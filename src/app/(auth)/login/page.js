@@ -21,6 +21,9 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+const appId = process.env.NEXT_PUBLIC_APP_ID;
+
   // ⛔ Jika sudah login, langsung redirect ke /dashboard
   useEffect(() => {
     const token = getToken();
@@ -33,7 +36,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/authMob`, {
+      const res = await fetch(`${apiUrl}/authMob`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,7 +44,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           nippos: username,
           password: password,
-          idAplikasi: process.env.NEXT_PUBLIC_ID_APLIKASI,
+          idAplikasi: appId,
         }),
       });
 
@@ -67,7 +70,7 @@ export default function LoginPage() {
 
   return (
     <Flex h="100vh" justify="center" align="center" p="lg">
-      <Box shadow="md" maw="30vw" mx="auto" mt="lg" style={{ border: "0px solid #ccc" }}>
+      <Box shadow="md" maw="30vw" mx="auto" mt="lg" style={{ border: "1px solid #ccc" }}>
         <Title order={2} mb="md" align="center">
           Login
         </Title>
