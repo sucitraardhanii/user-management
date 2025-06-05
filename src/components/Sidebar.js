@@ -7,8 +7,6 @@ export default function Sidebar() {
 
   return (
     <Box w={220} p="md" bg="blue.6" h="100vh" style={{ color: 'white' }}>
-      <Text fw={700} fz="lg" mb="lg">User Management</Text>
-
       <Stack gap="xs">
         <NavLink
           label="Dashboard"

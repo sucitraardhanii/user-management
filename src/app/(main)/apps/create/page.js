@@ -4,6 +4,8 @@ import { useState } from "react";
 import { TextInput, Button, Box, Title, Select } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/store/appStore";
+import { showNotification } from "@mantine/notifications";
+import { IconCheck } from "@tabler/icons-react";
 
 export default function CreateAppPage() {
   const router = useRouter();
@@ -24,6 +26,14 @@ export default function CreateAppPage() {
     // );
     router.push("/apps");
   };
+
+  showNotification({
+    title: 'Berhasil',
+    message: 'Data aplikasi berhasil ditambahkan',
+    color: 'teal',
+    icon: <IconCheck size={18} />,
+  });
+
 
   return (
     <Box>
