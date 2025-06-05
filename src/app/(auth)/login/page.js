@@ -70,8 +70,8 @@ const appId = process.env.NEXT_PUBLIC_APP_ID;
 
   return (
     <Flex h="100vh" justify="center" align="center" p="lg">
-      <Box shadow="md" maw="30vw" mx="auto" mt="lg" style={{ border: "1px solid #ccc" }}>
-        <Title order={2} mb="md" align="center">
+      <Box>
+        <Title order={1} mb="md" align="center">
           Login
         </Title>
         <Card withBorder shadow="md" p={30} mt={30} radius="md">
