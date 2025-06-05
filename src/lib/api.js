@@ -1,26 +1,19 @@
 // lib/api.js
 import { getToken } from "./auth";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export const apiFetch = async (path, options = {}) => {
+export const fetchAplikasi = async () => {
   const token = getToken();
+  if (!token) throw new Error("Token tidak tersedia");
 
-  const headers = {
-    "Content-Type": "application/json",
-    ...(options.headers || {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
+  const res = await fetch(`${BASE_URL}/getaplikasi/all`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.message || "API Error");
-  }
+  if (!res.ok) throw new Error("Gagal fetch aplikasi");
+  return res.json();
 
-  return response.json();
-};
+}

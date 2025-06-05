@@ -1,45 +1,25 @@
-import { create } from 'zustand'; // fungsi utama untuk membuat store Zustand
-import { persist } from 'zustand/middleware'; // middleware untuk menyimpan data ke localstorage
+import { create } from "zustand";
+import { fetchAplikasi } from "@/lib/api";
 
-export const useAppStore = create(
-  persist(
-    (set) => ({
-      apps: [],
-
-      // fetchApps: async() => {
-      //   try {
-      //     const res = await fetch('${process.env.NEXT_PUBLIC_API_URL}/apps');
-      //     const data = await res.json();
-      //     set({apps: data});
-      //   } catch (err) {
-      //     console.error("Gagal memuat data aplikasi:", err);
-      //   }
-      //  },
-
-      addApp: (newApp) =>
-        set((state) => ({
-          apps: [...state.apps, { ...newApp, id: Date.now() }],
-        })),
-
-      updateApp: (id, updatedApp) =>
-        set((state) => ({
-          apps: state.apps.map((app) =>
-            app.id === id ? { ...app, ...updatedApp } : app
-          ), // loop semua app jika app.id === id, maka update dan sisanya dibiarkan
-        })),
-
-      deleteApp: (id) =>
-        set((state) => ({
-          apps: state.apps.filter((app) => app.id !== id),
-        })), // filter() hanya menyisakan app yang id !== id
-    }),
-    
-    {
-      name: 'app-storage', // nama key di localStorage
-      partialize: (state) => ({apps: state.apps}),
+export const useAppStore = create((set, get) => ({
+  apps: [],
+  fetchApps: async () => {
+    try {
+      const data = await fetchAplikasi();
+      // ubah format key agar cocok dengan table: name, address, status, id
+      const mapped = data.map((item) => ({
+        id: item.idaplikasi,
+        name: item.nama,
+        address: item.alamat,
+        status: item.status,
+      }));
+      set({ apps: mapped });
+    } catch (err) {
+      console.error("Gagal fetch aplikasi:", err);
     }
-  )
-);
-// zustand menyimpan data ke localstorage dengan key user-storage
-// jadi saat browser di refresh, data akan tetap ada dan langsung dipulihkan
-// apabila data ingin disimpan ke server bukan localstorage, tinggal ganti fungsi2 jadi fetch/axios.
+  },
+  deleteApp: (id) => {
+    const updated = get().apps.filter((app) => app.id !== id);
+    set({ apps: updated });
+  },
+}));

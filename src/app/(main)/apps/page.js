@@ -1,29 +1,32 @@
 "use client";
 
-import { Table, Paper, ScrollArea, Title, Group, Button } from "@mantine/core";
+import { useEffect } from "react";
+import {
+  Table,
+  Paper,
+  ScrollArea,
+  Title,
+  Group,
+  Button,
+  Flex,
+  Loader,
+  Center,
+} from "@mantine/core";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import Link from "next/link";
 import { useAppStore } from "@/store/appStore";
-import { Flex } from "@mantine/core";
-// import { useEffect } from "react";
-
-// [
-//   { id: 1, name: "A", email: "aaa@gmail.com", role: "admin" },
-//   { id: 2, name: "B", email: "bbb@gmail.com", role: "editor" },
-//   { id: 3, name: "C", email: "ccc@gmail.com", role: "developer" },
-// ]; // ini merupakan array user dummy yg bisa diganti dengan API nantinya
 
 export default function AppPage() {
-  // ini merupakan komponen halaman utama/users
   const apps = useAppStore((state) => state.apps);
   const fetchApps = useAppStore((state) => state.fetchApps);
   const deleteApp = useAppStore((state) => state.deleteApp);
+  const loading = apps.length === 0;
 
-  // useEffect(() => {
-  //   fetchApps();
-  // }, []);
+  useEffect(() => {
+    fetchApps();
+  }, []);
 
-  const rows = (apps || []).map((app) => (
+  const rows = apps.map((app) => (
     <tr key={app.id}>
       <td style={{ textAlign: "left" }}>{app.name}</td>
       <td style={{ textAlign: "left" }}>{app.address}</td>
@@ -57,10 +60,17 @@ export default function AppPage() {
         </Flex>
       </td>
     </tr>
-  )); // ini artinya setiap user akan ditampilkan sebagai satu baris
+  ));
+
+  if (loading) {
+    return (
+      <Center h="80vh">
+        <Loader />
+      </Center>
+    );
+  }
 
   return (
-    // ini merupakan return JSX yang akan digunakan pada bagian tampilan
     <>
       <Title order={2} mb="md">
         Daftar Aplikasi
@@ -86,12 +96,3 @@ export default function AppPage() {
     </>
   );
 }
-// mb="md"artinya margin bawah ukuran medium
-// paper : card putih dengan shadow ringan ("xs") padding medium ("md")
-// ScrollArea : agar bisa digulir jika tabel melebar
-// striped : baris bergaris warna selang-seling
-// highlightOnHover : baris jadi terang kalau kursor diarahkan
-// thead : judul kolom
-// tbody : isi baris (hasil dari users.map)
-// IconEdit : untuk edit
-// IconTrash : untuk delete
