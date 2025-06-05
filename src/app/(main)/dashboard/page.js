@@ -4,6 +4,7 @@ import { Grid, Card, Text, Title } from "@mantine/core";
 import { useAppStore } from "@/store/appStore";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { saveToken, getToken } from "@/lib/auth";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function DashboardPage() {
   
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (!token) router.push('/login');
   }, []);
   
