@@ -1,12 +1,7 @@
 import '@mantine/core/styles.css';
 import { MantineProvider } from '@mantine/core';
 
-export const metadata = {
-  title: 'User Management',
-  description: 'Dashboard aplikasi user management',
-};
-
-export default function RootLayout({ children }) {
+export default function AuthLayout({ children }) {
   return (
     <html lang="en">
       <body>

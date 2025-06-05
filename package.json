@@ -9,8 +9,18 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/server": "^11.11.0",
+    "@mantine/core": "^8.0.2",
+    "@mantine/hooks": "^8.0.2",
+    "@tabler/icons-react": "^3.34.0",
+    "next": "14.2.29",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.2.29"
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "eslint": "^9.28.0",
+    "eslint-config-next": "^15.3.3"
   }
 }

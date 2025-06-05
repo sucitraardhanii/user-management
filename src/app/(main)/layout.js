@@ -1,17 +1,15 @@
+'use client';
+
 import '@mantine/core/styles.css';
 import { MantineProvider } from '@mantine/core';
+import AppShell from '@/components/AppShell';
 
-export const metadata = {
-  title: 'User Management',
-  description: 'Dashboard aplikasi user management',
-};
-
-export default function RootLayout({ children }) {
+export default function MainLayout({ children }) {
   return (
     <html lang="en">
       <body>
         <MantineProvider withGlobalStyles withNormalizeCSS>
-          {children}
+          <AppShell>{children}</AppShell>
         </MantineProvider>
       </body>
     </html>
