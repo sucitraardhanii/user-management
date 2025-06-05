@@ -17,3 +17,21 @@ export const fetchAplikasi = async () => {
   return res.json();
 
 }
+
+
+export async function fetchHakAkses() {
+  const token = getToken();
+ const res = await fetch(`${BASE_URL}/getlisthakakses/all`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await res.json();
+
+  if (!res.ok || result.statusCode !== 200) {
+    throw new Error(result.message || "Gagal mengambil data hak akses");
+  }
+
+  return result.data;
+}

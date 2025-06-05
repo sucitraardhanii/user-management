@@ -4,7 +4,6 @@ export function middleware(request) {
   const token = request.cookies.get("auth_token")?.value || 
                 request.headers.get("Authorization")?.replace("Bearer ", "") || 
                 null;
-
   const { pathname } = request.nextUrl;
 
   // ✅ Halaman yang tidak butuh login
@@ -24,3 +23,7 @@ export function middleware(request) {
 
   return NextResponse.next();
 }
+
+export const config = {
+  matcher: ["/((?!api|_next|favicon.ico).*)"], // proteksi semua yang bukan API/assets
+};

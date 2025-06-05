@@ -76,12 +76,12 @@ export default function Sidebar() {
         <NavLink
           label="Hak Akses"
           component={Link}
-          href="/hakakses"
-          active={pathname === '/hakakses'}
+          href="/hak-akses"
+          active={pathname === '/hak-akses'}
           styles={{
             root: {
               color:'white',
-              backgroundColor: pathname === '/hakakses' ? '#1c7ed6' : 'transparent',
+              backgroundColor: pathname === '/hak-akses' ? '#1c7ed6' : 'transparent',
               borderRadius: 8,
             },
           }}
