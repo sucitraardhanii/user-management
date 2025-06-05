@@ -5,11 +5,18 @@
 
 import { Box, Burger, Group, Flex, Text, Avatar, Menu, UnstyledButton } from "@mantine/core";
 import { IconUser, IconChevronDown, IconLogout, IconSettings } from "@tabler/icons-react";
+import { logout } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 export default function Header({ sidebarOpened, onToggleSidebar }) {
 // sidebarOpened: state boolean untuk sidebar (apakah terbuka atau tidak)
 // onToggleSidebar: fungsi untuk membuka/tutup sidebar saat tombol burger di klik
+const router = useRouter();
 
+const handleLogout = () => {
+  logout();            // hapus token dari localStorage
+  router.replace("/login"); // redirect ke halaman login
+};
   return (
     <Box
       h={60} //tinggi header 60px
@@ -50,7 +57,7 @@ export default function Header({ sidebarOpened, onToggleSidebar }) {
             <Menu.Item icon={<IconUser size={18} />}>My Profile</Menu.Item>
             <Menu.Item icon={<IconSettings size={18} />}>Settings</Menu.Item>
             <Menu.Divider />
-            <Menu.Item color="red" icon={<IconLogout size={18} />}>
+            <Menu.Item color="red" icon={<IconLogout size={18} />} onClick={handleLogout}>
               Logout
             </Menu.Item>
           </Menu.Dropdown>

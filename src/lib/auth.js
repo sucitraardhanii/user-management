@@ -1,4 +1,4 @@
-// lib/auth.js
+// src/lib/auth.js
 
 const TOKEN_KEY = "auth_token";
 
@@ -14,4 +14,6 @@ export const removeToken = () => {
   localStorage.removeItem(TOKEN_KEY);
 };
 
-export const isLoggedIn = () => !!getToken();
+export const logout = () => {
+  removeToken();
+};
