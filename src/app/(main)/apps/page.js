@@ -1,14 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Paper,
-  Title,
-  Button,
-  Flex,
-  Loader,
-  Center,
-} from "@mantine/core";
+import { Paper, Title, Button, Flex, Loader, Center } from "@mantine/core";
 import Link from "next/link";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { MantineReactTable } from "mantine-react-table";
@@ -17,6 +10,8 @@ import { fetchAplikasi, deleteAplikasi } from "@/lib/api.js"; // ganti pakai API
 export default function AppPage() {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(5);
 
   useEffect(() => {
     fetchAplikasi()
@@ -98,6 +93,14 @@ export default function AppPage() {
     );
   }
 
+  const totalRows = apps.length;
+  const start = pageIndex * pageSize + 1;
+  const end = Math.min(start + pageSize - 1, totalRows);
+  const paginatedData = apps.slice(
+    pageIndex * pageSize,
+    pageIndex * pageSize + pageSize
+  );
+
   return (
     <>
       <Flex justify="space-between" align="center" mb="md" mt="md">
@@ -109,19 +112,80 @@ export default function AppPage() {
       <Paper shadow="xs" p="md" withBorder>
         <MantineReactTable
           columns={columns}
-          data={apps}
-          enableSorting
-          mantinePaperProps={{ shadow: "0", withBorder: false }}
-          renderColumnHeaderContent={renderCustomHeader}
+          data={paginatedData}
+          enablePagination={false} // Disable default pagination
           enableColumnActions={false}
           enableColumnFilters={false}
           enableDensityToggle={false}
           enableFullScreenToggle={false}
           enableGlobalFilter={true}
-          renderTopToolbarCustomActions={({ table }) => (
-            <Flex justify="flex-end" w="100%" p="md"></Flex>
+          mantinePaperProps={{ shadow: "0", withBorder: false }}
+          renderTopToolbarCustomActions={() => (
+            <Flex justify="flex-end" w="100%" p="md" />
           )}
+          renderColumnHeaderContent={renderCustomHeader}
         />
+        <Flex
+          justify="flex-end"
+          align="center"
+          w="100%"
+          px="md"
+          py="sm"
+          gap="sm"
+        >
+          <span>
+            {start}-{end} of {totalRows}
+          </span>
+
+          <select
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPageIndex(0); // Reset to first page when page size changes
+            }}
+          >
+            {[5, 10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+
+          <Button.Group>
+            <Button
+              size="xs"
+              onClick={() => setPageIndex(0)}
+              disabled={pageIndex === 0}
+            >
+              {"<<"}
+            </Button>
+            <Button
+              size="xs"
+              onClick={() => setPageIndex((prev) => Math.max(prev - 1, 0))}
+              disabled={pageIndex === 0}
+            >
+              {"<"}
+            </Button>
+            <Button
+              size="xs"
+              onClick={() =>
+                setPageIndex((prev) =>
+                  Math.min(prev + 1, Math.floor(totalRows / pageSize))
+                )
+              }
+              disabled={pageIndex >= Math.floor(totalRows / pageSize)}
+            >
+              {">"}
+            </Button>
+            <Button
+              size="xs"
+              onClick={() => setPageIndex(Math.floor(totalRows / pageSize))}
+              disabled={pageIndex >= Math.floor(totalRows / pageSize)}
+            >
+              {">>"}
+            </Button>
+          </Button.Group>
+        </Flex>
       </Paper>
     </>
   );
