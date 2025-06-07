@@ -32,6 +32,16 @@ export default function AppPage() {
 
   const columns = useMemo(
     () => [
+      {
+        id: "number",
+        header: "No.",
+        size: 50,
+        enableSorting: false,
+        enableColumnFilter: false,
+        Cell: ({ row }) => {
+          return pageIndex * pageSize + row.index + 1;
+        }
+      },
       { accessorKey: "name", header: "Nama", enableSorting: false },
       { accessorKey: "address", header: "Alamat", enableSorting: false },
       { accessorKey: "status", header: "Status", enableSorting: false },
@@ -66,7 +76,7 @@ export default function AppPage() {
         ),
       },
     ],
-    []
+    [pageIndex, pageSize]
   );
 
   const renderCustomHeader = ({ column, header }) => (
