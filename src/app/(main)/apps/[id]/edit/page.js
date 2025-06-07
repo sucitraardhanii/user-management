@@ -4,7 +4,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { TextInput, Button, Box, Title, Group, Select } from "@mantine/core";
 import { useState } from "react";
-import { useAppStore } from "@/store/appStore";
 // useParams : mengambil parameter URL (id) dari route dinamis
 // useState : Hook React untuk membuat state lokal
 // TextInput, Button : komponen dari Mantine
@@ -14,10 +13,6 @@ export default function EditAppPage() {
   const { id } = useParams(); // ini untuk mengambil parameter id
   const router = useRouter();
   const appId = Number(id);
-
-  const apps = useAppStore((state) => state.apps);
-  const updateApp = useAppStore((state) => state.updateApp);
-  const deleteApp = useAppStore((state) => state.deleteApp);
 
   const existingApp = apps.find((app) => app.id == appId);
 

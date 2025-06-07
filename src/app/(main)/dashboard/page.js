@@ -1,15 +1,12 @@
 "use client";
 
 import { Grid, Card, Text, Title } from "@mantine/core";
-import { useAppStore } from "@/store/appStore";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { saveToken, getToken } from "@/lib/auth";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const apps = useAppStore((state) => state.apps); // ini akan mengambil users dari Zustand
-  
 
   useEffect(() => {
     const token = getToken();

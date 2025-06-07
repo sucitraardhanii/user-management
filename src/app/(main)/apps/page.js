@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Paper,
   Title,
@@ -8,22 +8,32 @@ import {
   Flex,
   Loader,
   Center,
-  TextInput,
 } from "@mantine/core";
 import Link from "next/link";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { MantineReactTable } from "mantine-react-table";
-import { useAppStore } from "@/store/appStore";
+import { fetchAplikasi, deleteAplikasi } from "@/lib/api.js"; // ganti pakai API langsung
 
 export default function AppPage() {
-  const apps = useAppStore((state) => state.apps);
-  const fetchApps = useAppStore((state) => state.fetchApps);
-  const deleteApp = useAppStore((state) => state.deleteApp);
-  const loading = apps.length === 0;
+  const [apps, setApps] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchApps();
-  }, [fetchApps]);
+    fetchAplikasi()
+      .then(setApps)
+      .catch((err) => console.error("Gagal fetch aplikasi:", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleDelete = async (id, name) => {
+    if (!confirm(`Yakin ingin menghapus ${name}?`)) return;
+    try {
+      await deleteAplikasi(id);
+      setApps((prev) => prev.filter((app) => app.id !== id));
+    } catch (err) {
+      console.error("Gagal menghapus aplikasi:", err);
+    }
+  };
 
   const columns = useMemo(
     () => [
@@ -52,11 +62,7 @@ export default function AppPage() {
               size="xs"
               variant="light"
               color="red"
-              onClick={() => {
-                if (confirm(`Yakin ingin menghapus ${row.original.name}?`)) {
-                  deleteApp(row.original.id);
-                }
-              }}
+              onClick={() => handleDelete(row.original.id, row.original.name)}
               leftSection={<IconTrash size={14} />}
             >
               Delete
@@ -65,7 +71,7 @@ export default function AppPage() {
         ),
       },
     ],
-    [deleteApp]
+    []
   );
 
   const renderCustomHeader = ({ column, header }) => (
@@ -106,7 +112,7 @@ export default function AppPage() {
           data={apps}
           enableSorting
           mantinePaperProps={{ shadow: "0", withBorder: false }}
-          renderColumnHeaderContent={renderCustomHeader} // ⬅️ ini override total header
+          renderColumnHeaderContent={renderCustomHeader}
           enableColumnActions={false}
           enableColumnFilters={false}
           enableDensityToggle={false}
