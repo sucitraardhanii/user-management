@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { Paper, Title, Button, Flex, Loader, Center } from "@mantine/core";
+import {
+  Paper,
+  Title,
+  Button,
+  Flex,
+  Loader,
+  Center,
+  TextInput,
+} from "@mantine/core";
 import Link from "next/link";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { MantineReactTable } from "mantine-react-table";
@@ -15,18 +23,18 @@ export default function AppPage() {
 
   useEffect(() => {
     fetchApps();
-  }, []);
+  }, [fetchApps]);
 
   const columns = useMemo(
     () => [
-      { accessorKey: "name", header: "Nama" },
-      { accessorKey: "address", header: "Alamat" },
-      { accessorKey: "status", header: "Status" },
+      { accessorKey: "name", header: "Nama", enableSorting: false },
+      { accessorKey: "address", header: "Alamat", enableSorting: false },
+      { accessorKey: "status", header: "Status", enableSorting: false },
       {
         id: "actions",
         header: "Aksi",
-        enableSorting: true,
-        enableColumnFilter: true,
+        enableSorting: false,
+        enableColumnFilter: false,
         Cell: ({ row }) => (
           <Flex gap="xs" wrap="nowrap">
             <Button
@@ -60,6 +68,22 @@ export default function AppPage() {
     [deleteApp]
   );
 
+  const renderCustomHeader = ({ column, header }) => (
+    <div
+      onClick={column.getToggleSortingHandler?.()}
+      style={{
+        cursor: column.getCanSort?.() ? "pointer" : "default",
+        fontWeight: 600,
+        textAlign: "right",
+        userSelect: "none",
+        padding: "8px 12px",
+        width: "100%",
+      }}
+    >
+      {header.column.columnDef.header}
+    </div>
+  );
+
   if (loading) {
     return (
       <Center h="80vh">
@@ -70,17 +94,27 @@ export default function AppPage() {
 
   return (
     <>
-      <Title order={2} mb="md">
-        Daftar Aplikasi
-      </Title>
-      <Button component={Link} href="/apps/create" mb="md">
-        Tambah Aplikasi
-      </Button>
+      <Flex justify="space-between" align="center" mb="md" mt="md">
+        <Title order={2}>Daftar Aplikasi</Title>
+        <Button component={Link} href="/apps/create">
+          Tambah Aplikasi
+        </Button>
+      </Flex>
       <Paper shadow="xs" p="md" withBorder>
         <MantineReactTable
           columns={columns}
           data={apps}
+          enableSorting
           mantinePaperProps={{ shadow: "0", withBorder: false }}
+          renderColumnHeaderContent={renderCustomHeader} // ⬅️ ini override total header
+          enableColumnActions={false}
+          enableColumnFilters={false}
+          enableDensityToggle={false}
+          enableFullScreenToggle={false}
+          enableGlobalFilter={true}
+          renderTopToolbarCustomActions={({ table }) => (
+            <Flex justify="flex-end" w="100%" p="md"></Flex>
+          )}
         />
       </Paper>
     </>
