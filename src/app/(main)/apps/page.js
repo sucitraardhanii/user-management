@@ -6,6 +6,7 @@ import Link from "next/link";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
 import { fetchAplikasi, deleteAplikasi } from "@/lib/api";
+import StatusBadge from "@/components/StatusBadge";
 
 export default function AppPage() {
   const [apps, setApps] = useState([]);
@@ -38,7 +39,9 @@ export default function AppPage() {
       },
       { accessorKey: "name", header: "Nama" },
       { accessorKey: "address", header: "Alamat" },
-      { accessorKey: "status", header: "Status" },
+      { accessorKey: "status", header: "Status",
+        Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
+      },
       {
         id: "actions",
         header: "Aksi",
