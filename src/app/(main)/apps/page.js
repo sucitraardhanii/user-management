@@ -34,12 +34,17 @@ export default function AppPage() {
       {
         id: "number",
         header: "No.",
-        Cell: ({ row }) => row.index + 1,
         size: 50,
+        Cell: ({ row, table }) => {
+          const { pageIndex, pageSize } = table.options.meta || {};
+          return (pageIndex ?? 0) * (pageSize ?? 5) + row.index + 1;
+        },
       },
       { accessorKey: "name", header: "Nama" },
       { accessorKey: "address", header: "Alamat" },
-      { accessorKey: "status", header: "Status",
+      {
+        accessorKey: "status",
+        header: "Status",
         Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
       },
       {
