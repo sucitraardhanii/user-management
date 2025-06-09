@@ -1,19 +1,18 @@
 "use client";
 
 import { Grid, Card, Text, Title, Center, Loader } from "@mantine/core";
-// import { useAppStore } from "@/store/appStore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { saveToken, getToken } from "@/lib/auth";
 import ForbiddenMessage from "@/components/ForbiddenMessage";
 
-
 export default function DashboardPage() {
   const router = useRouter();
-  // const apps = useAppStore((state) => state.apps); // ini akan mengambil users dari Zustand
   const [token, setToken] = useState(undefined);
+  const [apps, setApps] = useState([]);
+  const [users, setUsers] = useState([]);
 
-useEffect(() => {
+  useEffect(() => {
     const token = getToken();
     setToken(token);
   }, []);
@@ -31,7 +30,15 @@ useEffect(() => {
   if (!token) {
     return <ForbiddenMessage />;
   }
-  
+
+  const totalApps = apps.length;
+  const totalAdmins = users.filter(
+    (user) => user.role?.toLowerCase() === "admin"
+  ).length;
+  const totalOtherRoles = users.filter(
+    (user) => user.role?.toLowerCase() !== "admin"
+  ).length;
+
   return (
     <>
       <Title order={2} mb="lg">
