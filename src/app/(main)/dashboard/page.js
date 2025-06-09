@@ -55,7 +55,10 @@ useEffect(() => {
               Jumlah Admin
             </Text>
             <Text size="xl" color="green" fw={700}>
-              {apps.filter((apps) => apps.name.toLowerCase() === "admin").length}
+              {
+                apps.filter((apps) => apps.name.toLowerCase() === "admin")
+                  .length
+              }
             </Text>
           </Card>
         </Grid.Col>
@@ -65,7 +68,10 @@ useEffect(() => {
               Jumlah Role Lain
             </Text>
             <Text size="xl" color="red" fw={700}>
-              {apps.filter((apps) => apps.name.toLowerCase() !== "admin").length}
+              {
+                apps.filter((apps) => apps.name.toLowerCase() !== "admin")
+                  .length
+              }
             </Text>
           </Card>
         </Grid.Col>

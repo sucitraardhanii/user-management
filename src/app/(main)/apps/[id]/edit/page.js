@@ -2,9 +2,20 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { TextInput, Button, Box, Title, Group, Select } from "@mantine/core";
+import {
+  TextInput,
+  Button,
+  Box,
+  Title,
+  Group,
+  Select,
+  Loader,
+  Center,
+} from "@mantine/core";
 import { useState } from "react";
-import { useAppStore } from "@/store/appStore";
+import { showNotification } from "@mantine/notifications";
+import { IconCheck } from "@tabler/icons-react";
+import { getAplikasiById, updateAplikasi, deleteAplikasi } from "@/lib/api";
 // useParams : mengambil parameter URL (id) dari route dinamis
 // useState : Hook React untuk membuat state lokal
 // TextInput, Button : komponen dari Mantine
@@ -14,41 +25,71 @@ export default function EditAppPage() {
   const { id } = useParams(); // ini untuk mengambil parameter id
   const router = useRouter();
   const appId = Number(id);
+  const [loading, setLoading] = useState(true);
 
-  const apps = useAppStore((state) => state.apps);
-  const updateApp = useAppStore((state) => state.updateApp);
-  const deleteApp = useAppStore((state) => state.deleteApp);
-
-  const existingApp = apps.find((app) => app.id == appId);
-
-  const [app, setApp] = useState(
-    existingApp || {
-      name: "",
-      address: "",
-      status: "",
-    }
-  ); // ini membuat data user sementara, bisa digantikan dengan API nantinya
+  const [app, setApp] = useState({
+    name: "",
+    address: "",
+    status: "",
+  });
 
   useEffect(() => {
-    if (existingApp) setApp(existingApp);
-  }, [existingApp]);
+    getAplikasiById(appId)
+      .then(setApp)
+      .catch((err) => console.error("Gagal ambil data:", err))
+      .finally(() => setLoading(false));
+  }, [appId]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault(); // ini berfungsi untuk mencegah reload halaman
-    updateApp(appId, app); // ini yg akan menyimpan perubahan
-    router.push("/apps");
-    // alert(`Data untuk user ID ${id} disimpan!`); // ini untuk menampilkan konfirmasi simulai
-  }; // nanti ini bisa diganti dengan fetch() atau axios.put() untuk kirim ke API
-
-  const handleDelete = () => {
-    const confirmed = confirm(`Yakin ingin menghapus app #${id}?`);
-    if (confirmed) {
-      // nanti bisa diganti: await fetch ('/api/users/${id}', {method: 'DELETE'})
-      deleteApp(appId);
-      alert(`Aplikasi #${id} berhasil dihapus.`);
-      router.push("/apps"); // kembali ke halaman daftar user
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await updateAplikasi(appId, app);
+      showNotification({
+        title: "Berhasil",
+        message: "Data aplikasi berhasil diperbarui",
+        color: "teal",
+        icon: <IconCheck size={18} />,
+      });
+      router.push("/apps");
+    } catch (err) {
+      console.error("Gagal update:", err);
+      showNotification({
+        title: "Gagal",
+        message: "Tidak dapat menyimpan perubahan",
+        color: "red",
+      });
     }
   };
+
+  const handleDelete = async () => {
+    const confirmed = confirm(`Yakin ingin menghapus aplikasi #${appId}?`);
+    if (!confirmed) return;
+
+    try {
+      await deleteAplikasi(appId);
+      showNotification({
+        title: "Dihapus",
+        message: `Aplikasi #${appId} berhasil dihapus`,
+        color: "red",
+      });
+      router.push("/apps");
+    } catch (err) {
+      console.error("Gagal hapus:", err);
+      showNotification({
+        title: "Gagal",
+        message: "Tidak dapat menghapus aplikasi",
+        color: "red",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <Center h="80vh">
+        <Loader />
+      </Center>
+    );
+  }
 
   return (
     <Box maw={500} mx="auto">
@@ -73,10 +114,10 @@ export default function EditAppPage() {
         <Select
           label="Status"
           value={app.status}
-          onChange={(value) => setApp({ ...app, status:value })}
+          onChange={(value) => setApp({ ...app, status: value })}
           data={[
-            {value: 'Aktif', label: 'Aktif'},
-            {value: 'Tidak Aktif', label:'Tidak Aktif'},
+            { value: "Aktif", label: "Aktif" },
+            { value: "Tidak Aktif", label: "Tidak Aktif" },
           ]}
           placeholder="Pilih Status"
           mb="sm"

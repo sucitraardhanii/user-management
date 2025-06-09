@@ -3,37 +3,41 @@
 import { useState } from "react";
 import { TextInput, Button, Box, Title, Select } from "@mantine/core";
 import { useRouter } from "next/navigation";
-import { useAppStore } from "@/store/appStore";
 import { showNotification } from "@mantine/notifications";
 import { IconCheck } from "@tabler/icons-react";
+import { createAplikasi } from "@/lib/api"; // ⬅️ pakai dari lib/api.js
 
 export default function CreateAppPage() {
   const router = useRouter();
-  const addApp = useAppStore((state) => state.addApp);
-
   const [app, setApp] = useState({
     name: "",
     address: "",
     status: "",
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    addApp(app); // menambah ke store Zustand
-    // Simulasi pengiriman data
-    // alert(
-    //   `User baru dibuat: \n\nNama: ${user.name}\nEmail: ${user.email}\nRole: ${user.role}`
-    // );
-    router.push("/apps");
+
+    try {
+      await createAplikasi(app);
+
+      showNotification({
+        title: "Berhasil",
+        message: "Data aplikasi berhasil ditambahkan",
+        color: "teal",
+        icon: <IconCheck size={18} />,
+      });
+
+      router.push("/apps");
+    } catch (err) {
+      console.error(err);
+      showNotification({
+        title: "Gagal",
+        message: "Gagal menambahkan aplikasi",
+        color: "red",
+      });
+    }
   };
-
-  showNotification({
-    title: 'Berhasil',
-    message: 'Data aplikasi berhasil ditambahkan',
-    color: 'teal',
-    icon: <IconCheck size={18} />,
-  });
-
 
   return (
     <Box>
@@ -60,10 +64,11 @@ export default function CreateAppPage() {
           value={app.status}
           onChange={(value) => setApp({ ...app, status: value })}
           data={[
-            {value: 'Aktif', label: 'Aktif'},
-            {value:'Tidak Aktif', label: 'Tidak Aktif'},
+            { value: "1", label: "Aktif" },
+            { value: "0", label: "Tidak Aktif" },
           ]}
           placeholder="Pilih Status"
+          required
           mb="sm"
         />
         <Button type="submit" mt="md">
