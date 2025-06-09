@@ -82,7 +82,7 @@ export default function AppPage() {
   return (
     <>
       <Flex justify="space-between" align="center" mb="md" mt="md">
-        <Title order={2}>Daftar Aplikasi</Title>
+        <Title order={2}>Hak Akses</Title>
         <Button component={Link} href="/apps/create">
           +
         </Button>
