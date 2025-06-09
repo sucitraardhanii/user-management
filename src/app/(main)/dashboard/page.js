@@ -1,20 +1,36 @@
 "use client";
 
-import { Grid, Card, Text, Title } from "@mantine/core";
+import { Grid, Card, Text, Title, Center, Loader } from "@mantine/core";
 import { useAppStore } from "@/store/appStore";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { saveToken, getToken } from "@/lib/auth";
+import ForbiddenMessage from "@/components/ForbiddenMessage";
+
 
 export default function DashboardPage() {
   const router = useRouter();
   const apps = useAppStore((state) => state.apps); // ini akan mengambil users dari Zustand
-  
+  const [token, setToken] = useState(undefined);
 
-  useEffect(() => {
+useEffect(() => {
     const token = getToken();
-    if (!token) router.push('/login');
+    setToken(token);
   }, []);
+
+  // ⏳ Loading sementara token dicek
+  if (token === undefined) {
+    return (
+      <Center h="80vh">
+        <Loader />
+      </Center>
+    );
+  }
+
+  // 🔒 Jika belum login
+  if (!token) {
+    return <ForbiddenMessage />;
+  }
   
   return (
     <>
