@@ -16,14 +16,6 @@ export const fetchAplikasi = async () => {
   if (!res.ok) throw new Error("Gagal fetch aplikasi");
   const data = await res.json();
 
-<<<<<<< HEAD
-}
-
-
-export async function fetchHakAkses() {
-  const token = getToken();
- const res = await fetch(`${BASE_URL}/getlisthakakses/all`, {
-=======
   return data.map((item) => ({
     id: item.idaplikasi,
     name: item.nama,
@@ -39,22 +31,11 @@ export const deleteAplikasi = async (id) => {
 
   const res = await fetch(`${BASE_URL}/aplikasi/${id}`, {
     method: "DELETE",
->>>>>>> 9343a225cf5487c277e4ab5c55bf27ee4040ba6c
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
-<<<<<<< HEAD
-  const result = await res.json();
-
-  if (!res.ok || result.statusCode !== 200) {
-    throw new Error(result.message || "Gagal mengambil data hak akses");
-  }
-
-  return result.data;
-}
-=======
   if (!res.ok) throw new Error("Gagal menghapus aplikasi");
   return true;
 };
@@ -120,4 +101,3 @@ export const updateAplikasi = async (id, data) => {
   if (!res.ok) throw new Error("Gagal mengupdate aplikasi");
   return await res.json();
 };
->>>>>>> 9343a225cf5487c277e4ab5c55bf27ee4040ba6c

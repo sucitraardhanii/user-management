@@ -116,7 +116,7 @@ export default function AppPage() {
       <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>Daftar Aplikasi</Title>
         <Button component={Link} href="/apps/create">
-          Tambah Aplikasi
+          +
         </Button>
       </Flex>
       <Paper shadow="xs" p="md" withBorder>
