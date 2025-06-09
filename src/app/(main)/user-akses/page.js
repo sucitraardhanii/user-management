@@ -7,7 +7,7 @@ import {
   Paper,
   Flex,
   Stack,
-  Loader,
+  Title,
   Center,
 } from "@mantine/core";
 import GenericTable from "@/components/GenericTable";
@@ -15,7 +15,6 @@ import { fetchUserAkses } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
 import Link from "next/link";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
-
 
 export default function UserAksesPage() {
   const [nippos, setNippos] = useState("");
@@ -38,7 +37,11 @@ export default function UserAksesPage() {
       { accessorKey: "namaAkses", header: "Nama Akses" },
       { accessorKey: "namaAplikasi", header: "Nama Aplikasi" },
       { accessorKey: "nippos", header: "Nippos" },
-      { accessorKey: "statusUserAkses", header: "Status", Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />},
+      {
+        accessorKey: "statusUserAkses",
+        header: "Status",
+        Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
+      },
       {
         id: "actions",
         header: "Aksi",
@@ -72,32 +75,37 @@ export default function UserAksesPage() {
   );
 
   return (
-    <Stack>
-      {/* Form Filter */}
-      <Paper withBorder p="md" radius="md">
-        <Flex gap="md" wrap="wrap">
-          <TextInput
-            label="Nippos"
-            value={nippos}
-            onChange={(e) => setNippos(e.target.value)}
-            placeholder="Masukkan Nippos"
-            style={{ flex: 1 }}
-          />
-          <TextInput
-            label="ID Aplikasi"
-            value={idApp}
-            onChange={(e) => setIdApp(e.target.value)}
-            placeholder="Masukkan ID Aplikasi"
-            style={{ flex: 1 }}
-          />
-          <Button onClick={handleFetch} mt={20} style={{ height: "40px" }}>
-            Tampilkan Data
-          </Button>
-        </Flex>
-      </Paper>
+    <>
+      <Title order={2} mb="lg" mt="lg">
+        User Akses
+      </Title>
+      <Stack>
+        {/* Form Filter */}
+        <Paper withBorder p="md" radius="md">
+          <Flex gap="md" wrap="wrap">
+            <TextInput
+              label="Nippos"
+              value={nippos}
+              onChange={(e) => setNippos(e.target.value)}
+              placeholder="Masukkan Nippos"
+              style={{ flex: 1 }}
+            />
+            <TextInput
+              label="ID Aplikasi"
+              value={idApp}
+              onChange={(e) => setIdApp(e.target.value)}
+              placeholder="Masukkan ID Aplikasi"
+              style={{ flex: 1 }}
+            />
+            <Button onClick={handleFetch} mt={20} style={{ height: "40px" }}>
+              Tampilkan Data
+            </Button>
+          </Flex>
+        </Paper>
 
-      {/* Tabel */}
-      <GenericTable data={data} columns={columns} loading={loading} />
-    </Stack>
+        {/* Tabel */}
+        <GenericTable data={data} columns={columns} loading={loading} />
+      </Stack>
+    </>
   );
 }
