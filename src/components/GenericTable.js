@@ -57,7 +57,7 @@ export default function GenericTable({
         }
       `}</style>
 
-      <Paper shadow="xs" p="md" withBorder>
+      <Paper shadow="xs" p="md" withBorder style={{ overflowX: "auto" }}>
         <MantineReactTable
           columns={columns}
           data={paginatedData}
@@ -78,8 +78,16 @@ export default function GenericTable({
             <Flex justify="flex-end" w="100%" p="md" />
           )}
           renderColumnHeaderContent={renderCustomHeader}
+          meta={{ pageIndex, pageSize }}
         />
-        <Flex justify="flex-end" align="center" w="100%" px="md" py="sm" gap="sm">
+        <Flex
+          justify="flex-end"
+          align="center"
+          w="100%"
+          px="md"
+          py="sm"
+          gap="sm"
+        >
           <span>
             {start}-{end} of {totalRows}
           </span>
@@ -97,7 +105,11 @@ export default function GenericTable({
             ))}
           </select>
           <Button.Group>
-            <Button size="xs" onClick={() => setPageIndex(0)} disabled={pageIndex === 0}>
+            <Button
+              size="xs"
+              onClick={() => setPageIndex(0)}
+              disabled={pageIndex === 0}
+            >
               {"<<"}
             </Button>
             <Button

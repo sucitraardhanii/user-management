@@ -5,7 +5,7 @@ import { Title, Button, Flex } from "@mantine/core";
 import Link from "next/link";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
-import { fetchAplikasi, deleteAplikasi, fetchHakAkses } from "@/lib/api";
+import { deleteAplikasi, fetchHakAkses } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
 
 export default function AppPage() {
@@ -34,13 +34,18 @@ export default function AppPage() {
       {
         id: "number",
         header: "No.",
-        Cell: ({ row }) => row.index + 1,
         size: 50,
+        Cell: ({ row, table }) => {
+          const { pageIndex, pageSize } = table.options.meta || {};
+          return (pageIndex ?? 0) * (pageSize ?? 5) + row.index + 1;
+        },
       },
       { accessorKey: "namaAkses", header: "Nama" },
       { accessorKey: "namaAplikasi", header: "Nama Aplikasi" },
-      { accessorKey: "statusAktif", header: "Status",
-         Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
+      {
+        accessorKey: "statusAktif",
+        header: "Status",
+        Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
       },
       {
         id: "actions",
@@ -77,7 +82,7 @@ export default function AppPage() {
   return (
     <>
       <Flex justify="space-between" align="center" mb="md" mt="md">
-        <Title order={2}>Daftar Aplikasi</Title>
+        <Title order={2}>Hak Akses</Title>
         <Button component={Link} href="/apps/create">
           +
         </Button>

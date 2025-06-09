@@ -1,91 +1,111 @@
 "use client";
 
-import { useForm } from "@mantine/form";
+import { useState, useMemo } from "react";
 import {
-    Text,
-    TextInput,
-    Button,
-    Paper,
-    Title,
-    Flex,
-    Loader,
-    Center,
+  TextInput,
+  Button,
+  Paper,
+  Flex,
+  Stack,
+  Title,
+  Center,
 } from "@mantine/core";
-import { useState } from "react";
 import GenericTable from "@/components/GenericTable";
-import { fetchUserAkses } from "@/lib/api"; // method POST
+import { fetchUserAkses } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
+import Link from "next/link";
+import { IconEdit, IconTrash } from "@tabler/icons-react";
 
 export default function UserAksesPage() {
+  const [nippos, setNippos] = useState("");
+  const [idApp, setIdApp] = useState("");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const form = useForm({
-    initialValues: {
-      nippos: "",
-      idAplikasi: "",
-    },
-
-    validate: {
-      nippos: (value) => (value ? null : "NIPPOS wajib diisi"),
-      idAplikasi: (value) => (value ? null : "Pilih aplikasi"),
-    },
-  });
-
-  const handleSubmit = async (values) => {
+  const handleFetch = async () => {
     setLoading(true);
-    try {
-      const res = await fetchUserAkses(values);
-      setData(res.data || []);
-    } catch (err) {
-      console.error("Gagal fetch user akses:", err);
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
+    const result = await fetchUserAkses({ nippos, idAplikasi: idApp });
+    setData(result);
+    setLoading(false);
   };
 
-  const columns = [
-    { accessorKey: "nippos", header: "NIPPOS" },
-    { accessorKey: "namaAkses", header: "Nama Akses" },
-    { accessorKey: "namaAplikasi", header: "Nama Aplikasi" },
-    {
-      accessorKey: "statusUserAkses",
-      header: "Status",
-      Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
-    },
-  ];
+  const columns = useMemo(
+    () => [
+      { accessorKey: "alamataplikasi", header: "Alamat" },
+      { accessorKey: "idAkses", header: "ID Akses" },
+      { accessorKey: "idHakAkses", header: "ID Hak Akses" },
+      { accessorKey: "namaAkses", header: "Nama Akses" },
+      { accessorKey: "namaAplikasi", header: "Nama Aplikasi" },
+      { accessorKey: "nippos", header: "Nippos" },
+      {
+        accessorKey: "statusUserAkses",
+        header: "Status",
+        Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
+      },
+      {
+        id: "actions",
+        header: "Aksi",
+        Cell: ({ row }) => (
+          <Flex gap="xs" wrap="nowrap">
+            <Button
+              size="xs"
+              compact
+              variant="light"
+              color="blue"
+              component={Link}
+              href={`/user-akses/${row.original.id}/edit`}
+              leftSection={<IconEdit size={14} />}
+            >
+              Edit
+            </Button>
+            <Button
+              size="xs"
+              variant="light"
+              color="red"
+              onClick={() => handleDelete(row.original.id, row.original.name)}
+              leftSection={<IconTrash size={14} />}
+            >
+              Delete
+            </Button>
+          </Flex>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <>
-      <Title order={2} mb="md">
-        Cek User Akses
+      <Title order={2} mb="lg" mt="lg">
+        User Akses
       </Title>
+      <Stack>
+        {/* Form Filter */}
+        <Paper withBorder p="md" radius="md">
+          <Flex gap="md" wrap="wrap">
+            <TextInput
+              label="Nippos"
+              value={nippos}
+              onChange={(e) => setNippos(e.target.value)}
+              placeholder="Masukkan Nippos"
+              style={{ flex: 1 }}
+            />
+            <TextInput
+              label="ID Aplikasi"
+              value={idApp}
+              onChange={(e) => setIdApp(e.target.value)}
+              placeholder="Masukkan ID Aplikasi"
+              style={{ flex: 1 }}
+            />
+            <Button onClick={handleFetch} mt={20} style={{ height: "40px" }}>
+              Tampilkan Data
+            </Button>
+          </Flex>
+        </Paper>
 
-      <Paper p="md" withBorder mb="lg">
-       <form onSubmit={form.onSubmit(handleSubmit)}>
-  <Flex gap="md" wrap="wrap">
-    <TextInput
-      label="NIPPOS"
-      w="100%"
-      style={{ flex: 1 }}
-      {...form.getInputProps("nippos")}
-    />
-   <TextInput
-      label="ID Aplikasi"
-      w="100%"
-      style={{ flex: 1 }}
-      {...form.getInputProps("idAplikasi")}
-    />
-    <Button type="submit" mt="xs">
-      Cari
-    </Button>
-  </Flex>
-</form>
-
-      </Paper>
-
-      <GenericTable data={data} columns={columns} loading={loading} />
+        {/* Tabel */}
+        <GenericTable data={data} columns={columns} loading={loading} />
+      </Stack>
     </>
   );
 }
