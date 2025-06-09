@@ -7,6 +7,8 @@ import { IconEdit, IconTrash } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
 import { fetchAplikasi, deleteAplikasi } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
+import { showNotification } from "@mantine/notifications";
+
 
 export default function AppPage() {
   const [apps, setApps] = useState([]);
@@ -24,8 +26,18 @@ export default function AppPage() {
     try {
       await deleteAplikasi(id);
       setApps((prev) => prev.filter((app) => app.id !== id));
+      showNotification({
+      title: "Berhasil",
+      message: "Data berhasil dihapus",
+      color: "green",
+    });
     } catch (err) {
       console.error("Gagal menghapus aplikasi:", err);
+      showNotification({
+      title: "Gagal",
+      message: "Data Gagal dihapus",
+      color: "Red",
+    });
     }
   };
 
