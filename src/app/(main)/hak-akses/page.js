@@ -1,44 +1,94 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Title, Center, Loader, Text } from "@mantine/core";
+import { useEffect, useMemo, useState } from "react";
+import { Title, Button, Flex } from "@mantine/core";
+import Link from "next/link";
+import { IconEdit, IconTrash } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
-import { useHakAkses } from "@/store/hakAkses";
+import { fetchAplikasi, deleteAplikasi, fetchHakAkses } from "@/lib/api";
+import StatusBadge from "@/components/StatusBadge";
 
-export default function AksesPage() {
-  const router = useRouter();
-  const { akses, fetchHakAkses, deleteAkses } = useHakAkses();
+export default function AppPage() {
+  const [apps, setApps] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchHakAkses();
+    fetchHakAkses()
+      .then(setApps)
+      .catch((err) => console.error("Gagal fetch aplikasi:", err))
+      .finally(() => setLoading(false));
   }, []);
 
-  const columns = [
-    { label: "Nama Akses", accessor: "namaAkses" },
-    { label: "Nama Aplikasi", accessor: "namaAplikasi" },
-    { label: "Status", accessor: "statusAktif" },
-  ];
+  const handleDelete = async (id, name) => {
+    if (!confirm(`Yakin ingin menghapus ${name}?`)) return;
+    try {
+      await deleteAplikasi(id);
+      setApps((prev) => prev.filter((app) => app.id !== id));
+    } catch (err) {
+      console.error("Gagal menghapus aplikasi:", err);
+    }
+  };
+
+  const columns = useMemo(
+    () => [
+      {
+        id: "number",
+        header: "No.",
+        Cell: ({ row }) => row.index + 1,
+        size: 50,
+      },
+      { accessorKey: "namaAkses", header: "Nama" },
+      { accessorKey: "namaAplikasi", header: "Nama Aplikasi" },
+      { accessorKey: "statusAktif", header: "Status",
+         Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
+      },
+      {
+        id: "actions",
+        header: "Aksi",
+        Cell: ({ row }) => (
+          <Flex gap="xs" wrap="nowrap">
+            <Button
+              size="xs"
+              compact
+              variant="light"
+              color="blue"
+              component={Link}
+              href={`/apps/${row.original.id}/edit`}
+              leftSection={<IconEdit size={14} />}
+            >
+              Edit
+            </Button>
+            <Button
+              size="xs"
+              variant="light"
+              color="red"
+              onClick={() => handleDelete(row.original.id, row.original.name)}
+              leftSection={<IconTrash size={14} />}
+            >
+              Delete
+            </Button>
+          </Flex>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <>
-      <Title order={2} mb="md">
-        Data Hak Akses Aplikasi
-      </Title>
+      <Flex justify="space-between" align="center" mb="md" mt="md">
+        <Title order={2}>Daftar Aplikasi</Title>
+        <Button component={Link} href="/apps/create">
+          +
+        </Button>
+      </Flex>
 
-      {akses.length === 0 ? (
-        <Center h="80vh">
-          <Loader />
-        </Center>
-      ) : (
-        <GenericTable
-          columns={columns}
-          data={akses}
-          onAdd={() => router.push("/akses/create")}
-          onEdit={(item) => router.push(`/akses/${item.id}/edit`)}
-          onDelete={(item) => deleteAkses(item.id)}
-        />
-      )}
+      <GenericTable
+        data={apps}
+        columns={columns}
+        loading={loading}
+        defaultPageSize={5}
+      />
     </>
   );
 }
