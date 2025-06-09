@@ -50,12 +50,12 @@ export default function Sidebar() {
         <NavLink
           label="User Akses"
           component={Link}
-          href="/usersakses"
-          active={pathname === '/usersakses'}
+          href="/user-akses"
+          active={pathname === '/user-akses'}
           styles={{
             root: {
               color:'white',
-              backgroundColor: pathname === '/usersakses' ? '#1c7ed6' : 'transparent',
+              backgroundColor: pathname === '/user-akses' ? '#1c7ed6' : 'transparent',
               borderRadius: 8,
             },
           }}
