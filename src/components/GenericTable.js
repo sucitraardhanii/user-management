@@ -1,224 +1,133 @@
+// components/GenericTable.js
 "use client";
 
-import {
-  Table,
-  ScrollArea,
-  Paper,
-  Checkbox,
-  Group,
-  Text,
-  Button,
-  Pagination,
-  TextInput,
-  Select,
-  Badge,
-  Flex,
-} from "@mantine/core";
-import { useState, useMemo } from "react";
-import {
-  IconSearch,
-  IconChevronUp,
-  IconChevronDown,
-  IconEdit,
-  IconTrash,
-} from "@tabler/icons-react";
-import clsx from "clsx";
+import { MantineReactTable } from "mantine-react-table";
+import { Paper, Flex, Button, Loader, Center } from "@mantine/core";
+import { useMemo, useState } from "react";
 
 export default function GenericTable({
+  data = [],
   columns,
-  data,
-  rowKey = "id",
-  defaultLimit = 10,
+  loading = false,
   onEdit,
   onDelete,
-  onAdd,
+  pageSizeOptions = [5, 10, 20, 50],
+  defaultPageSize = 5,
 }) {
-  const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState([]);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-  const [limit, setLimit] = useState(String(defaultLimit));
-  const [page, setPage] = useState(1);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(defaultPageSize);
 
-  const itemsPerPage = parseInt(limit);
+  const totalRows = data.length;
+  const start = pageIndex * pageSize + 1;
+  const end = Math.min(start + pageSize - 1, totalRows);
+  const paginatedData = data.slice(
+    pageIndex * pageSize,
+    pageIndex * pageSize + pageSize
+  );
 
-  const toggleSort = (key) => {
-    setSortConfig((prev) => ({
-      key,
-      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
-    }));
-  };
+  const renderCustomHeader = ({ column, header }) => (
+    <div
+      onClick={column.getToggleSortingHandler?.()}
+      style={{
+        cursor: column.getCanSort?.() ? "pointer" : "default",
+        fontWeight: 600,
+        textAlign: "left",
+        userSelect: "none",
+        padding: "8px 12px",
+        width: "100%",
+      }}
+    >
+      {header.column.columnDef.header}
+    </div>
+  );
 
-  const filtered = useMemo(() => {
-    return data.filter((item) =>
-      columns.some((col) =>
-        item[col.accessor]?.toString().toLowerCase().includes(search.toLowerCase())
-      )
+  if (loading) {
+    return (
+      <Center h="80vh">
+        <Loader />
+      </Center>
     );
-  }, [search, data]);
-
-  const sorted = useMemo(() => {
-    if (!sortConfig.key) return filtered;
-    return [...filtered].sort((a, b) => {
-      const aVal = a[sortConfig.key];
-      const bVal = b[sortConfig.key];
-      return sortConfig.direction === "asc"
-        ? aVal.localeCompare(bVal)
-        : bVal.localeCompare(aVal);
-    });
-  }, [filtered, sortConfig]);
-
-  const paginated = sorted.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-  const totalPages = Math.ceil(sorted.length / itemsPerPage);
-
-  const allIds = paginated.map((item) => item[rowKey]);
-  const allSelected = allIds.every((id) => selected.includes(id));
-
-  const toggleAll = () => {
-    setSelected((prev) =>
-      allSelected ? prev.filter((id) => !allIds.includes(id)) : [...prev, ...allIds]
-    );
-  };
-
-  const toggleOne = (id) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((val) => val !== id) : [...prev, id]
-    );
-  };
+  }
 
   return (
-    <Paper withBorder p="md" radius="md">
-      <Group justify="space-between" mb="md">
-        <TextInput
-          placeholder="Cari..."
-          leftSection={<IconSearch size={16} />}
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
+    <>
+      <style jsx global>{`
+        .mantine-ActionIcon-root {
+          display: none !important;
+        }
+      `}</style>
+
+      <Paper shadow="xs" p="md" withBorder>
+        <MantineReactTable
+          columns={columns}
+          data={paginatedData}
+          enablePagination={false}
+          enableColumnActions={false}
+          enableColumnFilters={false}
+          enableDensityToggle={false}
+          enableFullScreenToggle={false}
+          enableGlobalFilter={true}
+          mantinePaperProps={{ shadow: "0", withBorder: false }}
+          mantineTableHeadCellProps={{
+            style: {
+              justifyContent: "flex-start",
+              gap: 0,
+            },
           }}
-        />
-        <Group>
-          {onAdd && (
-            <Button color="green" onClick={onAdd}>
-              Tambah Data
-            </Button>
+          renderTopToolbarCustomActions={() => (
+            <Flex justify="flex-end" w="100%" p="md" />
           )}
-          <Select
-            data={["10", "25", "50"]}
-            value={limit}
-            onChange={(val) => {
-              setLimit(val);
-              setPage(1);
+          renderColumnHeaderContent={renderCustomHeader}
+        />
+        <Flex justify="flex-end" align="center" w="100%" px="md" py="sm" gap="sm">
+          <span>
+            {start}-{end} of {totalRows}
+          </span>
+          <select
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPageIndex(0);
             }}
-            allowDeselect={false}
-            w={80}
-          />
-        </Group>
-      </Group>
-
-      <ScrollArea>
-        <Table verticalSpacing="sm" withColumnBorders withTableBorder>
-          <thead style={{ background: "#f9fafb" }}>
-            <tr>
-              <th>
-                <Checkbox
-                  checked={allSelected}
-                  indeterminate={!allSelected && selected.length > 0}
-                  onChange={toggleAll}
-                />
-              </th>
-              {columns.map((col) => (
-                <th
-                  key={col.accessor}
-                  onClick={() => toggleSort(col.accessor)}
-                  style={{ cursor: "pointer", textAlign: "left" }}
-                >
-                  <Group gap={4}>
-                    <Text fw={600}>{col.label.toUpperCase()}</Text>
-                    {sortConfig.key === col.accessor &&
-                      (sortConfig.direction === "asc" ? (
-                        <IconChevronUp size={14} />
-                      ) : (
-                        <IconChevronDown size={14} />
-                      ))}
-                  </Group>
-                </th>
-              ))}
-              {(onEdit || onDelete) && <th>Aksi</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.map((item) => {
-              const isSelected = selected.includes(item[rowKey]);
-              return (
-                <tr
-                  key={item[rowKey]}
-                  className={clsx({ "bg-gray-100": isSelected })}
-                  style={{ backgroundColor: isSelected ? "#f1f3f5" : undefined }}
-                >
-                  <td>
-                    <Checkbox
-                      checked={isSelected}
-                      onChange={() => toggleOne(item[rowKey])}
-                    />
-                  </td>
-                  {columns.map((col) => (
-                    <td key={col.accessor}>
-                      {col.accessor === "status" ? (
-                        <Badge
-                          color={
-                            item[col.accessor] === "Active"
-                              ? "green"
-                              : item[col.accessor] === "Paused"
-                              ? "yellow"
-                              : "gray"
-                          }
-                        >
-                          {item[col.accessor]}
-                        </Badge>
-                      ) : (
-                        <Text size="sm">{item[col.accessor]}</Text>
-                      )}
-                    </td>
-                  ))}
-                  {(onEdit || onDelete) && (
-                    <td>
-                      <Flex gap="xs">
-                        {onEdit && (
-                          <Button
-                            size="xs"
-                            color="blue"
-                            variant="light"
-                            onClick={() => onEdit(item)}
-                            leftSection={<IconEdit size={14} />}
-                          >
-                            Edit
-                          </Button>
-                        )}
-                        {onDelete && (
-                          <Button
-                            size="xs"
-                            color="red"
-                            variant="light"
-                            onClick={() => onDelete(item)}
-                            leftSection={<IconTrash size={14} />}
-                          >
-                            Delete
-                          </Button>
-                        )}
-                      </Flex>
-                    </td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </Table>
-      </ScrollArea>
-
-      <Group justify="end" mt="md">
-        <Pagination total={totalPages} value={page} onChange={setPage} />
-      </Group>
-    </Paper>
+          >
+            {pageSizeOptions.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+          <Button.Group>
+            <Button size="xs" onClick={() => setPageIndex(0)} disabled={pageIndex === 0}>
+              {"<<"}
+            </Button>
+            <Button
+              size="xs"
+              onClick={() => setPageIndex((prev) => Math.max(prev - 1, 0))}
+              disabled={pageIndex === 0}
+            >
+              {"<"}
+            </Button>
+            <Button
+              size="xs"
+              onClick={() =>
+                setPageIndex((prev) =>
+                  Math.min(prev + 1, Math.floor(totalRows / pageSize))
+                )
+              }
+              disabled={pageIndex >= Math.floor(totalRows / pageSize)}
+            >
+              {">"}
+            </Button>
+            <Button
+              size="xs"
+              onClick={() => setPageIndex(Math.floor(totalRows / pageSize))}
+              disabled={pageIndex >= Math.floor(totalRows / pageSize)}
+            >
+              {">>"}
+            </Button>
+          </Button.Group>
+        </Flex>
+      </Paper>
+    </>
   );
 }
