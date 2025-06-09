@@ -25,27 +25,30 @@ export const fetchAplikasi = async () => {
 };
 
 // Hapus aplikasi
-export const deleteAplikasi = async (id) => {
+export const deleteAplikasi = async (idaplikasi) => {
   const token = getToken();
   if (!token) throw new Error("Token tidak tersedia");
 
-  const res = await fetch(`${BASE_URL}/aplikasi/${id}`, {
+  const res = await fetch(`${BASE_URL}/deletaplikasi`, {
     method: "DELETE",
     headers: {
+      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ idaplikasi: String(idaplikasi) }),
   });
 
-  if (!res.ok) throw new Error("Gagal menghapus aplikasi");
-  return true;
+  if (!res.ok) throw new Error("Gagal hapus user akses");
+  return res.json();
 };
+
 
 // Tambah aplikasi
 export const createAplikasi = async (data) => {
   const token = getToken();
   if (!token) throw new Error("Token tidak tersedia");
 
-  const res = await fetch(`${BASE_URL}/aplikasi`, {
+  const res = await fetch(`${BASE_URL}/addaplikasi`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -54,7 +57,6 @@ export const createAplikasi = async (data) => {
     body: JSON.stringify({
       nama: data.name,
       alamat: data.address,
-      status: data.status,
     }),
   });
 
