@@ -57,7 +57,7 @@ export default function GenericTable({
         }
       `}</style>
 
-      <Paper shadow="xs" p="md" withBorder>
+      <Paper shadow="xs" p="md" withBorder style={{ overflowX: "auto" }}>
         <MantineReactTable
           columns={columns}
           data={paginatedData}
