@@ -9,6 +9,7 @@ import { fetchAplikasi, deleteAplikasi } from "@/api/aplikasi";
 import StatusBadge from "@/components/StatusBadge";
 import { showNotification } from "@mantine/notifications";
 import CreateButton from "@/components/CreateButton";
+import Breadcrumb from "@/components/BreadCrumb";
 
 export default function AppPage() {
   const [apps, setApps] = useState([]);
