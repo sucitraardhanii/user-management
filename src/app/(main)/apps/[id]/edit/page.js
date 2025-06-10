@@ -30,10 +30,10 @@ export default function EditAppPage() {
   const [app, setApp] = useState({
     name: "",
     address: "",
-    status: "",
   });
 
   useEffect(() => {
+    if (!id) return;
     getAplikasiById(appId)
       .then(setApp)
       .catch((err) => console.error("Gagal ambil data:", err))
@@ -109,17 +109,6 @@ export default function EditAppPage() {
           value={app.address}
           onChange={(e) => setApp({ ...app, address: e.target.value })}
           required
-          mb="sm"
-        />
-        <Select
-          label="Status"
-          value={app.status}
-          onChange={(value) => setApp({ ...app, status: value })}
-          data={[
-            { value: "Aktif", label: "Aktif" },
-            { value: "Tidak Aktif", label: "Tidak Aktif" },
-          ]}
-          placeholder="Pilih Status"
           mb="sm"
         />
         <Group mt="md">

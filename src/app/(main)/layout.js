@@ -7,11 +7,9 @@ import { Notifications } from "@mantine/notifications";
 
 export default function MainLayout({ children }) {
   return (
-    <>
-      <MantineProvider withGlobalStyles withNormalizeCSS>
-        <Notifications></Notifications>
-        <AppShell>{children}</AppShell>
-      </MantineProvider>
-    </>
+    <MantineProvider withGlobalStyles withNormalizeCSS>
+      <Notifications position="top-center" /> 
+      <AppShell>{children}</AppShell>
+    </MantineProvider>
   );
 }
