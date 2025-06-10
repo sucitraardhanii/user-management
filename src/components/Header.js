@@ -5,7 +5,7 @@
 
 import { Box, Burger, Group, Flex, Text, Avatar, Menu, UnstyledButton } from "@mantine/core";
 import { IconUser, IconChevronDown, IconLogout, IconSettings } from "@tabler/icons-react";
-import { logout } from "@/lib/auth";
+import { logout } from "@/api/auth";
 import { useRouter } from "next/navigation";
 
 export default function Header({ sidebarOpened, onToggleSidebar }) {

@@ -5,10 +5,10 @@ import { Title, Button, Flex } from "@mantine/core";
 import Link from "next/link";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
-import { fetchAplikasi, deleteAplikasi } from "@/lib/api";
+import { fetchAplikasi, deleteAplikasi } from "@/api/aplikasi";
 import StatusBadge from "@/components/StatusBadge";
 import { showNotification } from "@mantine/notifications";
-
+import CreateButton from "@/components/CreateButton";
 
 export default function AppPage() {
   const [apps, setApps] = useState([]);
@@ -93,11 +93,10 @@ export default function AppPage() {
 
   return (
     <>
+    <Breadcrumb />
       <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>Daftar Aplikasi</Title>
-        <Button component={Link} href="/apps/create">
-          +
-        </Button>
+        <CreateButton entity="apps" />
       </Flex>
 
       <GenericTable

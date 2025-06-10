@@ -18,7 +18,7 @@ import {
   getUserAksesByID,
   updateUserAkses,
   deleteUserAkses,
-} from "@/lib/api.js";
+} from "@/api/userAkses";
 
 export default function EditUserAksesPage() {
   const { id } = useParams();

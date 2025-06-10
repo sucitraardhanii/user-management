@@ -11,10 +11,12 @@ import {
   Center,
 } from "@mantine/core";
 import GenericTable from "@/components/GenericTable";
-import { fetchUserAkses } from "@/lib/api";
+import { fetchUserAkses } from "@/api/userAkses";
 import StatusBadge from "@/components/StatusBadge";
+import NullBadge from "@/components/NullBadge";
 import Link from "next/link";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
+import Breadcrumb from "@/components/BreadCrumb";
 
 export default function UserAksesPage() {
   const [nippos, setNippos] = useState("");
@@ -31,7 +33,7 @@ export default function UserAksesPage() {
 
   const columns = useMemo(
     () => [
-      { accessorKey: "alamataplikasi", header: "Alamat" },
+      { accessorKey: "alamataplikasi", header: "Alamat", Cell: ({ cell }) => <NullBadge value={cell.getValue()} />,},
       { accessorKey: "idAkses", header: "ID Akses" },
       { accessorKey: "idHakAkses", header: "ID Hak Akses" },
       { accessorKey: "namaAkses", header: "Nama Akses" },
@@ -76,6 +78,7 @@ export default function UserAksesPage() {
 
   return (
     <>
+    <Breadcrumb />
       <Title order={2} mb="lg" mt="lg">
         User Akses
       </Title>

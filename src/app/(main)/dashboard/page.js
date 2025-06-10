@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Grid, Card, Text, Title } from "@mantine/core";
-import { fetchAplikasi } from "@/lib/api";
+import { fetchAplikasi } from "@/api/aplikasi";
 import Link from "next/link";
 
 export default function DashboardPage() {

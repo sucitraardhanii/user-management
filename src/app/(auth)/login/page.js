@@ -14,7 +14,7 @@ import {
   Flex,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
-import { saveToken, getToken } from "@/lib/auth";
+import { saveToken, getToken } from "@/api/auth";
 
 export default function LoginPage() {
   const router = useRouter();
