@@ -2,17 +2,43 @@
 
 const TOKEN_KEY = "auth_token";
 
-export const saveToken = (token) => {
-  localStorage.setItem(TOKEN_KEY, token);
-};
+export function saveToken(token) {
+  const now = new Date();
+  const expiry = now.getTime() + 60 * 60 * 1000; // 1 jam dari sekarang
+  const item = {
+    token,
+    expiry,
+  };
+  localStorage.setItem("auth_token", JSON.stringify(item));
+}
 
-export const getToken = () => {
-  return typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
-};
 
-export const removeToken = () => {
-  localStorage.removeItem(TOKEN_KEY);
-};
+export function getToken() {
+  if (typeof window === "undefined") return null;
+
+  const itemStr = localStorage.getItem("auth_token");
+  if (!itemStr) return null;
+
+  try {
+    const item = JSON.parse(itemStr);
+    const now = new Date();
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem("auth_token");
+      return null;
+    }
+
+    return item.token;
+  } catch (err) {
+    localStorage.removeItem("auth_token");
+    return null;
+  }
+}
+
+
+export function removeToken() {
+  localStorage.removeItem("auth_token");
+}
 
 export const logout = () => {
   removeToken();
