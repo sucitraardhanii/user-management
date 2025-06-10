@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell";
 import { Notifications } from "@mantine/notifications";
 import { getToken } from "@/api/auth";
 import ForbiddenPage from "@/app/forbidden/page";
+import { MantineProvider } from '@mantine/core';
 
 export default function MainLayout({ children }) {
   const [authorized, setAuthorized] = useState(null);
