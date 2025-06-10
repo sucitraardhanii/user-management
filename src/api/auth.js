@@ -2,6 +2,21 @@
 
 const TOKEN_KEY = "auth_token";
 
+export function isTokenExpired() {
+  if (typeof window === "undefined") return true;
+
+  const itemStr = localStorage.getItem("auth_token");
+  if (!itemStr) return true;
+
+  try {
+    const item = JSON.parse(itemStr);
+    const now = new Date();
+    return now.getTime() > item.expiry;
+  } catch (err) {
+    return true;
+  }
+}
+
 export function saveToken(token) {
   const now = new Date();
   const expiry = now.getTime() + 60 * 60 * 1000; // 1 jam dari sekarang

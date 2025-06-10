@@ -5,7 +5,7 @@ import { TextInput, Button, Box, Title, Select } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { showNotification } from "@mantine/notifications";
 import { IconCheck } from "@tabler/icons-react";
-import { createAplikasi } from "@/api/hakAkses";
+import { createHakAkses } from "@/api/hakAkses";
 import Breadcrumb from "@/components/BreadCrumb";
 export default function CreateAppPage() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function CreateAppPage() {
     e.preventDefault();
 
     try {
-      await createAplikasi(app);
+      await createHakAkses(app);
 
       showNotification({
         title: "Berhasil",

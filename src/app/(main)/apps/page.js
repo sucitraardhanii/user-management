@@ -10,6 +10,7 @@ import StatusBadge from "@/components/StatusBadge";
 import { showNotification, updateNotification } from "@mantine/notifications";
 import CreateButton from "@/components/CreateButton";
 import Breadcrumb from "@/components/BreadCrumb";
+import Breadcrumb from "@/components/BreadCrumb";
 import { modals } from '@mantine/modals';
 
 export default function AppPage() {
