@@ -12,7 +12,7 @@ export default function ForbiddenMessage({ withRedirect = false }) {
     if (withRedirect) {
       const timer = setTimeout(() => {
         router.push("/login");
-      }, 100);
+      }, 10000);
       return () => clearTimeout(timer);
     }
   }, [withRedirect]);
