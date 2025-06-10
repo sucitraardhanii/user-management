@@ -2,7 +2,7 @@
 
 import { Box, NavLink, Stack, Loader } from '@mantine/core';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -19,9 +19,16 @@ export default function Sidebar() {
   ];
 
   const handleClick = (href) => {
-    setLoadingPath(href);
-    router.push(href);
+    if (href !== pathname) {
+      setLoadingPath(href);
+      router.push(href);
+    }
   };
+
+  // Matikan loading saat pathname berubah
+  useEffect(() => {
+    setLoadingPath(null);
+  }, [pathname]);
 
   return (
     <Box w={220} p="md" bg="blue.6" h="100vh" style={{ color: 'white' }}>
