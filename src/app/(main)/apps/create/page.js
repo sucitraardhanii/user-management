@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { TextInput, Button, Box, Title, Select } from "@mantine/core";
+import { TextInput, Button, Box, Title, Select, Stack } from "@mantine/core";
 import { useRouter } from "next/navigation";
-import { showNotification } from "@mantine/notifications";
-import { IconCheck } from "@tabler/icons-react";
+import { showNotification, updateNotification } from "@mantine/notifications";
+import { IconCheck, IconX} from "@tabler/icons-react";
 import { createAplikasi } from "@/api/aplikasi"; // ⬅️ pakai dari lib/api.js
+import Breadcrumb from "@/components/BreadCrumb";
 
 export default function CreateAppPage() {
   const router = useRouter();
@@ -16,28 +17,44 @@ export default function CreateAppPage() {
   });
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      await createAplikasi(app);
-
+      e.preventDefault();
+  
       showNotification({
-        title: "Berhasil",
-        message: "Data aplikasi berhasil ditambahkan",
-        color: "teal",
-        icon: <IconCheck size={18} />,
+        id:"add-aplikasi",
+        title: "Menyimpan...",
+        message: "Mohon tunggu, kami sedang menyimpan data",
+        loading: true,
+        autoClose: false,
+        disallowClose: true,
       });
+  
+      try {
+        await createAplikasi(app);
+  
+        updateNotification({
+          id: "add-aplikasi",
+          title: "Berhasil",
+          message: "Data Aplikasi Berhasil Ditambahkan",
+          color: "teal",
+          icon: <IconCheck size={18} />,
+          autoClose: 3000,
+        });
+  
+        router.push("/apps");
+      } catch (err) {
+        console.error("Gagal Ditambahkan:", err);
+  
+        updateNotification({
+          id: "add-aplikasi",
+          title: "Gagal",
+          message: "Data Aplikasi Gagal Ditambahkan",
+          color: "red",
+          icon: <IconX size={18} />,
+          autoClose: 3000,
+        });
+      }
+    };
 
-      router.push("/apps");
-    } catch (err) {
-      console.error(err);
-      showNotification({
-        title: "Gagal",
-        message: "Gagal menambahkan aplikasi",
-        color: "red",
-      });
-    }
-  };
 
   return (
     <Box>

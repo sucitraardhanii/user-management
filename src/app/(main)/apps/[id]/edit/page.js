@@ -13,8 +13,8 @@ import {
   Center,
 } from "@mantine/core";
 import { useState } from "react";
-import { showNotification } from "@mantine/notifications";
-import { IconCheck } from "@tabler/icons-react";
+import { showNotification, updateNotification } from "@mantine/notifications";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import { getAplikasiById, updateAplikasi, deleteAplikasi } from "@/api/aplikasi";
 // useParams : mengambil parameter URL (id) dari route dinamis
 // useState : Hook React untuk membuat state lokal
@@ -42,24 +42,43 @@ export default function EditAppPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    showNotification({
+      id:"update-aplikasi",
+      title: "Menyimpan...",
+      message: "Mohon tunggu, kami sedang menyimpan data",
+      loading: true,
+      autoClose: false,
+      disallowClose: true,
+    });
+
     try {
       await updateAplikasi(appId, app);
-      showNotification({
+
+      updateNotification({
+        id: "update-aplikasi",
         title: "Berhasil",
-        message: "Data aplikasi berhasil diperbarui",
+        message: "Data Aplikasi Berhasil Diperbaharui",
         color: "teal",
         icon: <IconCheck size={18} />,
+        autoClose: 3000,
       });
+
       router.push("/apps");
     } catch (err) {
-      console.error("Gagal update:", err);
-      showNotification({
+      console.error("Gagal Update:", err);
+
+      updateNotification({
+        id: "update-aplikasi",
         title: "Gagal",
-        message: "Tidak dapat menyimpan perubahan",
+        message: "Data Aplikasi Gagal Diperbaharui",
         color: "red",
+        icon: <IconX size={18} />,
+        autoClose: 3000,
       });
     }
   };
+
 
   const handleDelete = async () => {
     const confirmed = confirm(`Yakin ingin menghapus aplikasi #${appId}?`);

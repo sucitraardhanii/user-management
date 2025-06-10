@@ -8,7 +8,7 @@ import GenericTable from "@/components/GenericTable";
 import { deleteAplikasi, fetchHakAkses } from "@/api/hakAkses";
 import StatusBadge from "@/components/StatusBadge";
 import Breadcrumb from "@/components/BreadCrumb";
-import CreateButton from "@/components/CreateButton";
+import CreateButton from "@/components/CreateButton"; 
 
 
 export default function AppPage() {

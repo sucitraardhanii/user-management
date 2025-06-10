@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Title, Button, Flex } from "@mantine/core";
 import Link from "next/link";
-import { IconEdit, IconTrash } from "@tabler/icons-react";
+import { IconEdit, IconTrash, IconCheck, IconX } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
 import { fetchAplikasi, deleteAplikasi } from "@/api/aplikasi";
 import StatusBadge from "@/components/StatusBadge";
-import { showNotification } from "@mantine/notifications";
+import { showNotification, updateNotification } from "@mantine/notifications";
 import CreateButton from "@/components/CreateButton";
+import Breadcrumb from "@/components/BreadCrumb";
+import { modals } from '@mantine/modals';
 
 export default function AppPage() {
   const [apps, setApps] = useState([]);
@@ -21,25 +23,56 @@ export default function AppPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleDelete = async (id, name) => {
-    if (!confirm(`Yakin ingin menghapus ${name}?`)) return;
-    try {
-      await deleteAplikasi(id);
-      setApps((prev) => prev.filter((app) => app.id !== id));
+  const handleDelete = (id, name) => {
+  modals.openConfirmModal({
+    title: 'Konfirmasi Hapus',
+    centered: true,
+    size: "sm", // biar seperti notifikasi
+    overlayProps: { blur: 2, opacity: 0.1 },
+    children: (
+      <Text size="sm">
+        Yakin ingin menghapus <b>{name}</b>?
+      </Text>
+    ),
+    labels: { confirm: 'Hapus', cancel: 'Batal' },
+    confirmProps: { color: 'red' },
+    onConfirm: async () => {
       showNotification({
-      title: "Berhasil",
-      message: "Data berhasil dihapus",
-      color: "green",
-    });
-    } catch (err) {
-      console.error("Gagal menghapus aplikasi:", err);
-      showNotification({
-      title: "Gagal",
-      message: "Data Gagal dihapus",
-      color: "Red",
-    });
-    }
-  };
+        id: "delete-aplikasi",
+        title: "Menghapus...",
+        message: `Sedang menghapus ${name}`,
+        loading: true,
+        autoClose: false,
+        disallowClose: true,
+      });
+
+      try {
+        await deleteAplikasi(id);
+
+        updateNotification({
+          id: "delete-aplikasi",
+          title: "Berhasil",
+          message: `${name} berhasil dihapus`,
+          color: "teal",
+          icon: <IconCheck size={18} />,
+          autoClose: 3000,
+        });
+
+        setApps((prev) => prev.filter((app) => app.id !== id));
+      } catch (err) {
+        updateNotification({
+          id: "delete-aplikasi",
+          title: "Gagal",
+          message: `Tidak dapat menghapus ${name}`,
+          color: "red",
+          icon: <IconX size={18} />,
+          autoClose: 3000,
+        });
+      }
+    },
+  });
+};
+
 
   const columns = useMemo(
     () => [
@@ -93,7 +126,7 @@ export default function AppPage() {
 
   return (
     <>
-    <Breadcrumb />
+      <Breadcrumb />
       <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>Daftar Aplikasi</Title>
         <CreateButton entity="apps" />
