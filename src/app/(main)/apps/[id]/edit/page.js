@@ -15,7 +15,7 @@ import {
 import { useState } from "react";
 import { showNotification } from "@mantine/notifications";
 import { IconCheck } from "@tabler/icons-react";
-import { getAplikasiById, updateAplikasi, deleteAplikasi } from "@/lib/api";
+import { getAplikasiById, updateAplikasi, deleteAplikasi } from "@/api/api";
 // useParams : mengambil parameter URL (id) dari route dinamis
 // useState : Hook React untuk membuat state lokal
 // TextInput, Button : komponen dari Mantine

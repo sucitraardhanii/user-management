@@ -5,8 +5,8 @@ import { TextInput, Button, Box, Title, Select } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { showNotification } from "@mantine/notifications";
 import { IconCheck } from "@tabler/icons-react";
-import { createAplikasi } from "@/api/api"; // ⬅️ pakai dari lib/api.js
-
+import { createAplikasi } from "@/api/api";
+import Breadcrumb from "@/components/BreadCrumb";
 export default function CreateAppPage() {
   const router = useRouter();
   const [app, setApp] = useState({
@@ -28,7 +28,7 @@ export default function CreateAppPage() {
         icon: <IconCheck size={18} />,
       });
 
-      router.push("/apps");
+      router.push("/hak-akses");
     } catch (err) {
       console.error(err);
       showNotification({
@@ -42,33 +42,21 @@ export default function CreateAppPage() {
   return (
     <Box>
       <Title order={2} mb="md">
-        Tambah Aplikasi Baru
+        Tambah Hak Akses Baru
       </Title>
       <Breadcrumb />
       <form onSubmit={handleSubmit}>
         <TextInput
-          label="Nama"
-          value={app.name}
+          label="ID Aplikasi"
+          value={app.idaplikasi}
           onChange={(e) => setApp({ ...app, name: e.target.value })}
           required
           mb="sm"
         />
         <TextInput
-          label="Alamat"
+          label="Nama akses"
           value={app.address}
           onChange={(e) => setApp({ ...app, address: e.target.value })}
-          required
-          mb="sm"
-        />
-        <Select
-          label="Status"
-          value={app.status}
-          onChange={(value) => setApp({ ...app, status: value })}
-          data={[
-            { value: "1", label: "Aktif" },
-            { value: "0", label: "Tidak Aktif" },
-          ]}
-          placeholder="Pilih Status"
           required
           mb="sm"
         />
