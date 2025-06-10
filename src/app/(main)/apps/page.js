@@ -5,7 +5,7 @@ import { Title, Button, Flex } from "@mantine/core";
 import Link from "next/link";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
-import { fetchAplikasi, deleteAplikasi } from "@/api/api";
+import { fetchAplikasi, deleteAplikasi } from "@/api/aplikasi";
 import StatusBadge from "@/components/StatusBadge";
 import { showNotification } from "@mantine/notifications";
 import CreateButton from "@/components/CreateButton";

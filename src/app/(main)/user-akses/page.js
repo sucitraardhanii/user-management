@@ -11,7 +11,7 @@ import {
   Center,
 } from "@mantine/core";
 import GenericTable from "@/components/GenericTable";
-import { fetchUserAkses } from "@/api/api";
+import { fetchUserAkses } from "@/api/userAkses";
 import StatusBadge from "@/components/StatusBadge";
 import NullBadge from "@/components/NullBadge";
 import Link from "next/link";

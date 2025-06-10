@@ -5,7 +5,7 @@ import { TextInput, Button, Box, Title, Select } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { showNotification } from "@mantine/notifications";
 import { IconCheck } from "@tabler/icons-react";
-import { createAplikasi } from "@/api/api"; // ⬅️ pakai dari lib/api.js
+import { createAplikasi } from "@/api/aplikasi"; // ⬅️ pakai dari lib/api.js
 
 export default function CreateAppPage() {
   const router = useRouter();
