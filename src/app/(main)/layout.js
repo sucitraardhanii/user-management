@@ -24,10 +24,9 @@ export default function MainLayout({ children }) {
     return <ForbiddenPage />;
   }
   return (
-    <>
-    <Notifications></Notifications>
-    <AppShell>{children}</AppShell>
-
-    </>
+    <MantineProvider withGlobalStyles withNormalizeCSS>
+      <Notifications position="top-center" /> 
+      <AppShell>{children}</AppShell>
+    </MantineProvider>
   );
 }
