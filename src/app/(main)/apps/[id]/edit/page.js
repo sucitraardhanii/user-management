@@ -4,16 +4,19 @@ import { useEffect, useState } from "react";
 import {
   Box,
   Title,
-  TextInput,
+  Group,
   Select,
-  Button,
   Loader,
+  Center,
 } from "@mantine/core";
-import { useParams, useRouter } from "next/navigation";
-import { getAplikasiById, updateAplikasi } from "@/api/aplikasi";
-import { showNotification } from "@mantine/notifications";
-import { IconCheck } from "@tabler/icons-react";
-import Breadcrumb from "@/components/BreadCrumb";
+import { useState } from "react";
+import { showNotification, updateNotification } from "@mantine/notifications";
+import { IconCheck, IconX } from "@tabler/icons-react";
+import { getAplikasiById, updateAplikasi, deleteAplikasi } from "@/api/aplikasi";
+// useParams : mengambil parameter URL (id) dari route dinamis
+// useState : Hook React untuk membuat state lokal
+// TextInput, Button : komponen dari Mantine
+// Box, Title : komponen UI seperti <div> dan <h2> bawaan dari Mantine
 
 export default function EditAplikasiPage() {
   const { id } = useParams();
@@ -21,7 +24,11 @@ export default function EditAplikasiPage() {
 
   const [form, setForm] = useState({ nama: "", alamat: "", status: "" });
   const [loading, setLoading] = useState(true);
-  const [ready, setReady] = useState(false); // 🔥 kunci sukses!
+
+  const [app, setApp] = useState({
+    name: "",
+    address: "",
+  });
 
   useEffect(() => {
     async function fetchData() {
@@ -50,6 +57,15 @@ export default function EditAplikasiPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    showNotification({
+      id:"update-aplikasi",
+      title: "Menyimpan...",
+      message: "Mohon tunggu, kami sedang menyimpan data",
+      loading: true,
+      autoClose: false,
+      disallowClose: true,
+    });
+
     try {
       await updateAplikasi(id, form);
       showNotification({
@@ -73,8 +89,36 @@ export default function EditAplikasiPage() {
     }
   };
 
-  if (loading) return <Loader size="lg" mt="xl" />;
-  if (!ready) return <></>; // jangan render form dulu
+
+  const handleDelete = async () => {
+    const confirmed = confirm(`Yakin ingin menghapus aplikasi #${appId}?`);
+    if (!confirmed) return;
+
+    try {
+      await deleteAplikasi(appId);
+      showNotification({
+        title: "Dihapus",
+        message: `Aplikasi #${appId} berhasil dihapus`,
+        color: "red",
+      });
+      router.push("/apps");
+    } catch (err) {
+      console.error("Gagal hapus:", err);
+      showNotification({
+        title: "Gagal",
+        message: "Tidak dapat menghapus aplikasi",
+        color: "red",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <Center h="80vh">
+        <Loader />
+      </Center>
+    );
+  }
 
   return (
     <Box>
@@ -109,9 +153,14 @@ export default function EditAplikasiPage() {
           required
           mb="sm"
         />
-        <Button type="submit" mt="md">
-          Simpan Perubahan
-        </Button>
+        <Group mt="md">
+          <Button type="submit" mt="md">
+            Simpan Perubahan
+          </Button>
+          <Button variant="outline" color="red" onClick={handleDelete}>
+            Hapus Aplikasi
+          </Button>
+        </Group>
       </form>
     </Box>
   );

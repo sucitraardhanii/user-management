@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TextInput, Button, Box, Title, Select, Stack } from "@mantine/core";
+import { TextInput, Button, Box, Title, } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { showNotification, updateNotification } from "@mantine/notifications";
 import { IconCheck, IconX} from "@tabler/icons-react";
@@ -75,18 +75,6 @@ export default function CreateAppPage() {
           label="Alamat"
           value={app.address}
           onChange={(e) => setApp({ ...app, address: e.target.value })}
-          required
-          mb="sm"
-        />
-        <Select
-          label="Status"
-          value={app.status}
-          onChange={(value) => setApp({ ...app, status: value })}
-          data={[
-            { value: "1", label: "Aktif" },
-            { value: "0", label: "Tidak Aktif" },
-          ]}
-          placeholder="Pilih Status"
           required
           mb="sm"
         />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Title, Button, Flex } from "@mantine/core";
+import { Title, Button, Flex, Text } from "@mantine/core";
 import Link from "next/link";
 import { IconEdit, IconTrash, IconCheck, IconX } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
@@ -10,7 +10,7 @@ import StatusBadge from "@/components/StatusBadge";
 import { showNotification, updateNotification } from "@mantine/notifications";
 import CreateButton from "@/components/CreateButton";
 import Breadcrumb from "@/components/BreadCrumb";
-import { modals } from '@mantine/modals';
+import { modals } from "@mantine/modals";
 
 export default function AppPage() {
   const [apps, setApps] = useState([]);
@@ -24,55 +24,54 @@ export default function AppPage() {
   }, []);
 
   const handleDelete = (id, name) => {
-  modals.openConfirmModal({
-    title: 'Konfirmasi Hapus',
-    centered: true,
-    size: "sm", // biar seperti notifikasi
-    overlayProps: { blur: 2, opacity: 0.1 },
-    children: (
-      <Text size="sm">
-        Yakin ingin menghapus <b>{name}</b>?
-      </Text>
-    ),
-    labels: { confirm: 'Hapus', cancel: 'Batal' },
-    confirmProps: { color: 'red' },
-    onConfirm: async () => {
-      showNotification({
-        id: "delete-aplikasi",
-        title: "Menghapus...",
-        message: `Sedang menghapus ${name}`,
-        loading: true,
-        autoClose: false,
-        disallowClose: true,
-      });
-
-      try {
-        await deleteAplikasi(id);
-
-        updateNotification({
+    modals.openConfirmModal({
+      title: "Konfirmasi Hapus",
+      centered: true,
+      size: "sm", // biar seperti notifikasi
+      overlayProps: { blur: 2, opacity: 0.1 },
+      children: (
+        <Text size="sm">
+          Yakin ingin menghapus <b>{name}</b>?
+        </Text>
+      ),
+      labels: { confirm: "Hapus", cancel: "Batal" },
+      confirmProps: { color: "red" },
+      onConfirm: async () => {
+        showNotification({
           id: "delete-aplikasi",
-          title: "Berhasil",
-          message: `${name} berhasil dihapus`,
-          color: "teal",
-          icon: <IconCheck size={18} />,
-          autoClose: 3000,
+          title: "Menghapus...",
+          message: `Sedang menghapus ${name}`,
+          loading: true,
+          autoClose: false,
+          disallowClose: true,
         });
 
-        setApps((prev) => prev.filter((app) => app.id !== id));
-      } catch (err) {
-        updateNotification({
-          id: "delete-aplikasi",
-          title: "Gagal",
-          message: `Tidak dapat menghapus ${name}`,
-          color: "red",
-          icon: <IconX size={18} />,
-          autoClose: 3000,
-        });
-      }
-    },
-  });
-};
+        try {
+          await deleteAplikasi(id);
 
+          updateNotification({
+            id: "delete-aplikasi",
+            title: "Berhasil",
+            message: `${name} berhasil dihapus`,
+            color: "teal",
+            icon: <IconCheck size={18} />,
+            autoClose: 3000,
+          });
+
+          setApps((prev) => prev.filter((app) => app.id !== id));
+        } catch (err) {
+          updateNotification({
+            id: "delete-aplikasi",
+            title: "Gagal",
+            message: `Tidak dapat menghapus ${name}`,
+            color: "red",
+            icon: <IconX size={18} />,
+            autoClose: 3000,
+          });
+        }
+      },
+    });
+  };
 
   const columns = useMemo(
     () => [
