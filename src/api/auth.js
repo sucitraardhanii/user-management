@@ -55,7 +55,7 @@ export function isTokenExpired() {
 
 export function saveToken(token) {
   const now = new Date();
-  const expiry = now.getTime() + 60 * 60 * 1000; // 1 jam dari sekarang
+  const expiry = now.getTime() + 60 * 60 * 10000; // 1 jam dari sekarang
   const item = {
     token,
     expiry,
