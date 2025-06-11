@@ -17,6 +17,7 @@ const handleLogout = () => {
   logout();            // hapus token dari localStorage
   router.replace("/login"); // redirect ke halaman login
 };
+
   return (
     <Box
       h={60} //tinggi header 60px
@@ -54,7 +55,7 @@ const handleLogout = () => {
 
           <Menu.Dropdown>
             <Menu.Label>Account</Menu.Label>
-            <Menu.Item icon={<IconUser size={18} />}>My Profile</Menu.Item>
+            <Menu.Item icon={<IconUser size={18} />} onClick={() => router.push("/profile")} >My Profile</Menu.Item>
             <Menu.Item icon={<IconSettings size={18} />}>Settings</Menu.Item>
             <Menu.Divider />
             <Menu.Item color="red" icon={<IconLogout size={18} />} onClick={handleLogout}>
