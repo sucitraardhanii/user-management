@@ -8,14 +8,20 @@ import {
   Box,
   Title,
   Group,
-  Select,
+  Text,
   Loader,
   Center,
+  Select,
 } from "@mantine/core";
 import { useState } from "react";
 import { showNotification, updateNotification } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons-react";
-import { getAplikasiById, updateAplikasi, deleteAplikasi } from "@/api/aplikasi";
+import {
+  getAplikasiById,
+  updateAplikasi,
+  deleteAplikasi,
+} from "@/api/aplikasi";
+import { modals } from "@mantine/modals";
 // useParams : mengambil parameter URL (id) dari route dinamis
 // useState : Hook React untuk membuat state lokal
 // TextInput, Button : komponen dari Mantine
@@ -30,6 +36,7 @@ export default function EditAppPage() {
   const [app, setApp] = useState({
     name: "",
     address: "",
+    status: "",
   });
 
   useEffect(() => {
@@ -44,7 +51,7 @@ export default function EditAppPage() {
     e.preventDefault();
 
     showNotification({
-      id:"update-aplikasi",
+      id: "update-aplikasi",
       title: "Menyimpan...",
       message: "Mohon tunggu, kami sedang menyimpan data",
       loading: true,
@@ -79,27 +86,54 @@ export default function EditAppPage() {
     }
   };
 
+  const handleDelete = (id, name) => {
+    modals.openConfirmModal({
+      title: "Konfirmasi Hapus",
+      centered: true,
+      size: "sm", // biar seperti notifikasi
+      overlayProps: { blur: 2, opacity: 0.1 },
+      children: (
+        <Text size="sm">
+          Yakin ingin menghapus <b>{name}</b>?
+        </Text>
+      ),
+      labels: { confirm: "Hapus", cancel: "Batal" },
+      confirmProps: { color: "red" },
+      onConfirm: async () => {
+        showNotification({
+          id: "delete-aplikasi",
+          title: "Menghapus...",
+          message: `Sedang menghapus ${name}`,
+          loading: true,
+          autoClose: false,
+          disallowClose: true,
+        });
 
-  const handleDelete = async () => {
-    const confirmed = confirm(`Yakin ingin menghapus aplikasi #${appId}?`);
-    if (!confirmed) return;
+        try {
+          await deleteAplikasi(id);
 
-    try {
-      await deleteAplikasi(appId);
-      showNotification({
-        title: "Dihapus",
-        message: `Aplikasi #${appId} berhasil dihapus`,
-        color: "red",
-      });
-      router.push("/apps");
-    } catch (err) {
-      console.error("Gagal hapus:", err);
-      showNotification({
-        title: "Gagal",
-        message: "Tidak dapat menghapus aplikasi",
-        color: "red",
-      });
-    }
+          updateNotification({
+            id: "delete-aplikasi",
+            title: "Berhasil",
+            message: `${name} berhasil dihapus`,
+            color: "teal",
+            icon: <IconCheck size={18} />,
+            autoClose: 3000,
+          });
+
+          router.push("/apps");
+        } catch (err) {
+          updateNotification({
+            id: "delete-aplikasi",
+            title: "Gagal",
+            message: `Tidak dapat menghapus ${name}`,
+            color: "red",
+            icon: <IconX size={18} />,
+            autoClose: 3000,
+          });
+        }
+      },
+    });
   };
 
   if (loading) {
@@ -130,11 +164,24 @@ export default function EditAppPage() {
           required
           mb="sm"
         />
+        <Select
+          label="Status"
+          value={app.status}
+          onChange={(value) => setApp({ ...app, status: value })}
+          data={["Aktif","Tidak Aktif"]}
+          placeholder="Pilih Status"
+          required
+          mb="sm"
+        />
         <Group mt="md">
           <Button type="submit" mt="md">
             Simpan Perubahan
           </Button>
-          <Button variant="outline" color="red" onClick={handleDelete}>
+          <Button
+            variant="outline"
+            color="red"
+            onClick={() => handleDelete(appId, app.name)}
+          >
             Hapus Aplikasi
           </Button>
         </Group>
