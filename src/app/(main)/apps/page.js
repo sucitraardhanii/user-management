@@ -98,7 +98,6 @@ export default function AppPage() {
           <Flex gap="xs" wrap="nowrap">
             <Button
               size="xs"
-              compact
               variant="light"
               color="blue"
               component={Link}
@@ -125,12 +124,12 @@ export default function AppPage() {
 
   return (
     <>
-      <Breadcrumb />
+    
       <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>Daftar Aplikasi</Title>
         <CreateButton entity="apps" />
       </Flex>
-
+      <Breadcrumb />
       <GenericTable
         data={apps}
         columns={columns}

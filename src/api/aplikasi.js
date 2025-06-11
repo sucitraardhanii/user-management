@@ -67,27 +67,22 @@ export const createAplikasi = async (data) => {
 // Ambil aplikasi berdasarkan ID
 export const getAplikasiById = async (id) => {
   const token = getToken();
-  const res = await fetch(`${BASE_URL}/aplikasi/${id}`, {
+  const res = await fetch(`${BASE_URL}/getaplikasi/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
   if (!res.ok) throw new Error("Gagal mengambil data aplikasi");
-  const item = await res.json();
+  const json = await res.json();
+  return json?.data?.[0];
 
-  return {
-    id: item.idaplikasi,
-    name: item.nama,
-    address: item.alamat,
-    status: item.status,
-  };
 };
 
 // Update aplikasi
 export const updateAplikasi = async (id, data) => {
   const token = getToken();
-  const res = await fetch(`${BASE_URL}/aplikasi/${id}`, {
+  const res = await fetch(`${BASE_URL}/updateaplikasi/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

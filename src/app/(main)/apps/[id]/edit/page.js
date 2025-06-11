@@ -1,57 +1,64 @@
-"use client"; // ini penting digunakan untuk App Route di Next.js
+"use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  TextInput,
-  Button,
   Box,
   Title,
   Group,
-  Text,
+  Select,
   Loader,
   Center,
-  Select,
 } from "@mantine/core";
 import { useState } from "react";
 import { showNotification, updateNotification } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons-react";
-import {
-  getAplikasiById,
-  updateAplikasi,
-  deleteAplikasi,
-} from "@/api/aplikasi";
-import { modals } from "@mantine/modals";
+import { getAplikasiById, updateAplikasi, deleteAplikasi } from "@/api/aplikasi";
 // useParams : mengambil parameter URL (id) dari route dinamis
 // useState : Hook React untuk membuat state lokal
 // TextInput, Button : komponen dari Mantine
 // Box, Title : komponen UI seperti <div> dan <h2> bawaan dari Mantine
 
-export default function EditAppPage() {
-  const { id } = useParams(); // ini untuk mengambil parameter id
+export default function EditAplikasiPage() {
+  const { id } = useParams();
   const router = useRouter();
-  const appId = Number(id);
+
+  const [form, setForm] = useState({ nama: "", alamat: "", status: "" });
   const [loading, setLoading] = useState(true);
 
   const [app, setApp] = useState({
     name: "",
     address: "",
-    status: "",
   });
 
   useEffect(() => {
-    if (!id) return;
-    getAplikasiById(appId)
-      .then(setApp)
-      .catch((err) => console.error("Gagal ambil data:", err))
-      .finally(() => setLoading(false));
-  }, [appId]);
+    async function fetchData() {
+      try {
+        const data = await getAplikasiById(id);
+        console.log("data api", data); // debug
+
+        if (data) {
+          setForm({
+            nama: data.nama ?? "",
+            alamat: data.alamat ?? "",
+            status: data.status?.toString() ?? "",
+          });
+          setReady(true); // ✅ hanya tampil setelah data masuk
+        }
+      } catch (err) {
+        console.error("Gagal ambil data:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     showNotification({
-      id: "update-aplikasi",
+      id:"update-aplikasi",
       title: "Menyimpan...",
       message: "Mohon tunggu, kami sedang menyimpan data",
       loading: true,
@@ -60,12 +67,10 @@ export default function EditAppPage() {
     });
 
     try {
-      await updateAplikasi(appId, app);
-
-      updateNotification({
-        id: "update-aplikasi",
+      await updateAplikasi(id, form);
+      showNotification({
         title: "Berhasil",
-        message: "Data Aplikasi Berhasil Diperbaharui",
+        message: "Aplikasi berhasil diperbarui",
         color: "teal",
         icon: <IconCheck size={18} />,
         autoClose: 3000,
@@ -73,12 +78,10 @@ export default function EditAppPage() {
 
       router.push("/apps");
     } catch (err) {
-      console.error("Gagal Update:", err);
-
-      updateNotification({
-        id: "update-aplikasi",
+      console.error("Update gagal:", err);
+      showNotification({
         title: "Gagal",
-        message: "Data Aplikasi Gagal Diperbaharui",
+        message: "Gagal update aplikasi",
         color: "red",
         icon: <IconX size={18} />,
         autoClose: 3000,
@@ -86,54 +89,27 @@ export default function EditAppPage() {
     }
   };
 
-  const handleDelete = (id, name) => {
-    modals.openConfirmModal({
-      title: "Konfirmasi Hapus",
-      centered: true,
-      size: "sm", // biar seperti notifikasi
-      overlayProps: { blur: 2, opacity: 0.1 },
-      children: (
-        <Text size="sm">
-          Yakin ingin menghapus <b>{name}</b>?
-        </Text>
-      ),
-      labels: { confirm: "Hapus", cancel: "Batal" },
-      confirmProps: { color: "red" },
-      onConfirm: async () => {
-        showNotification({
-          id: "delete-aplikasi",
-          title: "Menghapus...",
-          message: `Sedang menghapus ${name}`,
-          loading: true,
-          autoClose: false,
-          disallowClose: true,
-        });
 
-        try {
-          await deleteAplikasi(id);
+  const handleDelete = async () => {
+    const confirmed = confirm(`Yakin ingin menghapus aplikasi #${appId}?`);
+    if (!confirmed) return;
 
-          updateNotification({
-            id: "delete-aplikasi",
-            title: "Berhasil",
-            message: `${name} berhasil dihapus`,
-            color: "teal",
-            icon: <IconCheck size={18} />,
-            autoClose: 3000,
-          });
-
-          router.push("/apps");
-        } catch (err) {
-          updateNotification({
-            id: "delete-aplikasi",
-            title: "Gagal",
-            message: `Tidak dapat menghapus ${name}`,
-            color: "red",
-            icon: <IconX size={18} />,
-            autoClose: 3000,
-          });
-        }
-      },
-    });
+    try {
+      await deleteAplikasi(appId);
+      showNotification({
+        title: "Dihapus",
+        message: `Aplikasi #${appId} berhasil dihapus`,
+        color: "red",
+      });
+      router.push("/apps");
+    } catch (err) {
+      console.error("Gagal hapus:", err);
+      showNotification({
+        title: "Gagal",
+        message: "Tidak dapat menghapus aplikasi",
+        color: "red",
+      });
+    }
   };
 
   if (loading) {
@@ -145,31 +121,35 @@ export default function EditAppPage() {
   }
 
   return (
-    <Box maw={500} mx="auto">
-      <Title order={2} mb="lg" ta="center">
-        Edit Aplikasi #{appId}
+    <Box>
+      <Title order={2} mb="md">
+        Edit Aplikasi
       </Title>
+      <Breadcrumb />
       <form onSubmit={handleSubmit}>
         <TextInput
           label="Nama"
-          value={app.name}
-          onChange={(e) => setApp({ ...app, name: e.target.value })}
+          value={form.nama}
+          onChange={(e) => setForm({ ...form, nama: e.target.value })}
           required
           mb="sm"
         />
         <TextInput
           label="Alamat"
-          value={app.address}
-          onChange={(e) => setApp({ ...app, address: e.target.value })}
+          value={form.alamat}
+          onChange={(e) => setForm({ ...form, alamat: e.target.value })}
           required
           mb="sm"
         />
         <Select
           label="Status"
-          value={app.status}
-          onChange={(value) => setApp({ ...app, status: value })}
-          data={["Aktif","Tidak Aktif"]}
-          placeholder="Pilih Status"
+          value={form.status}
+          onChange={(val) => setForm({ ...form, status: val })}
+          data={[
+            { value: "1", label: "Aktif" },
+            { value: "0", label: "Tidak Aktif" },
+          ]}
+          placeholder="Pilih status"
           required
           mb="sm"
         />
@@ -177,11 +157,7 @@ export default function EditAppPage() {
           <Button type="submit" mt="md">
             Simpan Perubahan
           </Button>
-          <Button
-            variant="outline"
-            color="red"
-            onClick={() => handleDelete(appId, app.name)}
-          >
+          <Button variant="outline" color="red" onClick={handleDelete}>
             Hapus Aplikasi
           </Button>
         </Group>

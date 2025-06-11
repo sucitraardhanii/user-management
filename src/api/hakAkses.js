@@ -66,3 +66,27 @@ export const deleteHakAkses = async (idaplikasi) => {
   if (!res.ok) throw new Error("Gagal hapus user akses");
   return res.json();
 };
+
+// api/hakAkses.js
+export async function getHakAksesByApp(idApp) {
+  const token = getToken();
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getHakAksesByApp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+       Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ idApp }),
+  });
+  return res.json();
+}
+
+export async function getHakAksesAll() {
+  const token = getToken();
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getlisthakakses/eKMPDrN2zHPAs_-Bh53Y_w%3D%3D`, {
+    headers: {
+       Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.json();
+}

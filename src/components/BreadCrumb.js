@@ -6,7 +6,7 @@ import { Card, Flex, Text } from "@mantine/core";
 import { IconChevronRight } from "@tabler/icons-react";
 
 export default function Breadcrumb() {
-  const pathname = usePathname(); // contoh: /hak-user/edit
+  const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
   const paths = segments.map((_, i) => "/" + segments.slice(0, i + 1).join("/"));
 
@@ -15,18 +15,17 @@ export default function Breadcrumb() {
       <Flex align="center" gap="xs" wrap="wrap">
         {segments.map((segment, i) => (
           <Flex key={i} align="center" gap={4}>
-            <Link href={paths[i]}>
+            <Link href={paths[i]} style={{ textDecoration: "none" }}>
               <Text
                 size="sm"
                 fw={500}
-                style={{ color: "#228be6", textTransform: "capitalize" }}
+                color="blue"
+                style={{ textTransform: "capitalize" }}
               >
-                {segment.replace(/-/g, " ")} {/* agar hak-user jadi hak user */}
+                {segment.replace(/-/g, " ")}
               </Text>
             </Link>
-            {i < segments.length - 1 && (
-              <IconChevronRight size={14} stroke={1.5} />
-            )}
+            {i < segments.length - 1 && <IconChevronRight size={14} stroke={1.5} />}
           </Flex>
         ))}
       </Flex>
