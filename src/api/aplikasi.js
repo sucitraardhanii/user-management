@@ -38,7 +38,7 @@ export const deleteAplikasi = async (idaplikasi) => {
     body: JSON.stringify({ idaplikasi: String(idaplikasi) }),
   });
 
-  if (!res.ok) throw new Error("Gagal hapus user akses");
+  if (!res.ok) throw new Error("Gagal hapus aplikasi");
   return res.json();
 };
 

@@ -57,7 +57,9 @@ export default function EditAplikasiPage() {
         message: "Aplikasi berhasil diperbarui",
         color: "teal",
         icon: <IconCheck size={18} />,
+        autoClose: 3000,
       });
+
       router.push("/apps");
     } catch (err) {
       console.error("Update gagal:", err);
@@ -65,6 +67,8 @@ export default function EditAplikasiPage() {
         title: "Gagal",
         message: "Gagal update aplikasi",
         color: "red",
+        icon: <IconX size={18} />,
+        autoClose: 3000,
       });
     }
   };

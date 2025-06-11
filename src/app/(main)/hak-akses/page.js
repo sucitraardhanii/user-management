@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { Button, Paper, Stack, Select, Flex, Text } from "@mantine/core";
 import GenericTable from "@/components/GenericTable";
-import { getHakAksesAll, getHakAksesByApp } from "@/api/hakAkses";
+import { deleteHakAkses, fetchHakAkses } from "@/api/hakAkses";
+import StatusBadge from "@/components/StatusBadge";
+import Breadcrumb from "@/components/BreadCrumb";
+import CreateButton from "@/components/CreateButton"; 
+
 
 export default function HakAksesPage() {
   const [idApp, setIdApp] = useState("");
