@@ -1,40 +1,27 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
-import {
-  Stepper,
-  Button,
-  Group,
-  TextInput,
-  PasswordInput,
-  Code,
+import { Stepper, Button, Group, TextInput, PasswordInput, Code,
   Card,
   Title,
   Select,
+  Autocomplete, Loader 
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { useDebouncedValue } from '@mantine/hooks';
 import Breadcrumb from "@/components/BreadCrumb";
-import { fetchJabatan } from "@/api/menu";
-
+import { fetchJabatan, searchKantor, fetchAllKantor } from "@/api/menu";
 
 export default function RegistrasiUser() {
   const [active, setActive] = useState(0);
-  const [data, setData] = useState([]);
+  const [jabatanOptions, setJabatanOptions] = useState([]);
+  const [kantorOptions, setKantorOptions] = useState([]);
+  const [allKantorCache, setAllKantorCache] = useState([]);
+  const [kantorInput, setKantorInput] = useState("");
+  const [debounced] = useDebouncedValue(kantorInput, 300);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-  const getData = async () => {
-    try {
-      const result = await fetchJabatan();
-      setData(result);
-    } catch (err) {
-      console.error("Gagal ambil data jabatan:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-  getData();
-}, []);
+  const [loadingKantor, setLoadingKantor] = useState(false);
 
   const form = useForm({
     mode: 'uncontrolled',
@@ -66,6 +53,60 @@ export default function RegistrasiUser() {
       return {};
     },
   });
+  
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [jabatan, semuaKantor] = await Promise.all([
+          fetchJabatan(),
+          fetchAllKantor()
+        ]);
+        setJabatanOptions(jabatan);
+        setAllKantorCache(semuaKantor);
+      } catch (err) {
+        console.error("Gagal ambil jabatan/kantor:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const uniqueByValue = (arr) => {
+  const seen = new Set();
+  return arr.filter((item) => {
+    if (seen.has(item.value)) return false;
+    seen.add(item.value);
+    return true;
+  });
+};
+
+useEffect(() => {
+  const doSearch = async () => {
+    if (!debounced) return;
+
+    if (/^\\d+$/.test(debounced)) {
+      setLoadingKantor(true);
+      try {
+        const result = await searchKantor(debounced);
+        setKantorOptions(uniqueByValue(result));
+      } catch (err) {
+        console.error("Gagal search kantor:", err);
+      } finally {
+        setLoadingKantor(false);
+      }
+    } else {
+      const filtered = allKantorCache.filter((item) =>
+        item.label.toLowerCase().includes(debounced.toLowerCase())
+      );
+      setKantorOptions(uniqueByValue(filtered));
+    }
+  };
+
+  doSearch();
+}, [debounced]);
 
   const nextStep = () =>
     setActive((current) => {
@@ -107,11 +148,10 @@ export default function RegistrasiUser() {
               required
             />
 
-            {/* Select Jabatan */}
             <Select
               label="Pilih Jabatan"
               placeholder={loading ? "Loading..." : "Pilih jabatan"}
-              data={data}
+              data={jabatanOptions}
               key={form.key('codeJabatan')}
               {...form.getInputProps('codeJabatan')}
               searchable
@@ -121,7 +161,23 @@ export default function RegistrasiUser() {
               mt="md"
             />
 
-            {/* Status Pegawai */}
+            <Autocomplete
+            label="Pilih Kantor"
+            placeholder="Ketik NOPEND atau Nama Kantor"
+            data={kantorOptions.map((opt) => opt.label)}
+            value={kantorInput}
+            onChange={(val) => {
+                setKantorInput(val);
+                const selected = kantorOptions.find((opt) => opt.label === val);
+                form.setFieldValue("kantor", selected?.value || "");
+            }}
+            rightSection={loading ? <Loader size="xs" /> : null}
+            clearable
+            disabled={loading}
+            required
+            mt="md"
+            />
+
             <Select
               label="Status Pegawai"
               data={[
@@ -135,7 +191,6 @@ export default function RegistrasiUser() {
               mt="md"
             />
 
-            {/* Status Akun */}
             <Select
               label="Status Akun"
               data={[
@@ -175,16 +230,14 @@ export default function RegistrasiUser() {
             />
           </Stepper.Step>
 
-          <Stepper.Step label="Final step" description="Social media">
-            <TextInput label="Website" placeholder="Website" />
-            <TextInput mt="md" label="GitHub" placeholder="GitHub" />
-          </Stepper.Step>
-
-          <Stepper.Completed>
-            Completed! Form values:
+          <Stepper.Step label="Final step" description="Selesai">
             <Code block mt="xl">
               {JSON.stringify(form.getValues(), null, 2)}
             </Code>
+          </Stepper.Step>
+
+          <Stepper.Completed>
+            Registrasi selesai!
           </Stepper.Completed>
         </Stepper>
 
