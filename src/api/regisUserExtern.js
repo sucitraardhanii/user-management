@@ -5,12 +5,16 @@ const token = getToken();
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const ENCRYPT_KEY = "$RAI^bYJey2jhDzv+V9FcsUnV";
 
+const headers = {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${getToken()}`,
+};
+
+
 // GET semua aplikasi
 export async function fetchAplikasi() {
   const res = await fetch(`${BASE_URL}/getaplikasi/all`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
   });
 
   if (!res.ok) throw new Error("Gagal ambil aplikasi");
@@ -26,10 +30,7 @@ export async function fetchAplikasi() {
 export async function encryptId(id) {
   const res = await fetch(`${BASE_URL}/encId`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({
       data: id, // langsung string ID
       key: ENCRYPT_KEY,
@@ -46,10 +47,7 @@ export async function encryptId(id) {
 export async function fetchHakAkses(encryptedId) {
   const res = await fetch(`${BASE_URL}/getHakAksesByApp`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({
       idApp: encryptedId,
     }),
@@ -62,5 +60,48 @@ export async function fetchHakAkses(encryptedId) {
   return data.map((item) => ({
     label: item.namaakses,
     value: item.idhakakses.toString(),
+  }));
+}
+
+export async function createUser(data) {
+  const res = await fetch(`${BASE_URL}/userExt`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) throw new Error("Gagal membuat user");
+
+  return res.json();
+}
+
+
+export async function createUserAkses(data) {
+  const res = await fetch(`${BASE_URL}/userAkses`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) throw new Error("Gagal membuat user akses");
+
+  return res.json();
+}
+
+//Get All Organisasi
+export async function fetchExternalOrg() {
+  const res = await fetch(`${BASE_URL}/getExternalOrgAll`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ statusActive: "all" }),
+  });
+
+   const { data } = await res.json();
+  return data.map((org) => ({
+    label: org.nameOrganization,
+    value: org.id_external_org,
   }));
 }
