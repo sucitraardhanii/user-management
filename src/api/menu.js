@@ -1,7 +1,8 @@
 import { getToken } from "./auth";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const token = getToken();
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function fetchJabatan() {
   const res = await fetch(`${BASE_URL}/getJabatan`, {
