@@ -2,6 +2,42 @@
 
 const TOKEN_KEY = "auth_token";
 
+export const login = async ({ nippos, password }) => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const appId = process.env.NEXT_PUBLIC_APP_ID;
+  //export const login = async ({ nippos, password }) => {
+ // export const login = async ({}) => {
+  // const nippos = process.env.NEXT_PUBLIC_NIPPOS;
+  // const password = process.env.NEXT_PUBLIC_PASSWORD;
+
+  const res = await fetch(`${apiUrl}/authMob`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      nippos,
+      password,
+      idAplikasi: appId,
+    }),
+  });
+
+  const contentType = res.headers.get("content-type");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!contentType?.includes("application/json")) {
+    const html = await res.text();
+    console.error("Response bukan JSON:", html);
+    throw new Error("Server mengirim data bukan JSON");
+  }
+
+  const data = await res.json();
+  if (!data.token) throw new Error("Token tidak ditemukan");
+
+  saveToken(data.token);
+  return data.token;
+};
+
+
 export function isTokenExpired() {
   if (typeof window === "undefined") return true;
 
@@ -19,7 +55,7 @@ export function isTokenExpired() {
 
 export function saveToken(token) {
   const now = new Date();
-  const expiry = now.getTime() + 60 * 60 * 1000; // 1 jam dari sekarang
+  const expiry = now.getTime() + 60 * 60 * 10000; // 1 jam dari sekarang
   const item = {
     token,
     expiry,

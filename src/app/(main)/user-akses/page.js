@@ -51,7 +51,6 @@ export default function UserAksesPage() {
           <Flex gap="xs" wrap="nowrap">
             <Button
               size="xs"
-              compact
               variant="light"
               color="blue"
               component={Link}

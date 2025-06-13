@@ -70,7 +70,7 @@ export const deleteHakAkses = async (idaplikasi) => {
 // api/hakAkses.js
 export async function getHakAksesByApp(idApp) {
   const token = getToken();
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getHakAksesByApp`, {
+  const res = await fetch(`${BASE_URL}/getHakAksesByApp`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -83,7 +83,7 @@ export async function getHakAksesByApp(idApp) {
 
 export async function getHakAksesAll() {
   const token = getToken();
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getlisthakakses/eKMPDrN2zHPAs_-Bh53Y_w%3D%3D`, {
+  const res = await fetch(`${BASE_URL}/getlisthakakses/all`, {
     headers: {
        Authorization: `Bearer ${token}`,
     },
