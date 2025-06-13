@@ -1,20 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import {
+  Box,
+  Title,
+  Text,
+  Flex,
+  Stack,
+  Image,
   TextInput,
   PasswordInput,
   Button,
-  Box,
-  Title,
-  Card,
-  Group,
-  Checkbox,
-  Anchor,
-  Flex,
+  Paper,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { login, getToken } from "@/api/auth";
+import { showNotification } from "@mantine/notifications";
+import { IconUser, IconLock } from "@tabler/icons-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,37 +26,104 @@ export default function LoginPage() {
 
   useEffect(() => {
     const token = getToken();
-    if (token) {
-      router.replace("/dashboard");
-    }
+    if (token) router.replace("/dashboard");
   }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
+
     try {
-      await login({ nippos: username, password });
+      const res = await fetch(`${apiUrl}/authMob`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nippos: username,
+          password: password,
+          idAplikasi: appId,
+        }),
+      });
+
+      const contentType = res.headers.get("content-type");
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!contentType?.includes("application/json")) {
+        const html = await res.text();
+        console.error("Response bukan JSON:", html);
+        throw new Error("Server mengirim data bukan JSON");
+      }
+
+      const data = await res.json();
+      if (!data.token) throw new Error("Token tidak ditemukan");
+
+      saveToken(data.token);
       router.push("/dashboard");
     } catch (err) {
-      alert("Login gagal: " + err.message);
-      console.error("LOGIN ERROR:", err);
+      showNotification({
+        title: "Login Gagal",
+        message: err.message,
+        color: "red",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Flex h="100vh" justify="center" align="center" p="lg">
-      <Box>
-        <Title order={1} mb="md" align="center">
-          Login
-        </Title>
-        <Card withBorder shadow="md" p={30} mt={30} radius="md">
+    <Flex
+      justify="center"
+      align="center"
+      h="100vh"
+      bg="#F7F7F7"
+    >
+      <Paper
+        radius="lg"
+        shadow="xl"
+        style={{
+          width: 800,
+          height: 460,
+          overflow: "hidden",
+          display: "flex",
+        }}
+      >
+        {/* LEFT SIDE */}
+        <Box
+          w="50%"
+          h="100%"
+          sx={{ backgroundColor: "#f5f5f5" }}
+          p="lg"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            src="/img/login-ilustrasi.png"
+            alt="Login Illustration"
+            width={220}
+            fit="contain"
+          />
+        </Box>
+
+        {/* RIGHT SIDE */}
+        <Box
+          w="50%"
+          p="xl"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <form onSubmit={handleLogin}>
             <TextInput
               label="Email atau Nippos"
               placeholder="Masukkan email atau nippos"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              
+              required
               mb="sm"
             />
             <PasswordInput
@@ -62,7 +131,7 @@ export default function LoginPage() {
               placeholder="Masukkan password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              
+              required
               mb="sm"
             />
             <Group mt="md" justify="space-between">
@@ -71,12 +140,12 @@ export default function LoginPage() {
                 Lupa Password?
               </Anchor>
             </Group>
-            <Button type="submit" color="#261FB3" fullWidth mt="xl" loading={loading}>
+            <Button type="submit" color="#261FB3" fullWidth mt="xl">
               Login
             </Button>
           </form>
-        </Card>
-      </Box>
+        </Box>
+      </Paper>
     </Flex>
   );
 }

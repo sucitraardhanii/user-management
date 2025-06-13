@@ -7,7 +7,6 @@ import { showNotification, updateNotification } from "@mantine/notifications";
 import { IconCheck, IconX} from "@tabler/icons-react";
 import { createAplikasi } from "@/api/aplikasi";
 import Breadcrumb from "@/components/BreadCrumb";
-import Breadcrumb from "@/components/BreadCrumb";
 
 export default function CreateAppPage() {
   const router = useRouter();

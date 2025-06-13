@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Title, Text, Card, Stack, Center, Loader } from "@mantine/core";
+import { IconUser } from "@tabler/icons-react";
 import { getToken } from "@/api/auth";
 
 export default function ProfilePage() {
