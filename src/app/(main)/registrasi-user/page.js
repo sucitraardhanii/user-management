@@ -14,15 +14,20 @@ import {
   Autocomplete,
   SimpleGrid,
   Loader,
+  Grid,
+  Text
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDebouncedValue } from '@mantine/hooks';
 import Breadcrumb from "@/components/BreadCrumb";
 import { fetchJabatan, searchKantor, fetchAllKantor } from "@/api/menu";
-import { fetchAplikasi, encryptId, fetchHakAkses,fetchExternalOrg } from "@/api/regisUserExtern";
+import { fetchAplikasi, encryptId, fetchHakAkses,fetchExternalOrg, createUser,createUserAkses, activeUser, validasiUser } from "@/api/regisUserExtern";
 import { showNotification } from "@mantine/notifications";
+import { IconCheck } from '@tabler/icons-react';
+import { useRouter } from "next/navigation";
 
 export default function RegistrasiUser() {
+  const router = useRouter();
   const [active, setActive] = useState(0);
   const [jabatanOptions, setJabatanOptions] = useState([]);
   const [kantorOptions, setKantorOptions] = useState([]);
@@ -48,7 +53,7 @@ export default function RegistrasiUser() {
       password: '',
       idaplikasi: '',
       idhakakses: '',
-      id_external_org:'',
+      encryptId:'',
     },
     validate: (values) => {
       if (active === 0) {
@@ -162,7 +167,7 @@ export default function RegistrasiUser() {
   // Create Data
   const handleSubmit = async () => {
     const values = form.getValues();
-
+   const encryptedId = await encryptId(form.getValues().idaplikasi);
     const payloadUser = {
       nippos: values.nippos,
       email: values.email,
@@ -170,9 +175,17 @@ export default function RegistrasiUser() {
       codeJabatan: values.codeJabatan,
       kantor: values.kantor,
       statuspegawai: 4, //registrasi-user external
-      statusakun: values.statusakun,
+      statusakun: 1,
       password: values.password,
+      id_external_org: values.externalOrg,
     };
+    const payloadValidasi={
+      nippos: values.nippos,
+      statusakun: 1,
+    };
+    // const payloadActive = {
+    //   nippos: values.nippos,
+    // };
 
     const payloadAkses = {
       nippos: values.nippos,
@@ -182,13 +195,21 @@ export default function RegistrasiUser() {
 
     try {
       await createUser(payloadUser);
+      await validasiUser(payloadValidasi);
+      // await activeUser(payloadActive);
       await createUserAkses(payloadAkses);
 
       showNotification({
-        title: "Berhasil",
-        message: "User dan akses berhasil dibuat!",
-        color: "green",
+        title: 'User berhasil dibuat',
+        message:(<>
+          <div><strong>📩Email:</strong> {values.email}</div>
+          <div><strong>🔐Encrypted ID:</strong> {encryptedId}</div>
+        </>),
+        icon: <IconCheck size={20} />,
+        color: 'teal',
+        autoClose: false, // biar user bisa salin
       });
+      router.push("/user");
     } catch (err) {
       console.error(err);
       showNotification({
@@ -264,15 +285,6 @@ export default function RegistrasiUser() {
               disabled={loading}
               required
             />
-            <Select
-              label="Status Akun"
-              data={[{ value: "1", label: "Aktif" }, { value: "0", label: "Tidak Aktif" }]}
-              {...form.getInputProps('statusakun')}
-              placeholder="Pilih status akun"
-              required
-              
-            />
-            
             </SimpleGrid>
           </Stepper.Step>
 
@@ -303,16 +315,30 @@ export default function RegistrasiUser() {
             />
           </Stepper.Step>
 
-          <Stepper.Step label="Step 3" description="Selesai">
+          <Stepper.Step label="Step 3" description="Review Json">
             <Code block mt="xl">
               {JSON.stringify(form.getValues(), null, 2)}
             </Code>
           </Stepper.Step>
 
           <Stepper.Step label="Step 4" description="Selesai">
-            <Code block mt="xl">
-              {JSON.stringify(form.getValues(), null, 2)}
-            </Code>
+            <Grid>
+            <Grid.Col span={6}>
+              <Text><strong>Nippos:</strong> {form.values.nippos}</Text>
+              <Text><strong>Email:</strong> {form.values.email}</Text>
+              <Text><strong>Nama:</strong> {form.values.nama}</Text>
+              <Text><strong>Jabatan:</strong> {form.values.codeJabatan}</Text>
+              <Text><strong>Aplikasi:</strong> {form.values.idaplikasi}</Text>
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <Text><strong>Kantor:</strong> {form.values.kantor}</Text>
+              <Text><strong>Status Pegawai:</strong> External </Text>
+              <Text><strong>Status Akun:</strong> {form.values.statusakun}</Text>
+              <Text><strong>Hak Akses:</strong> {form.values.idhakakses}</Text>
+              <Text><strong>Password:</strong> {form.values.password}</Text>
+            </Grid.Col>
+          </Grid>
+         
           </Stepper.Step>
 
           <Stepper.Completed>Registrasi selesai!</Stepper.Completed>
@@ -321,6 +347,12 @@ export default function RegistrasiUser() {
         <Group justify="flex-end" mt="xl">
           {active !== 0 && <Button variant="default" onClick={prevStep}>Back</Button>}
           {active !== 3 && <Button onClick={nextStep}>Next step</Button>}
+          {active == 3 && <Button onClick={async () => {
+            const confirm = window.confirm("Apakah kamu yakin ingin menyimpan data?");
+            if (confirm) {
+              await handleSubmit();
+            }
+          }} color="teal">Submit</Button>}
         </Group>
       </Card>
     </>

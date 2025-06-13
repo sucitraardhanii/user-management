@@ -75,6 +75,30 @@ export async function createUser(data) {
   return res.json();
 }
 
+export async function validasiUser(data) {
+  const res = await fetch(`${BASE_URL}/validasiUser`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) throw new Error("Gagal validasi User");
+
+  return res.json();
+}
+
+export async function activeUser(data) {
+  const res = await fetch(`${BASE_URL}/activeUser`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) throw new Error("Gagal Check User");
+
+  return res.json();
+}
+
 
 export async function createUserAkses(data) {
   const res = await fetch(`${BASE_URL}/userAkses`, {
