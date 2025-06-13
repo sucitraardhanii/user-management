@@ -14,7 +14,7 @@ import {
   Paper,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
-import { login, getToken } from "@/api/auth";
+import { saveToken, getToken } from "@/api/auth";
 import { showNotification } from "@mantine/notifications";
 import { IconUser, IconLock } from "@tabler/icons-react";
 
@@ -24,6 +24,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const appId = process.env.NEXT_PUBLIC_APP_ID;
+
   useEffect(() => {
     const token = getToken();
     if (token) router.replace("/dashboard");
@@ -31,26 +34,18 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+    setLoading(true);
     try {
       const res = await fetch(`${apiUrl}/authMob`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nippos: username,
-          password: password,
-          idAplikasi: appId,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nippos: username, password, idAplikasi: appId }),
       });
 
       const contentType = res.headers.get("content-type");
-
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       if (!contentType?.includes("application/json")) {
         const html = await res.text();
-        console.error("Response bukan JSON:", html);
         throw new Error("Server mengirim data bukan JSON");
       }
 
@@ -58,6 +53,11 @@ export default function LoginPage() {
       if (!data.token) throw new Error("Token tidak ditemukan");
 
       saveToken(data.token);
+      showNotification({
+        title: "Berhasil Login",
+        message: "Selamat Datang",
+        color: "green",
+      });
       router.push("/dashboard");
     } catch (err) {
       showNotification({
@@ -118,31 +118,37 @@ export default function LoginPage() {
           }}
         >
           <form onSubmit={handleLogin}>
-            <TextInput
-              label="Email atau Nippos"
-              placeholder="Masukkan email atau nippos"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              mb="sm"
-            />
-            <PasswordInput
-              label="Password"
-              placeholder="Masukkan password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              mb="sm"
-            />
-            <Group mt="md" justify="space-between">
-              <Checkbox label="Remember me" />
-              <Anchor size="sm" href="#">
-                Lupa Password?
-              </Anchor>
-            </Group>
-            <Button type="submit" color="#261FB3" fullWidth mt="xl">
-              Login
-            </Button>
+            <Stack justify="center" h="100%" gap="md">
+              <div>
+                <Title order={2} mb={2}>
+                  User Management
+                </Title>
+                <Text size="sm" c="dimmed">
+                  Login 
+                </Text>
+              </div>
+
+              <TextInput
+                icon={<IconUser size={16} />}
+                placeholder="Email / Nippos"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={loading}
+                required
+              />
+              <PasswordInput
+                icon={<IconLock size={16} />}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                required
+              />
+
+              <Button type="submit" fullWidth loading={loading} radius="xs" color="#0118D8">
+                {loading ? "Logging in..." : "Login"}
+              </Button>
+            </Stack>
           </form>
         </Box>
       </Paper>
