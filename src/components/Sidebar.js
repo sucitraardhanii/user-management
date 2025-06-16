@@ -24,6 +24,8 @@ export default function Sidebar() {
 
   const links = [
     { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Aplikasi', href: '/apps' },
+    { label: 'Hak Akses', href: '/hak-akses' },
     {
       label: 'Menu',
       children: [
@@ -33,22 +35,14 @@ export default function Sidebar() {
       ],
     },
     {
-      label: 'Registrasi',
-      children: [
-        { label: 'Registrasi User Baru', href: '/registrasi-user' },
-        { label: 'Registrasi Aplikasi Baru', href: '/users/external' },
-      ],
-    },
-    {
       label: 'User',
+      href:'/user',
       children: [
-        { label: 'User Internal', href: '/users/internal' },
-        { label: 'User Eksternal', href: '/users/external' },
+        { label: 'User Internal', href: '/user/internal' },
+        { label: 'User Eksternal', href: '/user/external' },
       ],
     },
     { label: 'User Akses', href: '/user-akses' },
-    { label: 'Aplikasi', href: '/apps' },
-    { label: 'Hak Akses', href: '/hak-akses' },
   ];
 
   useEffect(() => {
