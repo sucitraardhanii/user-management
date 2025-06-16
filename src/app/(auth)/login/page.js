@@ -14,14 +14,15 @@ import {
   Paper,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
-import { saveToken, getToken } from "@/api/auth";
 import { showNotification } from "@mantine/notifications";
 import { IconUser, IconLock } from "@tabler/icons-react";
+import { login, getToken } from "@/api/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [idaplikasi, setIdAplikasi] = useState("");
   const [loading, setLoading] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -36,23 +37,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/authMob`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nippos: username, password, idAplikasi: appId }),
-      });
-
-      const contentType = res.headers.get("content-type");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      if (!contentType?.includes("application/json")) {
-        const html = await res.text();
-        throw new Error("Server mengirim data bukan JSON");
-      }
-
-      const data = await res.json();
-      if (!data.token) throw new Error("Token tidak ditemukan");
-
-      saveToken(data.token);
+      await login({ nippos: username, password, idaplikasi});
       showNotification({
         title: "Berhasil Login",
         message: "Selamat Datang",
@@ -60,12 +45,14 @@ export default function LoginPage() {
       });
       router.push("/dashboard");
     } catch (err) {
+      alert("Login gagal: " + err.message);
+      console.error("LOGIN ERROR:", err);
       showNotification({
         title: "Login Gagal",
         message: err.message,
         color: "red",
       });
-    } finally {
+    }finally {
       setLoading(false);
     }
   };
@@ -144,7 +131,15 @@ export default function LoginPage() {
                 disabled={loading}
                 required
               />
-
+              <TextInput
+                icon={<IconUser size={16} />}
+                placeholder="ID Aplikasi"
+                value={idaplikasi}
+                onChange={(e) => setIdAplikasi(e.target.value)}
+                disabled={loading}
+                required
+              />
+              
               <Button type="submit" fullWidth loading={loading} radius="xs" color="#0118D8">
                 {loading ? "Logging in..." : "Login"}
               </Button>

@@ -2,7 +2,7 @@
 
 const TOKEN_KEY = "auth_token";
 
-export const login = async ({ nippos, password }) => {
+export const login = async ({ nippos, password, idaplikasi }) => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const appId = process.env.NEXT_PUBLIC_APP_ID;
   //export const login = async ({ nippos, password }) => {
@@ -18,7 +18,7 @@ export const login = async ({ nippos, password }) => {
     body: JSON.stringify({
       nippos,
       password,
-      idAplikasi: appId,
+      idAplikasi: idaplikasi,
     }),
   });
 
