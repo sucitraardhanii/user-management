@@ -1,69 +1,138 @@
 "use client";
 
-import { useState } from "react";
-import { TextInput, Button, Box, Title, Select } from "@mantine/core";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import {
+  Box,
+  Title,
+  Select,
+  Autocomplete,
+  Button,
+  Group,
+  Container,
+  Loader,
+} from "@mantine/core";
+import { fetchAplikasi, encryptId } from "@/api/registrasiUser";
+import { fetchJabatan } from "@/api/menu";
 import { showNotification } from "@mantine/notifications";
-import { IconCheck } from "@tabler/icons-react";
+import { useForm } from "@mantine/form";
+import { useRouter } from "next/navigation";
 import { createHakAkses } from "@/api/hakAkses";
-import Breadcrumb from "@/components/BreadCrumb";
-export default function CreateAppPage() {
+
+export default function AddHakAkses() {
+  const [jabatanOptions, setJabatanOptions] = useState([]);
+  const [aplikasiOptions, setAplikasiOptions] = useState([]);
+  const [kategoriInput, setKategoriInput] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [loadingKategori, setLoadingKategori] = useState(false);
   const router = useRouter();
-  const [app, setApp] = useState({
-    name: "",
-    address: "",
-    status: "",
+
+  const form = useForm({
+    initialValues: {
+      idaplikasi: "",
+      namaakses: "",
+    },
   });
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const [jabatan, idaplikasi] = await Promise.all([
+          fetchJabatan(),
+          fetchAplikasi(),
+        ]);
+
+        // Format ulang data untuk dropdown
+        const jabatanFormatted = jabatan.map((item) => ({
+          value: item.value?.toString() ?? item.id?.toString(),
+          label: item.label ?? item.nama ?? "Tanpa Nama",
+        }));
+
+        const aplikasiFormatted = idaplikasi.map((item) => ({
+          value: item.value?.toString() ?? item.id?.toString(),
+          label: item.label ?? item.nama ?? "Tanpa Nama",
+        }));
+
+        setJabatanOptions(jabatanFormatted);
+        setAplikasiOptions(aplikasiFormatted);
+      } catch (err) {
+        console.error("Gagal ambil data awal:", err);
+        showNotification({
+          title: "Error",
+          message: "Gagal memuat data dropdown",
+          color: "red",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      await createHakAkses(app);
+      await createHakAkses(form.values);
 
       showNotification({
         title: "Berhasil",
-        message: "Data aplikasi berhasil ditambahkan",
+        message: "Hak akses berhasil ditambahkan",
         color: "teal",
-        icon: <IconCheck size={18} />,
       });
 
-      router.push("/hak-akses");
+      router.push("/hak-akses"); // ✅ redirect ke halaman hak akses
     } catch (err) {
-      console.error(err);
+      console.error("Gagal simpan:", err);
       showNotification({
         title: "Gagal",
-        message: "Gagal menambahkan aplikasi",
+        message: "Terjadi kesalahan saat menyimpan data",
         color: "red",
       });
     }
   };
 
   return (
-    <Box>
-      <Title order={2} mb="md">
-        Tambah Hak Akses Baru
-      </Title>
-      <Breadcrumb />
-      <form onSubmit={handleSubmit}>
-        <TextInput
-          label="ID Aplikasi"
-          value={app.idaplikasi}
-          onChange={(e) => setApp({ ...app, name: e.target.value })}
-          required
-          mb="sm"
-        />
-        <TextInput
-          label="Nama akses"
-          value={app.address}
-          onChange={(e) => setApp({ ...app, address: e.target.value })}
-          required
-          mb="sm"
-        />
-        <Button type="submit" mt="md">
-          Simpan
-        </Button>
-      </form>
-    </Box>
+    <Container size="sm">
+      <Box my="xl">
+        <Title order={2} mb="md">
+          Tambah Hak Akses
+        </Title>
+        <form onSubmit={handleSubmit}>
+          <Select
+            label="Pilih Aplikasi"
+            placeholder={loading ? "Loading..." : "Pilih Aplikasi"}
+            data={aplikasiOptions}
+            {...form.getInputProps("idaplikasi")}
+            searchable
+            clearable
+            disabled={loading}
+            required
+            mt="md"
+          />
+
+          <Autocomplete
+            label="Pilih Kategori Jabatan"
+            placeholder="Ketik atau pilih kategori"
+            data={jabatanOptions.map((opt) => opt.label)}
+            value={kategoriInput}
+            onChange={(val) => {
+              setKategoriInput(val);
+              const selected = jabatanOptions.find((opt) => opt.label === val);
+              form.setFieldValue("namaakses", selected?.value || "");
+            }}
+            rightSection={loadingKategori ? <Loader size="xs" /> : null}
+            clearable
+            disabled={loading}
+            required
+            mt="md"
+          />
+
+          <Group mt="md">
+            <Button type="submit">Simpan</Button>
+          </Group>
+        </form>
+      </Box>
+    </Container>
   );
 }

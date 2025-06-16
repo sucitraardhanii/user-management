@@ -100,12 +100,12 @@ export default function AppPage() {
         <CreateButton entity="hak-akses" />
       </Flex>
        <Breadcrumb />
-      <TagsInput label="Filter berdasarkan Nama Akses / Aplikasi" placeholder="Ketik dan tekan Enter"
+      {/* <TagsInput label="Filter berdasarkan Nama Akses / Aplikasi" placeholder="Ketik dan tekan Enter"
       value={searchTags}
       onChange={setSearchTags}
       clearable
       mb="md"
-    />
+    /> */}
       <GenericTable
         data={filteredData}
         columns={columns}

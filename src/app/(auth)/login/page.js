@@ -25,6 +25,9 @@ export default function LoginPage() {
   const [idaplikasi, setIdAplikasi] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const appId = process.env.NEXT_PUBLIC_APP_ID;
+
   useEffect(() => {
     const token = getToken();
     if (token) router.replace("/dashboard");
@@ -32,7 +35,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+    setLoading(true);
     try {
       await login({ nippos: username, password, idaplikasi});
       showNotification({

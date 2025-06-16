@@ -8,11 +8,19 @@ import {
   Select,
   Loader,
   Center,
+  TextInput,
+  Button,
+  Text,
 } from "@mantine/core";
-import { useState } from "react";
 import { showNotification, updateNotification } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons-react";
-import { getAplikasiById, updateAplikasi, deleteAplikasi } from "@/api/aplikasi";
+import {
+  getAplikasiById,
+  updateAplikasi,
+  deleteAplikasi,
+} from "@/api/aplikasi";
+import { useRouter, useParams } from "next/navigation";
+import Breadcrumb from "@/components/BreadCrumb";
 // useParams : mengambil parameter URL (id) dari route dinamis
 // useState : Hook React untuk membuat state lokal
 // TextInput, Button : komponen dari Mantine
@@ -29,6 +37,7 @@ export default function EditAplikasiPage() {
     name: "",
     address: "",
   });
+  const [originalData, setOriginalData] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -42,7 +51,7 @@ export default function EditAplikasiPage() {
             alamat: data.alamat ?? "",
             status: data.status?.toString() ?? "",
           });
-          setReady(true); // ✅ hanya tampil setelah data masuk
+          setOriginalData(data);
         }
       } catch (err) {
         console.error("Gagal ambil data:", err);
@@ -58,7 +67,7 @@ export default function EditAplikasiPage() {
     e.preventDefault();
 
     showNotification({
-      id:"update-aplikasi",
+      id: "update-aplikasi",
       title: "Menyimpan...",
       message: "Mohon tunggu, kami sedang menyimpan data",
       loading: true,
@@ -88,7 +97,6 @@ export default function EditAplikasiPage() {
       });
     }
   };
-
 
   const handleDelete = async () => {
     const confirmed = confirm(`Yakin ingin menghapus aplikasi #${appId}?`);
@@ -131,15 +139,16 @@ export default function EditAplikasiPage() {
           label="Nama"
           value={form.nama}
           onChange={(e) => setForm({ ...form, nama: e.target.value })}
+          placeholder={originalData?.nama || "Masukkan nama aplikasi"}
           required
-          mb="sm"
         />
+
         <TextInput
           label="Alamat"
           value={form.alamat}
           onChange={(e) => setForm({ ...form, alamat: e.target.value })}
+          placeholder={originalData?.alamat || "Masukkan URL aplikasi"}
           required
-          mb="sm"
         />
         <Select
           label="Status"

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Box, NavLink, Stack, Loader } from '@mantine/core';
-import { useRouter, usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
+import { Box, NavLink, Stack, Loader, Collapse } from "@mantine/core";
+import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -23,26 +23,35 @@ export default function Sidebar() {
   };
 
   const links = [
-    { label: 'Dashboard', href: '/dashboard' },
+    { label: "Dashboard", href: "/dashboard" },
     { label: 'Aplikasi', href: '/apps' },
     { label: 'Hak Akses', href: '/hak-akses' },
     {
-      label: 'Menu',
+      label: "Menu",
       children: [
-        { label: 'Jabatan', href: '/menu/jabatan' },
-        { label: 'Kantor', href: '/menu/kantor' },
-        { label: 'Menu', href: '/menu/menu' },
+        { label: "Jabatan", href: "/menu/jabatan" },
+        { label: "Kantor", href: "/menu/kantor" },
+        { label: "Menu", href: "/menu/menu" },
       ],
     },
     {
-      label: 'User',
+      label: 'Registrasi',
+      children: [
+        { label: 'Registrasi User Baru', href: '/registrasi-user' },
+        { label: 'Registrasi Aplikasi Baru', href: '/users/external' },
+      ],
+    },
+    {
+      label: "User",
       href:'/user',
       children: [
-        { label: 'User Internal', href: '/user/internal' },
-        { label: 'User Eksternal', href: '/user/external' },
+        { label: "User Internal", href: "/user/internal" },
+        { label: "User Eksternal", href: "/user/external" },
       ],
     },
     { label: 'User Akses', href: '/user-akses' },
+    { label: 'Aplikasi', href: '/apps' },
+    { label: 'Hak Akses', href: '/hak-akses' },
   ];
 
   useEffect(() => {
@@ -50,7 +59,7 @@ export default function Sidebar() {
   }, [pathname]);
 
   return (
-    <Box w={220} p="md" bg="blue.6" h="100vh" style={{ color: 'white' }}>
+    <Box w={220} p="md" bg="blue.6" h="100vh" style={{ color: "white" }}>
       <Stack gap="xs">
         {links.map((link) =>
           link.children ? (
@@ -67,15 +76,16 @@ export default function Sidebar() {
                 }
                 styles={{
                   root: {
-                    color: 'white',
-                    backgroundColor: openedDropdown === link.label ? '#1c7ed6' : 'transparent',
+                    color: "white",
+                    backgroundColor:
+                      openedDropdown === link.label ? "#1c7ed6" : "transparent",
                     borderRadius: 8,
-                    cursor: 'pointer',
+                    cursor: "pointer",
                   },
                 }}
               />
-              {openedDropdown === link.label &&
-                link.children.map((child) => (
+              <Collapse in={openedDropdown === link.label}>
+                {link.children.map((child) => (
                   <NavLink
                     key={child.href}
                     label={child.label}
@@ -89,14 +99,16 @@ export default function Sidebar() {
                     }
                     styles={{
                       root: {
-                        color: 'white',
-                        backgroundColor: pathname === child.href ? '#1c7ed6' : 'transparent',
+                        color: "white",
+                        backgroundColor:
+                          pathname === child.href ? "#1c7ed6" : "transparent",
                         borderRadius: 8,
-                        cursor: 'pointer',
+                        cursor: "pointer",
                       },
                     }}
                   />
                 ))}
+              </Collapse>
             </Box>
           ) : (
             <NavLink
@@ -105,14 +117,17 @@ export default function Sidebar() {
               onClick={() => handleClick(link.href)}
               active={pathname === link.href}
               rightSection={
-                loadingPath === link.href ? <Loader size="xs" color="white" /> : null
+                loadingPath === link.href ? (
+                  <Loader size="xs" color="white" />
+                ) : null
               }
               styles={{
                 root: {
-                  color: 'white',
-                  backgroundColor: pathname === link.href ? '#1c7ed6' : 'transparent',
+                  color: "white",
+                  backgroundColor:
+                    pathname === link.href ? "#1c7ed6" : "transparent",
                   borderRadius: 8,
-                  cursor: 'pointer',
+                  cursor: "pointer",
                 },
               }}
             />
