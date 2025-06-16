@@ -1,6 +1,14 @@
 import { getToken } from "./auth";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const ENCRYPT_KEY = "$RAI^bYJey2jhDzv+V9FcsUnV";
+
+const token = getToken();
+
+const headers = {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${getToken()}`,
+};
 
 // Ambil semua aplikasi
 export const fetchAplikasi = async () => {
@@ -8,9 +16,7 @@ export const fetchAplikasi = async () => {
   if (!token) throw new Error("Token tidak tersedia");
 
   const res = await fetch(`${BASE_URL}/getaplikasi/all`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
   });
 
   if (!res.ok) throw new Error("Gagal fetch aplikasi");
@@ -21,6 +27,8 @@ export const fetchAplikasi = async () => {
     name: item.nama,
     address: item.alamat,
     status: item.status,
+    created_at: item.creatde_at,
+    idaplikasi: item.idaplikasi,
   }));
 };
 
@@ -98,3 +106,19 @@ export const updateAplikasi = async (id, data) => {
   if (!res.ok) throw new Error("Gagal mengupdate aplikasi");
   return await res.json();
 };
+
+export async function encryptId(id) {
+  const res = await fetch(`${BASE_URL}/encId`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      data: String(id),
+      key: ENCRYPT_KEY,
+    }),
+  });
+
+  if (!res.ok) throw new Error("Gagal encrypt ID aplikasi");
+
+  const json = await res.json();
+  return json.data;
+}

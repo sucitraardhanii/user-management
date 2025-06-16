@@ -1,13 +1,30 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Title, Button, Flex, Text } from "@mantine/core";
+import {
+  Title,
+  Button,
+  Flex,
+  Text,
+} from "@mantine/core";
 import Link from "next/link";
-import { IconEdit, IconTrash, IconCheck, IconX } from "@tabler/icons-react";
+import {
+  IconEdit,
+  IconTrash,
+  IconCheck,
+  IconX,
+} from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
-import { fetchAplikasi, deleteAplikasi } from "@/api/aplikasi";
+import {
+  fetchAplikasi,
+  deleteAplikasi,
+  encryptId,
+} from "@/api/aplikasi";
 import StatusBadge from "@/components/StatusBadge";
-import { showNotification, updateNotification } from "@mantine/notifications";
+import {
+  showNotification,
+  updateNotification,
+} from "@mantine/notifications";
 import CreateButton from "@/components/CreateButton";
 import Breadcrumb from "@/components/BreadCrumb";
 import { modals } from "@mantine/modals";
@@ -27,7 +44,7 @@ export default function AppPage() {
     modals.openConfirmModal({
       title: "Konfirmasi Hapus",
       centered: true,
-      size: "sm", // biar seperti notifikasi
+      size: "sm",
       overlayProps: { blur: 2, opacity: 0.1 },
       children: (
         <Text size="sm">
@@ -86,6 +103,46 @@ export default function AppPage() {
       },
       { accessorKey: "name", header: "Nama" },
       { accessorKey: "address", header: "Alamat" },
+      { accessorKey: "idaplikasi", header: "ID Aplikasi" },
+      {
+        accessorKey: "encryptedId",
+        header: "Encrypted ID",
+        Cell: ({ row }) => {
+          const [loading, setLoading] = useState(false);
+
+          const handleEncrypt = async () => {
+            setLoading(true);
+            try {
+              const res = await encryptId(row.original.idaplikasi);
+              showNotification({
+                title: "Encrypted ID",
+                message: `ID: ${row.original.idaplikasi}\n \n Encrypted: ${res}`,
+                icon: <IconCheck size={18} />,
+                color: "teal",
+                autoClose: false,
+              });
+            } catch (err) {
+              showNotification({
+                title: "Gagal Encrypt",
+                message: `ID: ${row.original.idaplikasi}`,
+                color: "red",
+              });
+            } finally {
+              setLoading(false);
+            }
+          };
+
+          return (
+            <Button size="xs" loading={loading} onClick={handleEncrypt}>
+              Encrypt
+            </Button>
+          );
+        },
+      },
+      {
+        accessorKey: "created_at",
+        header: "Created At",
+      },
       {
         accessorKey: "status",
         header: "Status",
@@ -110,7 +167,9 @@ export default function AppPage() {
               size="xs"
               variant="light"
               color="red"
-              onClick={() => handleDelete(row.original.id, row.original.name)}
+              onClick={() =>
+                handleDelete(row.original.id, row.original.name)
+              }
               leftSection={<IconTrash size={14} />}
             >
               Delete
@@ -124,12 +183,12 @@ export default function AppPage() {
 
   return (
     <>
-    
       <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>Daftar Aplikasi</Title>
         <CreateButton entity="apps" />
       </Flex>
       <Breadcrumb />
+
       <GenericTable
         data={apps}
         columns={columns}
