@@ -125,25 +125,28 @@ export default function RegistrasiUser() {
   }, [debounced]);
 
   useEffect(() => {
-    const selected = form.getValues().idaplikasi;
-    if (!selected) return;
+  const selected = form.values.idaplikasi;
+  if (!selected) return;
 
-    const fetchHakAksesFromApi = async () => {
-      setLoadingHakAkses(true);
-      try {
-        const encrypted = await encryptId(selected);
-        const data = await fetchHakAkses(encrypted);
-        setHakAksesOptions(data);
-      } catch (err) {
-        console.error("Gagal ambil hak akses:", err);
-        setHakAksesOptions([]);
-      } finally {
-        setLoadingHakAkses(false);
-      }
-    };
+  const fetchHakAksesFromApi = async () => {
+    setLoadingHakAkses(true);
+    try {
+      const encrypted = await encryptId(selected);
+      const data = await fetchHakAkses(encrypted);
+      setHakAksesOptions(data);
+    } catch (err) {
+      console.error("Gagal ambil hak akses:", err);
+      setHakAksesOptions([]);
+    } finally {
+      setLoadingHakAkses(false);
+    }
+  };
 
-    fetchHakAksesFromApi();
-  }, [form.values.idaplikasi]);
+  fetchHakAksesFromApi();
+}, [form.values.idaplikasi]);
+
+
+
 
   const uniqueByValue = (arr) => {
     const seen = new Set();
@@ -289,31 +292,39 @@ export default function RegistrasiUser() {
           </Stepper.Step>
 
           <Stepper.Step label="Step 2" description="Akses Aplikasi">
-            <Select
-              label="Pilih Aplikasi"
-              data={aplikasiOptions}
-              {...form.getInputProps('idaplikasi')}
-              placeholder="Pilih aplikasi"
-              searchable
-              clearable
-              required
-              disabled={loading}
-              rightSection={loading ? <Loader size="xs" /> : null}
-            />
+  <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+    <Select
+      label="Pilih Aplikasi"
+      data={aplikasiOptions}
+      placeholder="Pilih aplikasi"
+      searchable
+      clearable
+      required
+      disabled={loading}
+      value={form.values.idaplikasi}
+      onChange={(val) => {
+        form.setFieldValue("idaplikasi", val);  // set aplikasi
+        form.setFieldValue("idhakakses", "");   // reset hak akses
+        setHakAksesOptions([]);                 // kosongkan list hak akses
+      }}
+      rightSection={loading ? <Loader size="xs" /> : null}
+    />
 
-            <Select
-              label="Pilih Hak Akses"
-              data={hakAksesOptions}
-              {...form.getInputProps('idhakakses')}
-              placeholder={loadingHakAkses ? "Memuat..." : "Pilih hak akses"}
-              searchable
-              clearable
-              required
-              
-              disabled={loading}
-             rightSection={loading ? <Loader size="xs" /> : null}
-            />
-          </Stepper.Step>
+    <Select
+      label="Pilih Hak Akses"
+      data={hakAksesOptions}
+      {...form.getInputProps('idhakakses')}
+      placeholder={loadingHakAkses ? "Memuat..." : "Pilih hak akses"}
+      searchable
+      clearable
+      required
+      disabled={loading || !form.values.idaplikasi || loadingHakAkses}
+      rightSection={loadingHakAkses ? <Loader size="xs" /> : null}
+    />
+  </SimpleGrid>
+</Stepper.Step>
+
+
 
           <Stepper.Step label="Step 3" description="Review Json">
             <Code block mt="xl">
