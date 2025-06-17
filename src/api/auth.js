@@ -1,6 +1,5 @@
 // src/lib/auth.js
 import { showNotification, updateNotification } from "@mantine/notifications";
-const TOKEN_KEY = "auth_token";
 
 export const login = async ({ nippos, password, idaplikasi }) => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -22,6 +21,9 @@ export const login = async ({ nippos, password, idaplikasi }) => {
     }),
   });
 
+  const data = await res.json();
+  saveToken(data.token, idaplikasi);
+
   const contentType = res.headers.get("content-type");
   //if (!res.ok) throw new Error(`HTTP ${res.status}`);
   showNotification({
@@ -29,18 +31,20 @@ export const login = async ({ nippos, password, idaplikasi }) => {
           message: "Selamat Datang",
           color: "green",
         });
+  
+
   if (!contentType?.includes("application/json")) {
     const html = await res.text();
     console.error("Response bukan JSON:", html);
     throw new Error("Server mengirim data bukan JSON");
   }
+  
 
-  const data = await res.json();
   if (!data.token) throw new Error("Token tidak ditemukan");
-  saveToken(data.token);
+  
   showNotification({
-          title: "Berhasil Login",
-          message: "Selamat Datang",
+          title: "Gagal Login",
+          message: "Silahkan Login Ulang",
           color: "green",
         });
   return data.token;
@@ -64,9 +68,10 @@ export function isTokenExpired() {
 
 export function saveToken(token) {
   const now = new Date();
-  const expiry = now.getTime() + 60 * 60 * 10000; // 1 jam dari sekarang
+  const expiry = now.getTime() + 60 * 60 * 10000; // 10 jam dari sekarang
   const item = {
     token,
+    idAplikasi,
     expiry,
   };
   localStorage.setItem("auth_token", JSON.stringify(item));
@@ -103,3 +108,24 @@ export function removeToken() {
 export const logout = () => {
   removeToken();
 };
+
+function decodeJwt(token) {
+  const payload = token.split('.')[1];
+  const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split('')
+      .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+      .join('')
+  );
+  return JSON.parse(jsonPayload);
+}
+
+// Ambil token dari localStorage
+const token = localStorage.getItem("auth_token");
+
+if (token) {
+  const decoded = decodeJwt(token);
+  const idAplikasi = decoded["x-app"]; // 👈 ini biasanya idApp-nya
+  console.log("ID Aplikasi:", idAplikasi);
+}
