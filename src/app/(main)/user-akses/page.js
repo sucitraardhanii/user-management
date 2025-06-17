@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   TextInput,
   Button,
@@ -8,35 +8,77 @@ import {
   Flex,
   Stack,
   Title,
-  Center,
+  Select,
+  Loader,
 } from "@mantine/core";
+import { IconEdit, IconTrash } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
-import { fetchUserAkses } from "@/api/userAkses";
 import StatusBadge from "@/components/StatusBadge";
 import NullBadge from "@/components/NullBadge";
-import Link from "next/link";
-import { IconEdit, IconTrash } from "@tabler/icons-react";
 import Breadcrumb from "@/components/BreadCrumb";
+import CreateButton from "@/components/CreateButton";
+import Link from "next/link";
+import { fetchUserAkses, fetchAplikasi, encryptId } from "@/api/userAkses";
 
 export default function UserAksesPage() {
   const [nippos, setNippos] = useState("");
-  const [idApp, setIdApp] = useState("");
+  const [idaplikasi, setIdaplikasi] = useState("");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [aplikasiOptions, setAplikasiOptions] = useState([]);
 
   const handleFetch = async () => {
-    setLoading(true);
-    const result = await fetchUserAkses({ nippos, idAplikasi: idApp });
+  setLoading(true);
+  try {
+    let encryptedId = "";
+    if (idaplikasi){
+      encryptedId = await encryptId(idaplikasi);
+    }
+    
+    if (idaplikasi && nippos) {
+      encryptedId = await encryptId(idaplikasi);
+    }
+
+    const result = await fetchUserAkses({
+      nippos,
+      idaplikasi: encryptedId || "",
+    });
+
     setData(result);
+  } catch (err) {
+    console.error("Gagal fetch:", err);
+  } finally {
     setLoading(false);
-  };
+  }
+};
+
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        const aplikasi = await fetchAplikasi();
+        setAplikasiOptions(aplikasi);
+      } catch (err) {
+        console.error("Gagal ambil data aplikasi:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
 
   const columns = useMemo(
     () => [
-      { accessorKey: "alamataplikasi", header: "Alamat", Cell: ({ cell }) => <NullBadge value={cell.getValue()} />,},
-      { accessorKey: "idAkses", header: "ID Akses" },
-      { accessorKey: "idHakAkses", header: "ID Hak Akses" },
-      { accessorKey: "namaAkses", header: "Nama Akses" },
+      {
+        accessorKey: "alamatAplikasi",
+        header: "Alamat Aplikasi",
+        Cell: ({ cell }) => <NullBadge value={cell.getValue()} />,
+      },
+      { accessorKey: "idAkses", header: "ID Akses", size: 100 },
+      { accessorKey: "idHakAkses", header: "ID Hak Akses", size: 100 },
+      { accessorKey: "namaAkses", header: "Nama Akses", size: 150 },
       { accessorKey: "namaAplikasi", header: "Nama Aplikasi" },
       { accessorKey: "nippos", header: "Nippos" },
       {
@@ -47,6 +89,7 @@ export default function UserAksesPage() {
       {
         id: "actions",
         header: "Aksi",
+        size: 100,
         Cell: ({ row }) => (
           <Flex gap="xs" wrap="nowrap">
             <Button
@@ -63,7 +106,9 @@ export default function UserAksesPage() {
               size="xs"
               variant="light"
               color="red"
-              onClick={() => handleDelete(row.original.id, row.original.name)}
+              onClick={() =>
+                handleDelete(row.original.id, row.original.name)
+              }
               leftSection={<IconTrash size={14} />}
             >
               Delete
@@ -77,12 +122,12 @@ export default function UserAksesPage() {
 
   return (
     <>
-    <Breadcrumb />
-      <Title order={2} mb="lg" mt="lg">
-        User Akses
-      </Title>
+      <Flex justify="space-between" align="center" mb="md" mt="md">
+        <Title order={2}>User Akses</Title>
+        <CreateButton entity="user-akses" />
+      </Flex>
+
       <Stack>
-        {/* Form Filter */}
         <Paper withBorder p="md" radius="md">
           <Flex gap="md" wrap="wrap">
             <TextInput
@@ -92,20 +137,29 @@ export default function UserAksesPage() {
               placeholder="Masukkan Nippos"
               style={{ flex: 1 }}
             />
-            <TextInput
-              label="ID Aplikasi"
-              value={idApp}
-              onChange={(e) => setIdApp(e.target.value)}
-              placeholder="Masukkan ID Aplikasi"
+            <Select
+              label="Pilih Aplikasi"
+              data={aplikasiOptions}
+              value={idaplikasi}
+              onChange={setIdaplikasi}
+              placeholder="Pilih aplikasi"
+              searchable
+              clearable
+              disabled={loading}
+              rightSection={loading ? <Loader size="xs" /> : null}
               style={{ flex: 1 }}
             />
-            <Button onClick={handleFetch} mt={20} style={{ height: "40px" }}>
+            <Button
+              onClick={handleFetch}
+              mt={20}
+              style={{ height: "40px" }}
+            >
               Tampilkan Data
             </Button>
           </Flex>
         </Paper>
 
-        {/* Tabel */}
+        <Breadcrumb />
         <GenericTable data={data} columns={columns} loading={loading} />
       </Stack>
     </>
