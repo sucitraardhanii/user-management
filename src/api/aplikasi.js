@@ -78,33 +78,44 @@ export const getAplikasiById = async (id) => {
   const res = await fetch(`${BASE_URL}/getaplikasi/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
+      Accept: "application/json",
     },
   });
 
-  if (!res.ok) throw new Error("Gagal mengambil data aplikasi");
-  const json = await res.json();
-  return json?.data?.[0];
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Gagal mengambil data aplikasi: ${res.status} - ${errorText}`);
+  }
 
+  const json = await res.json();
+  return json?.[0] ?? null; // karena response langsung array
 };
 
 // Update aplikasi
-export const updateAplikasi = async (id, data) => {
+export const updateAplikasi = async ({ idaplikasi, nama, alamat, status }) => {
   const token = getToken();
-  const res = await fetch(`${BASE_URL}/updateaplikasi/${id}`, {
+
+  const res = await fetch(`${BASE_URL}/updateaplikasi`, {
     method: "PUT",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
     body: JSON.stringify({
-      nama: data.name,
-      alamat: data.address,
-      status: data.status,
+      idaplikasi, // string atau number, sesuai backend
+      nama,
+      alamat,
+      status,
     }),
   });
 
-  if (!res.ok) throw new Error("Gagal mengupdate aplikasi");
-  return await res.json();
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Gagal update aplikasi: ${res.status} - ${errorText}`);
+  }
+
+  return res.json();
 };
 
 export async function encryptId(id) {

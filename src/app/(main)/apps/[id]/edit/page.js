@@ -1,174 +1,111 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Box,
-  Title,
-  Group,
-  Select,
-  Loader,
-  Center,
   TextInput,
   Button,
-  Text,
+  Group,
+  Box,
+  Loader,
+  Title,
+  Select,
 } from "@mantine/core";
-import { showNotification, updateNotification } from "@mantine/notifications";
-import { IconCheck, IconX } from "@tabler/icons-react";
-import {
-  getAplikasiById,
-  updateAplikasi,
-  deleteAplikasi,
-} from "@/api/aplikasi";
-import { useRouter, useParams } from "next/navigation";
-import Breadcrumb from "@/components/BreadCrumb";
-// useParams : mengambil parameter URL (id) dari route dinamis
-// useState : Hook React untuk membuat state lokal
-// TextInput, Button : komponen dari Mantine
-// Box, Title : komponen UI seperti <div> dan <h2> bawaan dari Mantine
+import { usePathname, useRouter } from "next/navigation";
+import { getAplikasiById, updateAplikasi } from "@/api/aplikasi";
+import { showNotification } from "@mantine/notifications";
 
 export default function EditAplikasiPage() {
-  const { id } = useParams();
+  const pathname = usePathname();
   const router = useRouter();
+  const id = pathname.split("/")[2]; // /apps/3/edit -> ambil "3"
 
-  const [form, setForm] = useState({ nama: "", alamat: "", status: "" });
   const [loading, setLoading] = useState(true);
-
-  const [app, setApp] = useState({
-    name: "",
-    address: "",
+  const [formData, setFormData] = useState({
+    nama: "",
+    alamat: "",
+    status: "1",
   });
-  const [originalData, setOriginalData] = useState(null);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const data = await getAplikasiById(id);
-        console.log("data api", data); // debug
-
-        if (data) {
-          setForm({
-            nama: data.nama ?? "",
-            alamat: data.alamat ?? "",
-            status: data.status?.toString() ?? "",
-          });
-          setOriginalData(data);
-        }
-      } catch (err) {
+    if (!id) return;
+    getAplikasiById(id)
+      .then((data) => {
+        setFormData({
+          nama: data.nama || "",
+          alamat: data.alamat || "",
+          status: data.status || "1",
+        });
+      })
+      .catch((err) => {
         console.error("Gagal ambil data:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
+        showNotification({
+          title: "Error",
+          message: "Gagal mengambil data aplikasi",
+          color: "red",
+        });
+      })
+      .finally(() => setLoading(false));
   }, [id]);
+
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    showNotification({
-      id: "update-aplikasi",
-      title: "Menyimpan...",
-      message: "Mohon tunggu, kami sedang menyimpan data",
-      loading: true,
-      autoClose: false,
-      disallowClose: true,
-    });
-
     try {
-      await updateAplikasi(id, form);
+      await updateAplikasi({ idaplikasi: id, ...formData });
       showNotification({
         title: "Berhasil",
-        message: "Aplikasi berhasil diperbarui",
-        color: "teal",
-        icon: <IconCheck size={18} />,
-        autoClose: 3000,
+        message: "Data aplikasi berhasil diperbarui",
+        color: "green",
       });
-
       router.push("/apps");
     } catch (err) {
-      console.error("Update gagal:", err);
       showNotification({
         title: "Gagal",
         message: "Gagal update aplikasi",
         color: "red",
-        icon: <IconX size={18} />,
-        autoClose: 3000,
       });
     }
   };
 
-  const handleDelete = async () => {
-    const confirmed = confirm(`Yakin ingin menghapus aplikasi #${appId}?`);
-    if (!confirmed) return;
-
-    try {
-      await deleteAplikasi(appId);
-      showNotification({
-        title: "Dihapus",
-        message: `Aplikasi #${appId} berhasil dihapus`,
-        color: "red",
-      });
-      router.push("/apps");
-    } catch (err) {
-      console.error("Gagal hapus:", err);
-      showNotification({
-        title: "Gagal",
-        message: "Tidak dapat menghapus aplikasi",
-        color: "red",
-      });
-    }
-  };
-
-  if (loading) {
-    return (
-      <Center h="80vh">
-        <Loader />
-      </Center>
-    );
-  }
+  if (loading) return <Loader mt="md" />;
 
   return (
-    <Box>
-      <Title order={2} mb="md">
-        Edit Aplikasi
-      </Title>
-      <Breadcrumb />
+    <Box maw={500} mx="auto" mt="md">
+      <Title order={3}>Edit Aplikasi</Title>
       <form onSubmit={handleSubmit}>
         <TextInput
           label="Nama"
-          value={form.nama}
-          onChange={(e) => setForm({ ...form, nama: e.target.value })}
-          placeholder={originalData?.nama || "Masukkan nama aplikasi"}
+          value={formData.nama}
+          onChange={(e) => handleChange("nama", e.target.value)}
           required
+          mt="md"
         />
-
         <TextInput
           label="Alamat"
-          value={form.alamat}
-          onChange={(e) => setForm({ ...form, alamat: e.target.value })}
-          placeholder={originalData?.alamat || "Masukkan URL aplikasi"}
+          value={formData.alamat}
+          onChange={(e) => handleChange("alamat", e.target.value)}
           required
+          mt="md"
         />
         <Select
           label="Status"
-          value={form.status}
-          onChange={(val) => setForm({ ...form, status: val })}
           data={[
             { value: "1", label: "Aktif" },
             { value: "0", label: "Tidak Aktif" },
           ]}
-          placeholder="Pilih status"
+          value={formData.status}
+          onChange={(value) => handleChange("status", value)}
           required
-          mb="sm"
+          mt="md"
         />
-        <Group mt="md">
-          <Button type="submit" mt="md">
-            Simpan Perubahan
+        <Group mt="xl" position="apart">
+          <Button variant="default" onClick={() => router.push("/apps")}>
+            Cancel
           </Button>
-          <Button variant="outline" color="red" onClick={handleDelete}>
-            Hapus Aplikasi
-          </Button>
+          <Button type="submit">Submit</Button>
         </Group>
       </form>
     </Box>
