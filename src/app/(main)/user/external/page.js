@@ -21,7 +21,7 @@ import { useForm } from '@mantine/form';
 import { useDebouncedValue } from '@mantine/hooks';
 import Breadcrumb from "@/components/BreadCrumb";
 import { fetchJabatan, searchKantor, fetchAllKantor } from "@/api/menu";
-import { fetchAplikasi, encryptId, fetchHakAkses,fetchExternalOrg, createUser,createUserAkses, activeUser, validasiUser } from "@/api/regisUserExtern";
+import { fetchAplikasi, encryptId, fetchHakAkses,fetchExternalOrg, createUser,createUserAkses, validasiUser } from "@/api/regisUserExtern";
 import { showNotification } from "@mantine/notifications";
 import { IconCheck } from '@tabler/icons-react';
 import { useRouter } from "next/navigation";

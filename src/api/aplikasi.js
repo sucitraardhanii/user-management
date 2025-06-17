@@ -1,6 +1,14 @@
 import { getToken } from "./auth";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const ENCRYPT_KEY = "$RAI^bYJey2jhDzv+V9FcsUnV";
+
+const token = getToken();
+
+const headers = {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${getToken()}`,
+};
 
 // Ambil semua aplikasi
 export const fetchAplikasi = async () => {
@@ -8,9 +16,7 @@ export const fetchAplikasi = async () => {
   if (!token) throw new Error("Token tidak tersedia");
 
   const res = await fetch(`${BASE_URL}/getaplikasi/all`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
   });
 
   if (!res.ok) throw new Error("Gagal fetch aplikasi");
@@ -21,6 +27,8 @@ export const fetchAplikasi = async () => {
     name: item.nama,
     address: item.alamat,
     status: item.status,
+    created_at: item.creatde_at,
+    idaplikasi: item.idaplikasi,
   }));
 };
 
@@ -70,31 +78,58 @@ export const getAplikasiById = async (id) => {
   const res = await fetch(`${BASE_URL}/getaplikasi/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
+      Accept: "application/json",
     },
   });
 
-  if (!res.ok) throw new Error("Gagal mengambil data aplikasi");
-  const json = await res.json();
-  return json?.data?.[0];
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Gagal mengambil data aplikasi: ${res.status} - ${errorText}`);
+  }
 
+  const json = await res.json();
+  return json?.[0] ?? null; // karena response langsung array
 };
 
 // Update aplikasi
-export const updateAplikasi = async (id, data) => {
+export const updateAplikasi = async ({ idaplikasi, nama, alamat, status }) => {
   const token = getToken();
-  const res = await fetch(`${BASE_URL}/updateaplikasi/${id}`, {
+
+  const res = await fetch(`${BASE_URL}/updateaplikasi`, {
     method: "PUT",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
     body: JSON.stringify({
-      nama: data.name,
-      alamat: data.address,
-      status: data.status,
+      idaplikasi, // string atau number, sesuai backend
+      nama,
+      alamat,
+      status,
     }),
   });
 
-  if (!res.ok) throw new Error("Gagal mengupdate aplikasi");
-  return await res.json();
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Gagal update aplikasi: ${res.status} - ${errorText}`);
+  }
+
+  return res.json();
 };
+
+export async function encryptId(id) {
+  const res = await fetch(`${BASE_URL}/encId`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      data: String(id),
+      key: ENCRYPT_KEY,
+    }),
+  });
+
+  if (!res.ok) throw new Error("Gagal encrypt ID aplikasi");
+
+  const json = await res.json();
+  return json.data;
+}

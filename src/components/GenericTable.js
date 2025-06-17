@@ -71,7 +71,7 @@ export default function GenericTable({
           mantineTableHeadCellProps={{
             style: {
               justifyContent: "flex-start",
-              gap: 0,
+              gap: -10,
             },
           }}
           renderTopToolbarCustomActions={() => (

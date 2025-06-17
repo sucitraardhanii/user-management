@@ -1,5 +1,5 @@
 // src/lib/auth.js
-
+import { showNotification, updateNotification } from "@mantine/notifications";
 const TOKEN_KEY = "auth_token";
 
 export const login = async ({ nippos, password, idaplikasi }) => {
@@ -23,7 +23,12 @@ export const login = async ({ nippos, password, idaplikasi }) => {
   });
 
   const contentType = res.headers.get("content-type");
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  //if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  showNotification({
+          title: "Berhasil Login",
+          message: "Selamat Datang",
+          color: "green",
+        });
   if (!contentType?.includes("application/json")) {
     const html = await res.text();
     console.error("Response bukan JSON:", html);
@@ -32,8 +37,12 @@ export const login = async ({ nippos, password, idaplikasi }) => {
 
   const data = await res.json();
   if (!data.token) throw new Error("Token tidak ditemukan");
-
   saveToken(data.token);
+  showNotification({
+          title: "Berhasil Login",
+          message: "Selamat Datang",
+          color: "green",
+        });
   return data.token;
 };
 

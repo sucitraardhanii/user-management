@@ -1,20 +1,35 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Title, Button, Flex, Text } from "@mantine/core";
-import Link from "next/link";
-import { IconEdit, IconTrash, IconCheck, IconX } from "@tabler/icons-react";
+import {
+  Title,
+  Button,
+  Flex,
+  Text,
+  TagsInput
+} from "@mantine/core";
+import { IconCheck,IconX,
+} from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
-import { fetchAplikasi, deleteAplikasi } from "@/api/aplikasi";
+import {
+  fetchAplikasi,
+  deleteAplikasi,
+  encryptId,
+} from "@/api/aplikasi";
 import StatusBadge from "@/components/StatusBadge";
-import { showNotification, updateNotification } from "@mantine/notifications";
+import {
+  showNotification,
+  updateNotification,
+} from "@mantine/notifications";
 import CreateButton from "@/components/CreateButton";
 import Breadcrumb from "@/components/BreadCrumb";
 import { modals } from "@mantine/modals";
+import ButtonAction from "@/components/ButtonAction";
 
 export default function AppPage() {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTags, setSearchTags] = useState([]);
 
   useEffect(() => {
     fetchAplikasi()
@@ -23,11 +38,20 @@ export default function AppPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const filteredData = useMemo(() => {
+  if (searchTags.length === 0) return apps;
+  return apps.filter((item) =>
+    searchTags.every((tag) =>
+      (item.name?.toLowerCase().includes(tag.toLowerCase()))
+    )
+  );
+}, [apps, searchTags]);
+
   const handleDelete = (id, name) => {
     modals.openConfirmModal({
       title: "Konfirmasi Hapus",
       centered: true,
-      size: "sm", // biar seperti notifikasi
+      size: "sm",
       overlayProps: { blur: 2, opacity: 0.1 },
       children: (
         <Text size="sm">
@@ -86,36 +110,61 @@ export default function AppPage() {
       },
       { accessorKey: "name", header: "Nama" },
       { accessorKey: "address", header: "Alamat" },
+      { accessorKey: "idaplikasi", header: "ID Aplikasi", size:100 },
+      {
+        accessorKey: "encryptedId",
+        header: "Encrypted ID", size: 125,
+        Cell: ({ row }) => {
+          const [loading, setLoading] = useState(false);
+
+          const handleEncrypt = async () => {
+            setLoading(true);
+            try {
+              const res = await encryptId(row.original.idaplikasi);
+              showNotification({
+                title: "Encrypted ID",
+                message: `ID: ${row.original.idaplikasi}\n \n Encrypted: ${res}`,
+                icon: <IconCheck size={18} />,
+                color: "teal",
+                autoClose: false,
+              });
+            } catch (err) {
+              showNotification({
+                title: "Gagal Encrypt",
+                message: `ID: ${row.original.idaplikasi}`,
+                color: "red",
+              });
+            } finally {
+              setLoading(false);
+            }
+          };
+
+          return (
+            <Button size="xs" loading={loading} onClick={handleEncrypt}>
+              Encrypt
+            </Button>
+          );
+        },
+      },
+      {
+        accessorKey: "created_at",
+        header: "Created At",
+      },
       {
         accessorKey: "status",
         header: "Status",
+        size: 100,
         Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
       },
       {
         id: "actions",
         header: "Aksi",
         Cell: ({ row }) => (
-          <Flex gap="xs" wrap="nowrap">
-            <Button
-              size="xs"
-              variant="light"
-              color="blue"
-              component={Link}
-              href={`/apps/${row.original.id}/edit`}
-              leftSection={<IconEdit size={14} />}
-            >
-              Edit
-            </Button>
-            <Button
-              size="xs"
-              variant="light"
-              color="red"
-              onClick={() => handleDelete(row.original.id, row.original.name)}
-              leftSection={<IconTrash size={14} />}
-            >
-              Delete
-            </Button>
-          </Flex>
+          <ButtonAction
+      editUrl={`/apps/${row.original.id}/edit`}
+      onDelete={() =>
+        handleDelete(row.original.id, row.original.name)
+      }/>
         ),
       },
     ],
@@ -124,14 +173,19 @@ export default function AppPage() {
 
   return (
     <>
-    
       <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>Daftar Aplikasi</Title>
         <CreateButton entity="apps" />
       </Flex>
       <Breadcrumb />
+        <TagsInput label="Filter berdasarkan Nama Akses / Aplikasi" placeholder="Ketik dan tekan Enter"
+        value={searchTags}
+        onChange={setSearchTags}
+        clearable
+        mb="md"
+      />
       <GenericTable
-        data={apps}
+        data={filteredData}
         columns={columns}
         loading={loading}
         defaultPageSize={5}
