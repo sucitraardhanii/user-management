@@ -1,6 +1,13 @@
 import { getToken } from "./auth";
 
+const token = getToken();
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const ENCRYPT_KEY = "$RAI^bYJey2jhDzv+V9FcsUnV";
+
+const headers = {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${getToken()}`,
+};
 
 // Hak Akses
 export const fetchHakAkses = async () => {
@@ -29,43 +36,37 @@ export const fetchHakAkses = async () => {
   }));
 };
 
-// Tambah aplikasi
-export const createHakAkses = async (data) => {
-  const token = getToken();
-  if (!token) throw new Error("Token tidak tersedia");
+// GET semua aplikasi
+export async function fetchAplikasi() {
+  const res = await fetch(`${BASE_URL}/getaplikasi/all`, {
+    headers,
+  });
 
-  const res = await fetch(`${BASE_URL}/addaplikasi`, {
+  if (!res.ok) throw new Error("Gagal ambil aplikasi");
+
+  const apps = await res.json(); // langsung array
+  return apps.map((item) => ({
+    label: item.nama,
+    value: item.idaplikasi.toString(),
+  }));
+}
+
+// ENKRIP ID APLIKASI
+export async function encryptId(id) {
+  const res = await fetch(`${BASE_URL}/encId`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
     body: JSON.stringify({
-      nama: data.name,
-      alamat: data.address,
+      data: id, // langsung string ID
+      key: ENCRYPT_KEY,
     }),
   });
 
-  if (!res.ok) throw new Error("Gagal menambahkan aplikasi");
-  return await res.json();
-};
+  if (!res.ok) throw new Error("Gagal encrypt ID aplikasi");
 
-export const deleteHakAkses = async (idaplikasi) => {
-  const token = getToken();
-  if (!token) throw new Error("Token tidak tersedia");
-
-  const res = await fetch(`${BASE_URL}/deletaplikasi`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ idaplikasi: String(idaplikasi) }),
-  });
-
-  if (!res.ok) throw new Error("Gagal hapus user akses");
-  return res.json();
-};
+  const result = await res.json();
+  return result.data;
+}
 
 // api/hakAkses.js
 export async function getHakAksesByApp(idApp) {
