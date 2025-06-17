@@ -45,8 +45,6 @@ export default function LoginPage() {
       });
       router.push("/dashboard");
     } catch (err) {
-      alert("Login gagal: " + err.message);
-      console.error("LOGIN ERROR:", err);
       showNotification({
         title: "Login Gagal",
         message: err.message,
