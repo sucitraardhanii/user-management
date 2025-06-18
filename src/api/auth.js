@@ -66,12 +66,12 @@ export function isTokenExpired() {
   }
 }
 
-export function saveToken(token) {
+export function saveToken(token, idaplikasi) {
   const now = new Date();
   const expiry = now.getTime() + 60 * 60 * 10000; // 10 jam dari sekarang
   const item = {
     token,
-    idAplikasi,
+    idaplikasi,
     expiry,
   };
   localStorage.setItem("auth_token", JSON.stringify(item));
