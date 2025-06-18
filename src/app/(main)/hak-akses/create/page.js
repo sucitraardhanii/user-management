@@ -16,7 +16,7 @@ import { fetchJabatan } from "@/api/menu";
 import { showNotification } from "@mantine/notifications";
 import { useForm } from "@mantine/form";
 import { useRouter } from "next/navigation";
-import { createHakAkses } from "@/api/hakAkses";
+import { createHakAkses, getListHakAksesByApp } from "@/api/hakAkses";
 
 export default function AddHakAkses() {
   const [jabatanOptions, setJabatanOptions] = useState([]);
@@ -86,10 +86,11 @@ export default function AddHakAkses() {
       form.setFieldValue("encryptIdAplikasi", encrypted);
 
       setLoadingJabatan(true);
-      const jabatan = await fetchJabatan(idaplikasi);
-      const jabatanFormatted = jabatan.map((item) => ({
-          value: item.value?.toString() ?? item.id?.toString(),
-          label: item.label ?? item.nama ?? "Tanpa Nama",
+      const hakAksesResponse = await getListHakAksesByApp(encrypted);
+
+      const jabatanFormatted = hakAksesResponse.map((item) => ({
+          value: item.idhakakses?.toString(),
+          label: item.namaakses ?? "Tanpa Nama",
         }));
 
       setJabatanOptions(jabatanFormatted);

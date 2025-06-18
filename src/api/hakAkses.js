@@ -1,32 +1,30 @@
 import { getToken } from "./auth";
 
-const token = getToken();
+// Konstanta umum
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const ENCRYPT_KEY = "$RAI^bYJey2jhDzv+V9FcsUnV";
 
-const headers = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${getToken()}`,
-};
-
-// Hak Akses
-export const fetchHakAkses = async () => {
+// Header helper dinamis
+function getAuthHeaders() {
   const token = getToken();
   if (!token) throw new Error("Token tidak tersedia");
 
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+// ========== FETCH SEMUA HAK AKSES ==========
+export async function fetchHakAkses() {
   const res = await fetch(`${BASE_URL}/getlisthakakses/all`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!res.ok) throw new Error("Gagal fetch hak akses");
-  const json = await res.json();
 
-  // Pastikan kita akses data dari field "data"
-  if (!Array.isArray(json.data)) {
-    throw new Error("Format response tidak sesuai");
-  }
+  const json = await res.json();
+  if (!Array.isArray(json.data)) throw new Error("Format response tidak sesuai");
 
   return json.data.map((item, index) => ({
     id: index + 1,
@@ -34,60 +32,77 @@ export const fetchHakAkses = async () => {
     namaAplikasi: item.namaAplikasi,
     statusAktif: item.statusAktif,
   }));
-};
+}
 
-// GET semua aplikasi
+// ========== FETCH SEMUA APLIKASI ==========
 export async function fetchAplikasi() {
   const res = await fetch(`${BASE_URL}/getaplikasi/all`, {
-    headers,
+    headers: getAuthHeaders(),
   });
 
   if (!res.ok) throw new Error("Gagal ambil aplikasi");
 
-  const apps = await res.json(); // langsung array
+  const apps = await res.json();
   return apps.map((item) => ({
     label: item.nama,
     value: item.idaplikasi.toString(),
   }));
 }
 
-// ENKRIP ID APLIKASI
+// ========== ENKRIPSI ID APLIKASI ==========
 export async function encryptId(id) {
   const res = await fetch(`${BASE_URL}/encId`, {
     method: "POST",
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify({
-      data: id, // langsung string ID
+      data: id,
       key: ENCRYPT_KEY,
     }),
   });
 
   if (!res.ok) throw new Error("Gagal encrypt ID aplikasi");
 
-  const result = await res.json();
-  return result.data;
+  const json = await res.json();
+  return json.data;
 }
 
-// api/hakAkses.js
-export async function getHakAksesByApp(idApp) {
-  const token = getToken();
+// ========== GET HAK AKSES BERDASARKAN APP ==========
+export async function getListHakAksesByApp(encryptedId) {
   const res = await fetch(`${BASE_URL}/getHakAksesByApp`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-       Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ idApp }),
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      idApp: encryptedId, // pastikan field-nya sesuai dengan backend
+    }),
   });
-  return res.json();
+
+  if (!res.ok) throw new Error("Gagal ambil hak akses berdasarkan aplikasi");
+
+  const json = await res.json();
+  return json.data;
 }
 
-export async function getHakAksesAll() {
-  const token = getToken();
-  const res = await fetch(`${BASE_URL}/getlisthakakses/all`, {
-    headers: {
-       Authorization: `Bearer ${token}`,
-    },
+// ========== CREATE ==========
+export async function createHakAkses(data) {
+  const res = await fetch(`${BASE_URL}/addhakakses`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
   });
-  return res.json();
+
+  if (!res.ok) throw new Error("Gagal membuat hak akses");
+
+  return await res.json();
+}
+
+// ========== DELETE ==========
+export async function deleteHakAkses(id) {
+  const res = await fetch(`${BASE_URL}/deletehakaksesaplikasi/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+
+  if (!res.ok) throw new Error("Gagal menghapus hak akses");
+
+  return await res.json();
 }
