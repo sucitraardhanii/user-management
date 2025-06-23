@@ -8,17 +8,25 @@ import {
   Flex,
   Stack,
   Title,
+  Text,
   Select,
   Loader,
 } from "@mantine/core";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
+import {
+  showNotification,
+  updateNotification,
+} from "@mantine/notifications";
 import GenericTable from "@/components/GenericTable";
 import StatusBadge from "@/components/StatusBadge";
 import NullBadge from "@/components/NullBadge";
 import Breadcrumb from "@/components/BreadCrumb";
 import CreateButton from "@/components/CreateButton";
+import { modals } from "@mantine/modals";
 import Link from "next/link";
-import { fetchUserAkses, fetchAplikasi, encryptId } from "@/api/userAkses";
+import { fetchUserAkses, fetchAplikasi, encryptId, deleteUserAkses } from "@/api/userAkses";
+import ButtonAction from "@/components/ButtonAction";
+import { IconCheck, IconX } from "@tabler/icons-react";
 
 export default function UserAksesPage() {
   const [nippos, setNippos] = useState("");
@@ -50,6 +58,56 @@ export default function UserAksesPage() {
   } finally {
     setLoading(false);
   }
+};
+
+const handleDelete = (id, name) => {
+  modals.openConfirmModal({
+    title: "Konfirmasi Hapus",
+    centered: true,
+    size: "sm",
+    overlayProps: { blur: 2, opacity: 0.1 },
+    children: (
+      <Text size="sm">
+        Yakin ingin menghapus <b>{name}</b>?
+      </Text>
+    ),
+    labels: { confirm: "Hapus", cancel: "Batal" },
+    confirmProps: { color: "red" },
+    onConfirm: async () => {
+      showNotification({
+        id: "delete-userakses",
+        title: "Menghapus...",
+        message: `Sedang menghapus ${name}`,
+        loading: true,
+        autoClose: false,
+        withCloseButton: true,
+      });
+
+      try {
+        await deleteUserAkses(id); // pastikan API ini menerima idAkses
+
+        updateNotification({
+          id: "delete-userakses",
+          title: "Berhasil",
+          message: `${name} berhasil dihapus`,
+          color: "teal",
+          icon: <IconCheck size={18} />,
+          autoClose: 3000,
+        });
+
+        setData((prev) => prev.filter((item) => item.idAkses !== id));
+      } catch (err) {
+        updateNotification({
+          id: "delete-userakses",
+          title: "Gagal",
+          message: `Tidak dapat menghapus ${name}`,
+          color: "red",
+          icon: <IconX size={18} />,
+          autoClose: 3000,
+        });
+      }
+    },
+  });
 };
 
 
@@ -93,7 +151,7 @@ export default function UserAksesPage() {
         size: 100,
         Cell: ({ row }) => (
           <Flex gap="xs" wrap="nowrap">
-            <Button
+            {/* <Button
               size="xs"
               variant="light"
               color="blue"
@@ -102,18 +160,11 @@ export default function UserAksesPage() {
               leftSection={<IconEdit size={14} />}
             >
               Edit
-            </Button>
-            <Button
-              size="xs"
-              variant="light"
-              color="red"
-              onClick={() =>
-                handleDelete(row.original.id, row.original.name)
-              }
-              leftSection={<IconTrash size={14} />}
-            >
-              Delete
-            </Button>
+            </Button> */}
+            <ButtonAction
+              onEdit={() => setEditId(row.original.idAkses)}
+              onDelete={() => handleDelete(row.original.idAkses, row.original.namaAkses)}
+            />
           </Flex>
         ),
       },

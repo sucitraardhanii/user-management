@@ -121,15 +121,17 @@ export const deleteUserAkses = async (id) => {
   const token = getToken();
   if (!token) throw new Error("Token tidak tersedia");
 
-  const res = await fetch(`${BASE_URL}/userAkses/${id}`, {
+  const res = await fetch(`${BASE_URL}/userAkses`, {
     method: "DELETE",
     headers: {
+      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ "id": (id) }),
   });
 
-  if (!res.ok) throw new Error("Gagal menghapus aplikasi");
-  return true;
+  if (!res.ok) throw new Error("Gagal hapus aplikasi");
+  return res.json();
 };
 
 export async function fetchHakAkses() {
