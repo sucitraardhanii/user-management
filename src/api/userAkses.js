@@ -131,3 +131,48 @@ export const deleteUserAkses = async (id) => {
   if (!res.ok) throw new Error("Gagal menghapus aplikasi");
   return true;
 };
+
+export async function fetchHakAkses() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getHakAksesByApp`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+    },
+    body: JSON.stringify({ idApp: process.env.NEXT_PUBLIC_APP_ID }),
+  });
+
+  const data = await res.json();
+  return data.map((item) => ({ value: item.idHakAkses.toString(), label: item.namaAkses }));
+}
+
+export async function searchUserByNippos(query) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/userSearch`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+    },
+    body: JSON.stringify({ query }),
+  });
+
+  return await res.json();
+}
+
+export async function createUserAkses(payload) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/userAkses`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Gagal menambahkan akses');
+  }
+
+  return await res.json();
+}
