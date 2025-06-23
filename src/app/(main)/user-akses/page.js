@@ -84,6 +84,7 @@ export default function UserAksesPage() {
       {
         accessorKey: "statusUserAkses",
         header: "Status",
+        size:100,
         Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
       },
       {
