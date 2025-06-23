@@ -6,7 +6,7 @@ import {
   Button,
   Flex,
   Text,
-  TagsInput
+  TagsInput, Box
 } from "@mantine/core";
 import { IconCheck,IconX,
 } from "@tabler/icons-react";
@@ -25,17 +25,32 @@ import CreateButton from "@/components/CreateButton";
 import Breadcrumb from "@/components/BreadCrumb";
 import { modals } from "@mantine/modals";
 import ButtonAction from "@/components/ButtonAction";
+import PageBreadCrumb from "@/components/PageBreadCrumb";
+import AppModal from "@/components/AppModal";
+import AppEditModal from "@/components/AppEditModal";
 
 export default function AppPage() {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTags, setSearchTags] = useState([]);
+  const [opened, setOpened] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [data, setData] = useState([]);
+
+  const getAplikasi = async () => {
+        try {
+          setLoading(true); // opsional, bisa dipindah
+          const data = await fetchAplikasi(); // ambil dari API
+          setApps(data); // update state
+        } catch (err) {
+          console.error("Gagal fetch aplikasi:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
 
   useEffect(() => {
-    fetchAplikasi()
-      .then(setApps)
-      .catch((err) => console.error("Gagal fetch aplikasi:", err))
-      .finally(() => setLoading(false));
+    getAplikasi()
   }, []);
 
   const filteredData = useMemo(() => {
@@ -67,7 +82,7 @@ export default function AppPage() {
           message: `Sedang menghapus ${name}`,
           loading: true,
           autoClose: false,
-          disallowClose: true,
+          withCloseButton: true,
         });
 
         try {
@@ -161,10 +176,9 @@ export default function AppPage() {
         header: "Aksi",
         Cell: ({ row }) => (
           <ButtonAction
-      editUrl={`/apps/${row.original.id}/edit`}
-      onDelete={() =>
-        handleDelete(row.original.id, row.original.name)
-      }/>
+            onEdit={() => setEditId(row.original.id)}
+            onDelete={() => handleDelete(row.original.id, row.original.name)}
+          />
         ),
       },
     ],
@@ -173,11 +187,13 @@ export default function AppPage() {
 
   return (
     <>
-      <Flex justify="space-between" align="center" mb="md" mt="md">
+      <PageBreadCrumb />
+
+      {/* Title dan tombol dalam 1 baris */}
+      <Flex justify="space-between" align="center" mb="md">
         <Title order={2}>Daftar Aplikasi</Title>
-        <CreateButton entity="apps" />
+        <CreateButton entity="aplikasi" useModal onClick={() => setOpened(true)} />
       </Flex>
-      <Breadcrumb />
         <TagsInput label="Filter berdasarkan Nama Akses / Aplikasi" placeholder="Ketik dan tekan Enter"
         value={searchTags}
         onChange={setSearchTags}
@@ -189,6 +205,18 @@ export default function AppPage() {
         columns={columns}
         loading={loading}
         defaultPageSize={5}
+      />
+      <AppModal
+        opened={opened}
+        onClose={() => setOpened(false)}
+        onSuccess={getAplikasi}
+      />
+
+      <AppEditModal
+        id={editId}
+        opened={!!editId}
+        onClose={() => setEditId(null)}
+        onSuccess={getAplikasi}
       />
     </>
   );
