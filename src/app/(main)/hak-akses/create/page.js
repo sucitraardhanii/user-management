@@ -5,25 +5,20 @@ import {
   Box,
   Title,
   Select,
-  Autocomplete,
+  TextInput,
   Button,
   Group,
   Container,
   Loader,
 } from "@mantine/core";
-import { fetchAplikasi, encryptId } from "@/api/hakAkses";
-import { fetchJabatan } from "@/api/menu";
+import { fetchAplikasi, encryptId, createHakAkses } from "@/api/hakAkses";
 import { showNotification } from "@mantine/notifications";
 import { useForm } from "@mantine/form";
 import { useRouter } from "next/navigation";
-import { createHakAkses, getListHakAksesByApp } from "@/api/hakAkses";
 
 export default function AddHakAkses() {
-  const [jabatanOptions, setJabatanOptions] = useState([]);
   const [aplikasiOptions, setAplikasiOptions] = useState([]);
-  const [jabatanInput, setJabatanInput] = useState("");
   const [loadingAplikasi, setLoadingAplikasi] = useState(true);
-  const [loadingJabatan, setLoadingJabatan] = useState(false);
   const [encrypting, setEncrypting] = useState(false);
   const router = useRouter();
 
@@ -35,26 +30,11 @@ export default function AddHakAkses() {
     },
   });
 
-  // Fetch data aplikasi saat pertama
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [idaplikasi, jabatan] = await Promise.all([
-          fetchAplikasi(),
-          fetchJabatan(),
-        ]);
-        const aplikasiFormatted = idaplikasi.map((item) => ({
-          value: item.value?.toString() ?? item.id?.toString(),
-          label: item.label ?? item.nama ?? "Tanpa Nama",
-        }));
-
-        const jabatanFormatted = jabatan.map((item) => ({
-          value: item.value?.toString() ?? item.id?.toString(),
-          label: item.label ?? item.nama ?? "Tanpa Nama",
-        }));
-
-        setAplikasiOptions(aplikasiFormatted);
-        setJabatanOptions(jabatanFormatted);
+        const apps = await fetchAplikasi();
+        setAplikasiOptions(apps);
       } catch (err) {
         console.error("Error fetching applications:", err);
         showNotification({
@@ -70,13 +50,9 @@ export default function AddHakAkses() {
     fetchInitialData();
   }, []);
 
-  // Saat aplikasi dipilih: enkripsi ID & ambil jabatan
   const handleChangeAplikasi = async (idaplikasi) => {
     form.setFieldValue("idaplikasi", idaplikasi);
     form.setFieldValue("encryptIdAplikasi", "");
-    form.setFieldValue("namaakses", "");
-    setJabatanInput("");
-    setJabatanOptions([]);
 
     if (!idaplikasi) return;
 
@@ -84,33 +60,20 @@ export default function AddHakAkses() {
       setEncrypting(true);
       const encrypted = await encryptId(idaplikasi);
       form.setFieldValue("encryptIdAplikasi", encrypted);
-
-      setLoadingJabatan(true);
-      const hakAksesResponse = await getListHakAksesByApp(encrypted);
-
-      const jabatanFormatted = hakAksesResponse.map((item) => ({
-          value: item.idhakakses?.toString(),
-          label: item.namaakses ?? "Tanpa Nama",
-        }));
-
-      setJabatanOptions(jabatanFormatted);
     } catch (err) {
       console.error(err);
       showNotification({
         title: "Gagal",
-        message: "Gagal mengenkripsi ID atau mengambil jabatan",
+        message: "Gagal mengenkripsi ID aplikasi",
         color: "red",
       });
     } finally {
       setEncrypting(false);
-      setLoadingJabatan(false);
     }
   };
 
-  // Submit data
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const payload = {
         idaplikasi: form.values.encryptIdAplikasi,
@@ -157,28 +120,10 @@ export default function AddHakAkses() {
             rightSection={encrypting ? <Loader size="xs" /> : null}
           />
 
-          <Autocomplete
-            label="Pilih Kategori Jabatan"
-            placeholder={
-              loadingJabatan
-                ? "Memuat jabatan..."
-                : jabatanOptions.length === 0
-                ? "Pilih aplikasi terlebih dahulu"
-                : "Ketik atau pilih jabatan"
-            }
-            data={jabatanOptions}
-            value={
-              jabatanOptions.find((opt) => opt.value === form.values.namaakses)
-                ?.label ?? jabatanInput
-            }
-            onChange={(val) => {
-              setJabatanInput(val);
-              const selected = jabatanOptions.find((opt) => opt.label === val);
-              form.setFieldValue("namaakses", selected?.value || "");
-            }}
-            rightSection={loadingJabatan ? <Loader size="xs" /> : null}
-            clearable
-            disabled={loadingJabatan || jabatanOptions.length === 0}
+          <TextInput
+            label="Nama Akses"
+            placeholder="Masukkan nama akses"
+            {...form.getInputProps("namaakses")}
             required
             mt="md"
           />
