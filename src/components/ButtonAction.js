@@ -6,20 +6,23 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 
-export default function ButtonAction({ editUrl, onDelete }) {
-  const router = useRouter();
+export default function ButtonAction({ editUrl, onDelete, onEdit }) {
   const [loadingEdit, setLoadingEdit] = useState(false);
   const [loadingDelete, setLoadingDelete] = useState(false);
 
   const handleEdit = async () => {
-    setLoadingEdit(true);
-    router.push(editUrl);
+    if (onEdit) {
+      onEdit();
+    } else {
+      setLoadingEdit(true);
+      router.push(editUrl);
+    }
   };
 
   const handleDelete = async () => {
     setLoadingDelete(true);
     try {
-      await onDelete(); // fungsi dari parent
+      await onDelete();
     } finally {
       setLoadingDelete(false);
     }
@@ -31,8 +34,6 @@ export default function ButtonAction({ editUrl, onDelete }) {
         size="xs"
         variant="light"
         color="blue"
-        component={Link}
-        href={editUrl}
         onClick={handleEdit}
         loading={loadingEdit}
         leftSection={<IconEdit size={14} />}
@@ -52,3 +53,4 @@ export default function ButtonAction({ editUrl, onDelete }) {
     </Flex>
   );
 }
+

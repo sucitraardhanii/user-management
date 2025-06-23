@@ -1,3 +1,4 @@
+// components/CreateButton.jsx
 "use client";
 
 import { Button } from "@mantine/core";
@@ -5,15 +6,19 @@ import { IconPlus } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function CreateButton({ entity }) {
+export default function CreateButton({ entity, onClick, useModal = false }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleClick = () => {
-    setLoading(true);
-    setTimeout(() => {
-      router.push(`/${entity}/create`);
-    }, 500); // biar keliatan loading-nya, delay sedikit
+    if (useModal && onClick) {
+      onClick(); // buka modal
+    } else {
+      setLoading(true);
+      setTimeout(() => {
+        router.push(`/${entity}/create`);
+      }, 500);
+    }
   };
 
   return (
