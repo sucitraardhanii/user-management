@@ -27,6 +27,10 @@ import Link from "next/link";
 import { fetchUserAkses, fetchAplikasi, encryptId, deleteUserAkses } from "@/api/userAkses";
 import ButtonAction from "@/components/ButtonAction";
 import { IconCheck, IconX } from "@tabler/icons-react";
+import UserAksesModal from "@/components/UserAksesModal";
+import { getIdAplikasi, isSuperAdmin } from "@/api/auth";
+import { ADMIN_ID } from "@/api/constant";
+
 
 export default function UserAksesPage() {
   const [nippos, setNippos] = useState("");
@@ -34,10 +38,44 @@ export default function UserAksesPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [aplikasiOptions, setAplikasiOptions] = useState([]);
+  const [editId, setEditId] = useState(null);
+  const [opened, setOpened] = useState(false);
+
+
+  useEffect(() => {
+    
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        
+        const aplikasi = await fetchAplikasi();
+        setAplikasiOptions(aplikasi);
+      } catch (err) {
+        console.error("Gagal ambil data aplikasi:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
 
   const handleFetch = async () => {
   setLoading(true);
   try {
+    if (!isSuperAdmin()) {
+      const idaplikasi = getIdAplikasi();
+      setIdaplikasi(idaplikasi);
+
+      const result = await fetchUserAkses({
+      nippos,
+      idaplikasi: idaplikasi,
+
+      });
+      setData(result);
+      return;
+    }
+
     let encryptedId = "";
     if (idaplikasi){
       encryptedId = await encryptId(idaplikasi);
@@ -46,6 +84,7 @@ export default function UserAksesPage() {
     if (idaplikasi && nippos) {
       encryptedId = await encryptId(idaplikasi);
     }
+
 
     const result = await fetchUserAkses({
       nippos,
@@ -111,22 +150,6 @@ const handleDelete = (id, name) => {
 };
 
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      setLoading(true);
-      try {
-        const aplikasi = await fetchAplikasi();
-        setAplikasiOptions(aplikasi);
-      } catch (err) {
-        console.error("Gagal ambil data aplikasi:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInitialData();
-  }, []);
-
   const columns = useMemo(
     () => [
       {
@@ -189,7 +212,8 @@ const handleDelete = (id, name) => {
               placeholder="Masukkan Nippos"
               style={{ flex: 1 }}
             />
-            <Select
+            {isSuperAdmin()?(
+              <Select
               label="Pilih Aplikasi"
               data={aplikasiOptions}
               value={idaplikasi}
@@ -201,6 +225,17 @@ const handleDelete = (id, name) => {
               rightSection={loading ? <Loader size="xs" /> : null}
               style={{ flex: 1 }}
             />
+            ) : (
+              <TextInput
+                label="ID Aplikasi"
+                value={getIdAplikasi()}
+                readOnly
+                disabled
+                style={{ flex: 1 }}
+              />
+            )
+            }
+            
             <Button
               onClick={handleFetch}
               mt={20}
@@ -213,6 +248,7 @@ const handleDelete = (id, name) => {
 
         <Breadcrumb />
         <GenericTable data={data} columns={columns} loading={loading} />
+
       </Stack>
     </>
   );
