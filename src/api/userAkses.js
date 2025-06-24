@@ -58,20 +58,20 @@ export async function fetchAplikasi() {
 }
 
 
-export async function encryptId(data) {
+export async function encryptId(id) {
   const res = await fetch(`${BASE_URL}/encId`, {
     method: "POST",
     headers,
     body: JSON.stringify({
-      data, // pastikan dikirim sebagai integer
+      data: id, // langsung string ID
       key: ENCRYPT_KEY,
     }),
   });
 
-  if (!res.ok) throw new Error("Gagal encrypt ID");
+  if (!res.ok) throw new Error("Gagal encrypt ID aplikasi");
 
-  const json = await res.json();
-  return json.data; // contoh: "zWNxN3mYyLT6R7-A9BLe2A=="
+  const result = await res.json();
+  return result.data;
 }
 
 
@@ -134,47 +134,81 @@ export const deleteUserAkses = async (id) => {
   return res.json();
 };
 
-export async function fetchHakAkses() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getHakAksesByApp`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
-    },
-    body: JSON.stringify({ idApp: process.env.NEXT_PUBLIC_APP_ID }),
+export async function fetchHakAkses(encryptedId) {
+  const res = await fetch(`${BASE_URL}/getHakAksesByApp`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      idApp: encryptedId,
+    }),
   });
 
-  const data = await res.json();
-  return data.map((item) => ({ value: item.idHakAkses.toString(), label: item.namaAkses }));
-}
+  if (!res.ok) throw new Error("Gagal ambil hak akses");
 
-export async function searchUserByNippos(query) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/userSearch`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
-    },
-    body: JSON.stringify({ query }),
-  });
+  const { data } = await res.json();
 
-  return await res.json();
+  return data.map((item) => ({
+    label: item.namaakses,
+    value: item.idhakakses.toString(),
+  }));
 }
 
 export async function createUserAkses(payload) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/userAkses`, {
+  const res = await fetch(`${BASE_URL}/userAkses`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`,
-    },
+    headers,
     body: JSON.stringify(payload),
   });
 
+  const result = await res.json();
+
   if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || 'Gagal menambahkan akses');
+    const error = new Error(result.message || 'Gagal');
+    error.response = { data: result };
+    throw error;
   }
 
-  return await res.json();
+  return result;
 }
+
+
+export async function fetchAllUserNippos() {
+  const res = await fetch(`${BASE_URL}/getUser`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ nippos: '' }),
+  });
+
+  const result = await res.json();
+
+  const arr = Array.isArray(result.data) ? result.data : [result.data];
+
+  return arr.map((item) => ({
+    value: item.nippos,
+    label: `${item.nippos} - ${item.nama}`,
+  }));
+}
+
+
+export async function searchUserNippos(query) {
+  const res = await fetch(`${BASE_URL}/getUser`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ nippos: query }),
+  });
+
+  const result = await res.json();
+
+  if (!result?.data) return [];
+
+  const arr = Array.isArray(result.data) ? result.data : [result.data];
+
+  return arr.map((item) => ({
+    value: item.nippos,
+    label: `${item.nippos} - ${item.nama}`,
+  }));
+}
+
