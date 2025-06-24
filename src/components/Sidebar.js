@@ -4,12 +4,19 @@ import { Box, NavLink, Stack, Loader, Collapse } from "@mantine/core";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
+import { isSuperAdmin } from "@/api/auth";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [loadingPath, setLoadingPath] = useState(null);
   const [openedDropdown, setOpenedDropdown] = useState(null);
+  const [adminMode, setAdminMode] = useState(false);
+
+  useEffect(() => {
+    setAdminMode(isSuperAdmin());
+    setLoadingPath(null);
+  }, [pathname]);
 
   const handleClick = (href) => {
     if (href !== pathname) {
@@ -22,32 +29,39 @@ export default function Sidebar() {
     setOpenedDropdown((prev) => (prev === label ? null : label));
   };
 
-  const links = [
+  const baseLinks = [
     { label: "Dashboard", href: "/dashboard" },
-    { label: 'Aplikasi', href: '/apps' },
-    { label: 'Hak Akses', href: '/hak-akses' },
-    {
-      label: "Menu",
-      children: [
-        { label: "Jabatan", href: "/menu/jabatan" },
-        { label: "Kantor", href: "/menu/kantor" },
-        { label: "Menu", href: "/menu/menu" },
-      ],
-    },
-    {
-      label: "User",
-      href:'/user',
-      children: [
-        { label: "User Internal", href: "/user/internal" },
-        { label: "User Eksternal", href: "/user/external" },
-      ],
-    },
     { label: "User Akses", href: "/user-akses" },
+    { label: "Hak Akses", href: "/hak-akses" },
+    {
+          label: "User External",
+          href: "/user/external",
+    },
+    {
+          label: "User Internal",
+          href: "/user/internal",
+    },
   ];
 
-  useEffect(() => {
-    setLoadingPath(null);
-  }, [pathname]);
+  const adminLinks = adminMode
+    ? [
+        { label: "Aplikasi", href: "/apps" },
+        {
+          label: "User",
+          href: "/user",
+        },
+        {
+            label: "Menu",
+            children: [
+                  { label: "Jabatan", href: "/menu/jabatan" },
+                  { label: "Kantor", href: "/menu/kantor" },
+                  { label: "Menu", href: "/menu/menu" },
+                ],
+          },
+      ]
+    : [];
+
+  const links = [...baseLinks, ...adminLinks];
 
   return (
     <Box w={220} p="md" bg="blue.6" h="100vh" style={{ color: "white" }}>
