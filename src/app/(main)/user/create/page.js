@@ -210,7 +210,7 @@ export default function RegistrasiUser() {
         </>),
         icon: <IconCheck size={20} />,
         color: 'teal',
-        autoClose: false, // biar user bisa salin
+        autoClose: false,
       });
       router.push("/user");
     } catch (err) {
