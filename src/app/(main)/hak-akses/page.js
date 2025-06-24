@@ -1,70 +1,130 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Title, Button, Flex, TextInput, TagsInput   } from "@mantine/core";
-import Link from "next/link";
-import { IconEdit, IconTrash } from "@tabler/icons-react";
+import { useState, useMemo, useEffect } from "react";
+import {
+  Text,
+  Button,
+  Paper,
+  Flex,
+  Stack,
+  Title,
+  Select,
+  Loader,
+} from "@mantine/core";
+import { IconEdit, IconTrash, IconX } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
-import { deleteHakAkses, fetchHakAkses } from "@/api/hakAkses";
 import StatusBadge from "@/components/StatusBadge";
 import Breadcrumb from "@/components/BreadCrumb";
 import CreateButton from "@/components/CreateButton";
+import Link from "next/link";
+import { fetchHakAkses, fetchAplikasi, encryptId, deleteHakAkses } from "@/api/hakAkses";
+import { showNotification, updateNotification } from "@mantine/notifications";
+import { modals } from "@mantine/modals";
 
+export default function HakAksesPage() {
+  const [idaplikasi, setIdaplikasi] = useState("");
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [aplikasiOptions, setAplikasiOptions] = useState([]);
 
-export default function AppPage() {
-  const [apps, setApps] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTags, setSearchTags] = useState([]);
-  
-  useEffect(() => {
-    fetchHakAkses()
-      .then(setApps)
-      .catch((err) => console.error("Gagal fetch aplikasi:", err))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleDelete = async (id, name) => {
-    if (!confirm(`Yakin ingin menghapus ${name}?`)) return;
+  const handleFetch = async () => {
+    setLoading(true);
     try {
-      await deleteHakAkses(id);
-      setApps((prev) => prev.filter((app) => app.id !== id));
+      let encryptedId = "";
+      if (idaplikasi) {
+        encryptedId = await encryptId(idaplikasi);
+      }
+
+      const result = await fetchHakAkses({
+        idaplikasi: encryptedId || "",
+      });
+
+      setData(result);
     } catch (err) {
-      console.error("Gagal menghapus aplikasi:", err);
+      console.error("Gagal fetch:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredData = useMemo(() => {
-  if (searchTags.length === 0) return apps;
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        const aplikasi = await fetchAplikasi();
+        setAplikasiOptions(aplikasi);
+      } catch (err) {
+        console.error("Gagal ambil data aplikasi:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  return apps.filter((item) =>
-    searchTags.every((tag) =>
-      (item.namaAkses?.toLowerCase().includes(tag.toLowerCase()) ||
-       item.namaAplikasi?.toLowerCase().includes(tag.toLowerCase()))
-    )
-  );
-}, [apps, searchTags]);
+    fetchInitialData();
+  }, []);
+
+   const handleDelete = (id, namaakses) => {
+      modals.openConfirmModal({
+        title: "Konfirmasi Hapus",
+        centered: true,
+        size: "sm",
+        overlayProps: { blur: 2, opacity: 0.1 },
+        children: (
+          <Text size="sm">
+            Yakin ingin menghapus <b>{namaakses}</b>?
+          </Text>
+        ),
+        labels: { confirm: "Hapus", cancel: "Batal" },
+        confirmProps: { color: "red" },
+        onConfirm: async () => {
+          showNotification({
+            id: "delete-aplikasi",
+            title: "Menghapus...",
+            message: `Sedang menghapus ${namaakses}`,
+            loading: true,
+            autoClose: false,
+          });
+  
+          try {
+            await deleteHakAkses(idhakakses);
+  
+            updateNotification({
+              id: "delete-aplikasi",
+              title: "Berhasil",
+              message: `${namaakses} berhasil dihapus`,
+              color: "teal",
+              icon: <IconCheck size={18} />,
+              autoClose: 3000,
+            });
+  
+            setData((prev) => prev.filter((item) => item.id !== id));
+          } catch (err) {
+            updateNotification({
+              id: "delete-aplikasi",
+              title: "Gagal",
+              message: `Tidak dapat menghapus ${namaakses}`,
+              color: "red",
+              icon: <IconX size={18} />,
+              autoClose: 3000,
+            });
+          }
+        },
+      });
+    };
 
   const columns = useMemo(
     () => [
+      { accessorKey: "idhakakses", header: "ID Hak Akses", size: 100 },
+      { accessorKey: "namaakses", header: "Nama Akses", size: 150 },
       {
-        id: "number",
-        header: "No.",
-        size: 50,
-        Cell: ({ row, table }) => {
-          const { pageIndex, pageSize } = table.options.meta || {};
-          return (pageIndex ?? 0) * (pageSize ?? 5) + row.index + 1;
-        },
-      },
-      { accessorKey: "namaAkses", header: "Nama" },
-      { accessorKey: "namaAplikasi", header: "Nama Aplikasi" },
-      {
-        accessorKey: "statusAktif",
+        accessorKey: "status",
         header: "Status",
         Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
       },
       {
         id: "actions",
         header: "Aksi",
+        size: 100,
         Cell: ({ row }) => (
           <Flex gap="xs" wrap="nowrap">
             <Button
@@ -72,7 +132,7 @@ export default function AppPage() {
               variant="light"
               color="blue"
               component={Link}
-              href={`/apps/${row.original.id}/edit`}
+              href={`/hak-akses/${row.original.id}/edit`}
               leftSection={<IconEdit size={14} />}
             >
               Edit
@@ -81,7 +141,7 @@ export default function AppPage() {
               size="xs"
               variant="light"
               color="red"
-              onClick={() => handleDelete(row.original.id, row.original.name)}
+              onClick={() => handleDelete(row.original.id, row.original.namaakses)}
               leftSection={<IconTrash size={14} />}
             >
               Delete
@@ -99,19 +159,31 @@ export default function AppPage() {
         <Title order={2}>Hak Akses</Title>
         <CreateButton entity="hak-akses" />
       </Flex>
-       <Breadcrumb />
-      {/* <TagsInput label="Filter berdasarkan Nama Akses / Aplikasi" placeholder="Ketik dan tekan Enter"
-      value={searchTags}
-      onChange={setSearchTags}
-      clearable
-      mb="md"
-    /> */}
-      <GenericTable
-        data={filteredData}
-        columns={columns}
-        loading={loading}
-        defaultPageSize={5}
-      />
+
+      <Stack>
+        <Paper withBorder p="md" radius="md">
+          <Flex gap="md" wrap="wrap">
+            <Select
+              label="Pilih Aplikasi"
+              data={aplikasiOptions}
+              value={idaplikasi}
+              onChange={setIdaplikasi}
+              placeholder="Pilih aplikasi"
+              searchable
+              clearable
+              disabled={loading}
+              rightSection={loading ? <Loader size="xs" /> : null}
+              style={{ flex: 1 }}
+            />
+            <Button onClick={handleFetch} mt={20} style={{ height: "40px" }}>
+              Tampilkan Data
+            </Button>
+          </Flex>
+        </Paper>
+
+        <Breadcrumb />
+        <GenericTable data={data} columns={columns} loading={loading} />
+      </Stack>
     </>
   );
 }
