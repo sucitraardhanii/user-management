@@ -1,9 +1,5 @@
-// src/lib/auth.js
-import { showNotification, updateNotification } from "@mantine/notifications";
-
 export const login = async ({ nippos, password, idaplikasi }) => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  const appId = process.env.NEXT_PUBLIC_APP_ID;
 
   const res = await fetch(`${apiUrl}/authMob`, {
     method: "POST",
@@ -18,40 +14,23 @@ export const login = async ({ nippos, password, idaplikasi }) => {
   });
 
   const data = await res.json();
-  saveToken(data.token, idaplikasi);
 
   const contentType = res.headers.get("content-type");
-  //if (!res.ok) throw new Error(`HTTP ${res.status}`);
- 
   if (!contentType?.includes("application/json")) {
     const html = await res.text();
     console.error("Response bukan JSON:", html);
     throw new Error("Server mengirim data bukan JSON");
   }
-  
+
   if (!data.token) throw new Error("Token tidak ditemukan");
+
+  saveToken(data.token, idaplikasi);
   return data.token;
 };
 
-
-export function isTokenExpired() {
-  if (typeof window === "undefined") return true;
-
-  const itemStr = localStorage.getItem("auth_token");
-  if (!itemStr) return true;
-
-  try {
-    const item = JSON.parse(itemStr);
-    const now = new Date();
-    return now.getTime() > item.expiry;
-  } catch (err) {
-    return true;
-  }
-}
-
 export function saveToken(token, idaplikasi) {
   const now = new Date();
-  const expiry = now.getTime() + 60 * 60 * 10000; // 10 jam dari sekarang
+  const expiry = now.getTime() + 60 * 60 * 10000; // 10 jam
   const item = {
     token,
     idaplikasi,
@@ -59,7 +38,6 @@ export function saveToken(token, idaplikasi) {
   };
   localStorage.setItem("auth_token", JSON.stringify(item));
 }
-
 
 export function getToken() {
   if (typeof window === "undefined") return null;
@@ -83,6 +61,34 @@ export function getToken() {
   }
 }
 
+export function getIdAplikasi() {
+  if (typeof window === "undefined") return null;
+
+  const itemStr = localStorage.getItem("auth_token");
+  if (!itemStr) return null;
+
+  try {
+    const item = JSON.parse(itemStr);
+    return item.idaplikasi || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+export function isTokenExpired() {
+  if (typeof window === "undefined") return true;
+
+  const itemStr = localStorage.getItem("auth_token");
+  if (!itemStr) return true;
+
+  try {
+    const item = JSON.parse(itemStr);
+    const now = new Date();
+    return now.getTime() > item.expiry;
+  } catch (err) {
+    return true;
+  }
+}
 
 export function removeToken() {
   localStorage.removeItem("auth_token");
@@ -104,30 +110,6 @@ function decodeJwt(token) {
   return JSON.parse(jsonPayload);
 }
 
-// Ambil token dari localStorage
-const token = localStorage.getItem("auth_token");
-
-if (token) {
-  const decoded = decodeJwt(token);
-  const idAplikasi = decoded["x-app"]; 
-  console.log("ID Aplikasi:", idAplikasi);
-}
-
-export function getIdAplikasi() {
-  if (typeof window === "undefined") return null;
-
-  const itemStr = localStorage.getItem("auth_token");
-  if (!itemStr) return null;
-
-  try {
-    const item = JSON.parse(itemStr);
-    return item.idAplikasi || null;
-  } catch (err) {
-    return null;
-  }
-}
-
-///Pengecekan SUPER ADMIN - User Management
 export const SUPER_ADMIN_APP_ID = "kkTF3FKfnK0sWExTZZquhw==";
 
 export function isSuperAdmin() {
