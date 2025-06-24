@@ -34,11 +34,11 @@ export default function Sidebar() {
     { label: "User Akses", href: "/user-akses" },
     { label: "Hak Akses", href: "/hak-akses" },
     {
-          label: "User External",
+          label: "Regis User External",
           href: "/user/external",
     },
     {
-          label: "User Internal",
+          label: "Regis User Internal",
           href: "/user/internal",
     },
   ];
