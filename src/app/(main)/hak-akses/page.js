@@ -2,24 +2,30 @@
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  Text,
   Button,
   Paper,
   Flex,
   Stack,
   Title,
+  Text,
   Select,
   Loader,
 } from "@mantine/core";
-import { IconEdit, IconTrash, IconX } from "@tabler/icons-react";
+import { showNotification, updateNotification } from "@mantine/notifications";
 import GenericTable from "@/components/GenericTable";
 import StatusBadge from "@/components/StatusBadge";
 import Breadcrumb from "@/components/BreadCrumb";
 import CreateButton from "@/components/CreateButton";
-import Link from "next/link";
-import { fetchHakAkses, fetchAplikasi, encryptId, deleteHakAkses } from "@/api/hakAkses";
-import { showNotification, updateNotification } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
+import {
+  fetchHakAkses,
+  fetchAplikasi,
+  encryptId,
+  deleteHakAkses,
+} from "@/api/hakAkses";
+import { IconCheck, IconX } from "@tabler/icons-react";
+import { IconEdit, IconTrash } from "@tabler/icons-react";
+import Link from "next/link";
 
 export default function HakAksesPage() {
   const [idaplikasi, setIdaplikasi] = useState("");
@@ -47,6 +53,56 @@ export default function HakAksesPage() {
     }
   };
 
+  const handleDelete = (idhakakses, name) => {
+    modals.openConfirmModal({
+      title: "Konfirmasi Hapus",
+      centered: true,
+      size: "sm",
+      overlayProps: { blur: 2, opacity: 0.1 },
+      children: (
+        <Text size="sm">
+          Yakin ingin menghapus <b>{name}</b>?
+        </Text>
+      ),
+      labels: { confirm: "Hapus", cancel: "Batal" },
+      confirmProps: { color: "red" },
+      onConfirm: async () => {
+        showNotification({
+          id: "delete-hakakses",
+          title: "Menghapus...",
+          message: `Sedang menghapus ${name}`,
+          loading: true,
+          autoClose: false,
+          withCloseButton: true,
+        });
+
+        try {
+          await deleteHakAkses(idhakakses); // pastikan API ini menerima idAkses
+
+          updateNotification({
+            id: "delete-hakakses",
+            title: "Berhasil",
+            message: `${name} berhasil dihapus`,
+            color: "teal",
+            icon: <IconCheck size={18} />,
+            autoClose: 3000,
+          });
+
+          setData((prev) => prev.filter((item) => item.idhakakses !== id));
+        } catch (err) {
+          updateNotification({
+            id: "delete-hakakses",
+            title: "Gagal",
+            message: `Tidak dapat menghapus ${name}`,
+            color: "red",
+            icon: <IconX size={18} />,
+            autoClose: 3000,
+          });
+        }
+      },
+    });
+  };
+
   useEffect(() => {
     const fetchInitialData = async () => {
       setLoading(true);
@@ -63,55 +119,6 @@ export default function HakAksesPage() {
     fetchInitialData();
   }, []);
 
-   const handleDelete = (id, namaakses) => {
-      modals.openConfirmModal({
-        title: "Konfirmasi Hapus",
-        centered: true,
-        size: "sm",
-        overlayProps: { blur: 2, opacity: 0.1 },
-        children: (
-          <Text size="sm">
-            Yakin ingin menghapus <b>{namaakses}</b>?
-          </Text>
-        ),
-        labels: { confirm: "Hapus", cancel: "Batal" },
-        confirmProps: { color: "red" },
-        onConfirm: async () => {
-          showNotification({
-            id: "delete-aplikasi",
-            title: "Menghapus...",
-            message: `Sedang menghapus ${namaakses}`,
-            loading: true,
-            autoClose: false,
-          });
-  
-          try {
-            await deleteHakAkses(idhakakses);
-  
-            updateNotification({
-              id: "delete-aplikasi",
-              title: "Berhasil",
-              message: `${namaakses} berhasil dihapus`,
-              color: "teal",
-              icon: <IconCheck size={18} />,
-              autoClose: 3000,
-            });
-  
-            setData((prev) => prev.filter((item) => item.id !== id));
-          } catch (err) {
-            updateNotification({
-              id: "delete-aplikasi",
-              title: "Gagal",
-              message: `Tidak dapat menghapus ${namaakses}`,
-              color: "red",
-              icon: <IconX size={18} />,
-              autoClose: 3000,
-            });
-          }
-        },
-      });
-    };
-
   const columns = useMemo(
     () => [
       { accessorKey: "idhakakses", header: "ID Hak Akses", size: 100 },
@@ -119,6 +126,7 @@ export default function HakAksesPage() {
       {
         accessorKey: "status",
         header: "Status",
+        size: 100,
         Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
       },
       {
@@ -132,8 +140,9 @@ export default function HakAksesPage() {
               variant="light"
               color="blue"
               component={Link}
-              href={`/hak-akses/${row.original.id}/edit`}
+              href={`/hak-akses/${row.original.idhakakses}/edit?idApp=${idaplikasi}`}
               leftSection={<IconEdit size={14} />}
+              disabled={!idaplikasi}
             >
               Edit
             </Button>
@@ -141,7 +150,9 @@ export default function HakAksesPage() {
               size="xs"
               variant="light"
               color="red"
-              onClick={() => handleDelete(row.original.id, row.original.namaakses)}
+              onClick={() =>
+                handleDelete(row.original.idhakakses, row.original.namaakses)
+              }
               leftSection={<IconTrash size={14} />}
             >
               Delete
@@ -150,7 +161,7 @@ export default function HakAksesPage() {
         ),
       },
     ],
-    []
+    [idaplikasi]
   );
 
   return (

@@ -15,27 +15,50 @@ function getAuthHeaders() {
   };
 }
 
-export async function fetchHakAkses({ idaplikasi = "" }) {
+export async function fetchHakAkses({ idaplikasi } = {}) {
   let endpoint = "/getlisthakakses/all";
-  let body = { idApp: idaplikasi };
-
-  if (idaplikasi) {
-    endpoint = "/getHakAksesByApp";
-    body = { idApp: idaplikasi };
-  }
-
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
-    method: "POST",
+  let options = {
+    method: "GET",
     headers: getAuthHeaders(),
-    body: JSON.stringify(body),
-  });
+  };
 
-  if (!res.ok) {
-    throw new Error("Gagal fetch hak akses");
+  // Jika ada idaplikasi, gunakan POST dan endpoint yang berbeda
+  if (idaplikasi) {
+  console.log("📡 fetchHakAkses → by app:", idaplikasi);
+    endpoint = "/getHakAksesByApp";
+    options = {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ idApp: idaplikasi }),
+    };
   }
+
+  const res = await fetch(`${BASE_URL}${endpoint}`, options);
+
+  if (!res.ok) throw new Error("Gagal fetch hak akses");
 
   const json = await res.json();
-  return json.data; // ✅ Ambil hanya bagian array-nya
+
+  return json.data.map((item) => ({
+    idhakakses: item.idhakakses?.toString(),
+    namaakses: item.namaakses ?? "-",
+    status: item.status ?? "-",
+  }));
+}
+
+export async function updateHakAkses(id, data) {
+  const res = await fetch(`${BASE_URL}/updatehakakses`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      idhakakses: id,
+      ...data,
+    }),
+  });
+
+  if (!res.ok) throw new Error("Gagal update hak akses");
+
+  return await res.json();
 }
 
 // ========== FETCH SEMUA APLIKASI ==========
@@ -64,11 +87,11 @@ export async function encryptId(id) {
     }),
   });
 
-  if (!res.ok) throw new Error("Gagal encrypt ID aplikasi");
-
   const json = await res.json();
+  console.log("🔐 Encrypted ID:", json.data);
   return json.data;
 }
+
 
 // ========== GET HAK AKSES BERDASARKAN APP ==========
 export async function getListHakAksesByApp(encryptedId) {
@@ -103,56 +126,21 @@ export async function createHakAkses(data) {
   return await res.json();
 }
 
-// Ambil user akses berdasarkan ID
-export const getHakAksesByID = async (id) => {
-  const token = getToken();
-  const res = await fetch(`${BASE_URL}/hakAkses/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) throw new Error("Gagal mengambil data aplikasi");
-  const item = await res.json();
-
-  return {
-    id: item.id,
-    namaakses: item.namaakses,
-    status: item.status,
-    idhakakses: item.idhakakses,
-  };
-};
-
-
-// Update User Akses
-export const updateHakAkses = async (id, data) => {
-  const token = getToken();
-  const res = await fetch(`${BASE_URL}/hakAkses/${id}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({
-      namaakses: data.namaakses,
-      status: data.status,
-    }),
-  });
-
-  if (!res.ok) throw new Error("Gagal mengupdate Hak Akses");
-  return await res.json();
-};
-
-
 // Hapus aplikasi
-export const deleteHakAkses = async (id) => {
+export const deleteHakAkses = async (idhakakses) => {
   const token = getToken();
   if (!token) throw new Error("Token tidak tersedia");
 
-  const res = await fetch(`${BASE_URL}/hakAkses/${id}`, {
+  const res = await fetch(`${BASE_URL}/deletehakaksesaplikasi`, {
     method: "DELETE",
     headers: {
+      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ "id": (idhakakses) }),
   });
 
-  if (!res.ok) throw new Error("Gagal menghapus Hak Akses");
-  return true;
+  if (!res.ok) throw new Error("Gagal hapus aplikasi");
+  return res.json();
 };
+

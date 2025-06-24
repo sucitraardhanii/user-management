@@ -1,131 +1,135 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   TextInput,
-  Button,
-  Box,
-  Title,
-  Group,
   Select,
+  Button,
+  Stack,
+  Paper,
+  Title,
   Loader,
-  Center,
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
-import { IconCheck } from "@tabler/icons-react";
-import {
-  getHakAksesByID,
-  updateHakAkses,
-  deleteHakAkses,
-} from "@/api/hakAkses";
+import { IconCheck, IconX } from "@tabler/icons-react";
+import { fetchHakAkses, updateHakAkses } from "@/api/hakAkses";
+
+// Ambil data hak akses dari filter by app
+async function fetchHakAksesById(id, encryptedIdApp) {
+  const dataByApp = await fetchHakAkses({ idaplikasi: encryptedIdApp });
+
+  const item = dataByApp.find(
+    (d) => d.idhakakses?.toString() === id?.toString()
+  );
+
+  if (!item) throw new Error("Data hak akses tidak ditemukan");
+
+  return item;
+}
 
 export default function EditHakAksesPage() {
   const { id } = useParams();
   const router = useRouter();
-  const idhakakses = id ? Number(id) : null;
+  const searchParams = useSearchParams();
+  const encryptedIdApp = searchParams.get("idApp");
+
   const [loading, setLoading] = useState(true);
 
-  const [hakAkses, setHakAkses] = useState({
-    namaakses: "",
-    status: 1,
+  const form = useForm({
+    initialValues: {
+      namaakses: "",
+      status: "1",
+    },
   });
 
   useEffect(() => {
-    getHakAksesByID(idhakakses)
-      .then(setHakAkses)
-      .catch((err) => console.error("Gagal ambil data hak akses:", err))
-      .finally(() => setLoading(false));
-  }, [idhakakses]);
+    const loadData = async () => {
+      if (!encryptedIdApp || encryptedIdApp === "undefined") {
+        showNotification({
+          title: "ID Aplikasi Tidak Valid",
+          message: "Query idapp hilang atau tidak valid.",
+          color: "red",
+          icon: <IconX />,
+        });
+        router.push("/hak-akses");
+        return;
+      }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+      setLoading(true);
+      try {
+        const data = await fetchHakAksesById(id, encryptedIdApp);
+        form.setValues({
+          namaakses: data.namaakses,
+          status: data.status?.toString() || "0",
+        });
+      } catch (err) {
+        console.error("Gagal fetch data hak akses:", err);
+        showNotification({
+          title: "Gagal",
+          message: "Data hak akses tidak ditemukan",
+          color: "red",
+          icon: <IconX />,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id && encryptedIdApp) {
+      loadData();
+    }
+  }, [id, encryptedIdApp]);
+
+  const handleSubmit = async (values) => {
     try {
-      await updateHakAkses(idhakakses, namaakses);
+      await updateHakAkses(id, values);
       showNotification({
         title: "Berhasil",
         message: "Data hak akses berhasil diperbarui",
         color: "teal",
-        icon: <IconCheck size={18} />,
+        icon: <IconCheck />,
       });
       router.push("/hak-akses");
     } catch (err) {
       console.error("Gagal update:", err);
       showNotification({
         title: "Gagal",
-        message: "Tidak dapat menyimpan perubahan",
+        message: "Terjadi kesalahan saat update data",
         color: "red",
+        icon: <IconX />,
       });
     }
   };
 
-  const handleDelete = async () => {
-    const confirmed = confirm(`Yakin ingin menghapus hak akses #${namaakses}?`);
-    if (!confirmed) return;
-
-    try {
-      await deleteHakAkses(idhakakses);
-      showNotification({
-        title: "Dihapus",
-        message: `Hak akses #${namaakses} berhasil dihapus`,
-        color: "red",
-      });
-      router.push("/hak-akses");
-    } catch (err) {
-      console.error("Gagal hapus:", err);
-      showNotification({
-        title: "Gagal",
-        message: "Tidak dapat menghapus hak akses",
-        color: "red",
-      });
-    }
-  };
-
-  if (loading) {
-    return (
-      <Center h="80vh">
-        <Loader />
-      </Center>
-    );
-  }
+  if (loading) return <Loader mt="xl" />;
 
   return (
-    <Box maw={500} mx="auto">
-      <Title order={2} mb="lg" ta="center">
-        Edit Hak Akses #{idhakakses}
+    <Paper withBorder p="md" radius="md">
+      <Title order={3} mb="md">
+        Edit Hak Akses
       </Title>
-      <form onSubmit={handleSubmit}>
-        <TextInput
-          label="Nama Akses"
-          value={hakAkses.namaakses}
-          onChange={(e) =>
-            setHakAkses({ ...hakAkses, namaakses: e.target.value })
-          }
-          required
-          mb="sm"
-        />
-        <Select
-          label="Status"
-          value={String(hakAkses.statusHakAkses)}
-          onChange={(value) =>
-            setHakAkses({ ...hakAkses, status: Number(value) })
-          }
-          data={[
-            { value: "1", label: "Aktif" },
-            { value: "0", label: "Nonaktif" },
-          ]}
-          placeholder="Pilih Status"
-          mb="sm"
-        />
-        <Group mt="md">
-          <Button type="submit" mt="md">
-            Simpan Perubahan
-          </Button>
-          <Button variant="outline" color="red" onClick={handleDelete}>
-            Hapus Hak Akses
-          </Button>
-        </Group>
+
+      <form onSubmit={form.onSubmit(handleSubmit)}>
+        <Stack>
+          <TextInput
+            label="Nama Akses"
+            {...form.getInputProps("namaakses")}
+            required
+          />
+          <Select
+            label="Status"
+            data={[
+              { value: "1", label: "Aktif" },
+              { value: "0", label: "Nonaktif" },
+            ]}
+            {...form.getInputProps("status")}
+            required
+          />
+          <Button type="submit">Simpan Perubahan</Button>
+        </Stack>
       </form>
-    </Box>
+    </Paper>
   );
 }
