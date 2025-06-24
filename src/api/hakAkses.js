@@ -47,7 +47,7 @@ export async function fetchHakAkses({ idaplikasi } = {}) {
 }
 
 export async function updateHakAkses(id, data) {
-  const res = await fetch(`${BASE_URL}/updatehakakses`, {
+  const res = await fetch(`${BASE_URL}/updatehakaksesaplikasi`, {
     method: "PUT",
     headers: getAuthHeaders(),
     body: JSON.stringify({
@@ -137,7 +137,7 @@ export const deleteHakAkses = async (idhakakses) => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ "id": (idhakakses) }),
+    body: JSON.stringify({ idhakakses }),
   });
 
   if (!res.ok) throw new Error("Gagal hapus aplikasi");

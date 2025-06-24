@@ -88,7 +88,7 @@ export default function HakAksesPage() {
             autoClose: 3000,
           });
 
-          setData((prev) => prev.filter((item) => item.idhakakses !== id));
+          setData((prev) => prev.filter((item) => item.idhakakses !== idhakakses));
         } catch (err) {
           updateNotification({
             id: "delete-hakakses",

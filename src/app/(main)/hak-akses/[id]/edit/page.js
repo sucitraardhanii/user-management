@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   TextInput,
   Select,
@@ -14,73 +13,18 @@ import {
 import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons-react";
-import { fetchHakAkses, updateHakAkses } from "@/api/hakAkses";
-
-// Ambil data hak akses dari filter by app
-async function fetchHakAksesById(id, encryptedIdApp) {
-  const dataByApp = await fetchHakAkses({ idaplikasi: encryptedIdApp });
-
-  const item = dataByApp.find(
-    (d) => d.idhakakses?.toString() === id?.toString()
-  );
-
-  if (!item) throw new Error("Data hak akses tidak ditemukan");
-
-  return item;
-}
+import { updateHakAkses } from "@/api/hakAkses";
 
 export default function EditHakAksesPage() {
   const { id } = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const encryptedIdApp = searchParams.get("idApp");
-
-  const [loading, setLoading] = useState(true);
 
   const form = useForm({
     initialValues: {
       namaakses: "",
-      status: "1",
+      status: "1", // default aktif
     },
   });
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!encryptedIdApp || encryptedIdApp === "undefined") {
-        showNotification({
-          title: "ID Aplikasi Tidak Valid",
-          message: "Query idapp hilang atau tidak valid.",
-          color: "red",
-          icon: <IconX />,
-        });
-        router.push("/hak-akses");
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const data = await fetchHakAksesById(id, encryptedIdApp);
-        form.setValues({
-          namaakses: data.namaakses,
-          status: data.status?.toString() || "0",
-        });
-      } catch (err) {
-        console.error("Gagal fetch data hak akses:", err);
-        showNotification({
-          title: "Gagal",
-          message: "Data hak akses tidak ditemukan",
-          color: "red",
-          icon: <IconX />,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id && encryptedIdApp) {
-      loadData();
-    }
-  }, [id, encryptedIdApp]);
 
   const handleSubmit = async (values) => {
     try {
@@ -103,8 +47,6 @@ export default function EditHakAksesPage() {
     }
   };
 
-  if (loading) return <Loader mt="xl" />;
-
   return (
     <Paper withBorder p="md" radius="md">
       <Title order={3} mb="md">
@@ -115,6 +57,7 @@ export default function EditHakAksesPage() {
         <Stack>
           <TextInput
             label="Nama Akses"
+            placeholder="Masukkan nama akses baru"
             {...form.getInputProps("namaakses")}
             required
           />
