@@ -20,7 +20,6 @@ import {
 import GenericTable from "@/components/GenericTable";
 import StatusBadge from "@/components/StatusBadge";
 import NullBadge from "@/components/NullBadge";
-import Breadcrumb from "@/components/BreadCrumb";
 import CreateButton from "@/components/CreateButton";
 import { modals } from "@mantine/modals";
 import Link from "next/link";
@@ -29,7 +28,7 @@ import ButtonAction from "@/components/ButtonAction";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import UserAksesModal from "@/components/UserAksesModal";
 import { getIdAplikasi, isSuperAdmin } from "@/api/auth";
-import { ADMIN_ID } from "@/api/constant";
+import PageBreadCrumb from "@/components/PageBreadCrumb";
 
 
 export default function UserAksesPage() {
@@ -43,11 +42,9 @@ export default function UserAksesPage() {
 
 
   useEffect(() => {
-    
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        
         const aplikasi = await fetchAplikasi();
         setAplikasiOptions(aplikasi);
       } catch (err) {
@@ -84,7 +81,6 @@ export default function UserAksesPage() {
     if (idaplikasi && nippos) {
       encryptedId = await encryptId(idaplikasi);
     }
-
 
     const result = await fetchUserAkses({
       nippos,
@@ -197,6 +193,7 @@ const handleDelete = (id, name) => {
 
   return (
     <>
+    <PageBreadCrumb />
       <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>User Akses</Title>
         <CreateButton entity="user-akses" />
@@ -209,33 +206,24 @@ const handleDelete = (id, name) => {
               label="Nippos"
               value={nippos}
               onChange={(e) => setNippos(e.target.value)}
-              placeholder="Masukkan Nippos"
+              placeholder="Cari Menggunakan Nippos/Email"
               style={{ flex: 1 }}
             />
-            {isSuperAdmin()?(
+            {isSuperAdmin() && (
               <Select
-              label="Pilih Aplikasi"
-              data={aplikasiOptions}
-              value={idaplikasi}
-              onChange={setIdaplikasi}
-              placeholder="Pilih aplikasi"
-              searchable
-              clearable
-              disabled={loading}
-              rightSection={loading ? <Loader size="xs" /> : null}
-              style={{ flex: 1 }}
-            />
-            ) : (
-              <TextInput
-                label="ID Aplikasi"
-                value={getIdAplikasi()}
-                readOnly
-                disabled
+                label="Pilih Aplikasi"
+                data={aplikasiOptions}
+                value={idaplikasi}
+                onChange={setIdaplikasi}
+                placeholder="Pilih aplikasi"
+                searchable
+                clearable
+                disabled={loading}
+                rightSection={loading ? <Loader size="xs" /> : null}
                 style={{ flex: 1 }}
               />
-            )
-            }
-            
+            )}
+
             <Button
               onClick={handleFetch}
               mt={20}
@@ -246,7 +234,6 @@ const handleDelete = (id, name) => {
           </Flex>
         </Paper>
 
-        <Breadcrumb />
         <GenericTable data={data} columns={columns} loading={loading} />
 
       </Stack>

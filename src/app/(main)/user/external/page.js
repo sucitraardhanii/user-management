@@ -1,371 +1,132 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState, useMemo } from "react";
 import {
-  Stepper,
-  Button,
-  Group,
   TextInput,
-  PasswordInput,
-  Code,
-  Card,
+  Button,
+  Paper,
+  Flex,
+  Stack,
   Title,
   Select,
-  Autocomplete,
-  SimpleGrid,
-  Loader,
-  Grid,
-  Text
-} from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { useDebouncedValue } from '@mantine/hooks';
+} from "@mantine/core";
+import GenericTable from "@/components/GenericTable";
+import { fetchUserByApp } from "@/api/user";
+import { fetchAplikasi } from "@/api/aplikasi"; // fungsi ambil aplikasi
+import StatusBadge from "@/components/StatusBadge";
+import NullBadge from "@/components/NullBadge";
 import Breadcrumb from "@/components/BreadCrumb";
-import { fetchJabatan, searchKantor, fetchAllKantor } from "@/api/menu";
-import { fetchAplikasi, encryptId, fetchHakAkses,fetchExternalOrg, createUser,createUserAkses, validasiUser } from "@/api/regisUserExtern";
-import { showNotification } from "@mantine/notifications";
-import { IconCheck } from '@tabler/icons-react';
-import { useRouter } from "next/navigation";
+import { getIdAplikasi, isSuperAdmin } from "@/api/auth";
 
-export default function RegistrasiUser() {
-  const router = useRouter();
-  const [active, setActive] = useState(0);
-  const [jabatanOptions, setJabatanOptions] = useState([]);
-  const [kantorOptions, setKantorOptions] = useState([]);
-  const [allKantorCache, setAllKantorCache] = useState([]);
-  const [kantorInput, setKantorInput] = useState("");
-  const [aplikasiOptions, setAplikasiOptions] = useState([]);
-  const [hakAksesOptions, setHakAksesOptions] = useState([]);
-  const [externalOrgOptions, setExternalOrgOptions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingKantor, setLoadingKantor] = useState(false);
-  const [loadingHakAkses, setLoadingHakAkses] = useState(false);
-  const [debounced] = useDebouncedValue(kantorInput, 300);
-
-  const form = useForm({
-    mode: 'uncontrolled',
-    initialValues: {
-      nippos: '',
-      email: '',
-      nama: '',
-      codeJabatan: '',
-      kantor: '',
-      statusakun: '',
-      password: '',
-      idaplikasi: '',
-      idhakakses: '',
-      encryptId:'',
-    },
-    validate: (values) => {
-      if (active === 0) {
-        return {
-          password: values.password.length < 6 ? 'Password minimal 6 karakter' : null,
-        };
-      }
-
-      if (active === 1) {
-        return {
-          email: /^\S+@\S+$/.test(values.email) ? null : 'Format email tidak valid',
-        };
-      }
-      if (values.nippos !== values.email) {
-        errors.nippos = "Nippos dan Email harus sama";
-        errors.email = "Email dan Nippos harus sama";
-      }
-      
-      return {};
-    },
+export default function UserByAppPage() {
+   const [idApp, setIdApp] = useState(() => {
+    return isSuperAdmin() ? "" : getIdAplikasi();
   });
+  const [activeAccount, setActiveAccount] = useState("all");
+  const [data, setData] = useState([]);
+  const [aplikasiList, setAplikasiList] = useState([]);
+  const [loading, setLoading] = useState(false);
 
+  // Ambil list aplikasi saat pertama render
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const loadAplikasi = async () => {
       try {
-        const [jabatan, semuaKantor, aplikasi, eksternalOrg] = await Promise.all([
-          fetchJabatan(),
-          fetchAllKantor(),
-          fetchAplikasi(),
-          fetchExternalOrg(),
-        ]);
-        setJabatanOptions(jabatan);
-        setAllKantorCache(semuaKantor);
-        setAplikasiOptions(aplikasi);
-        setExternalOrgOptions(eksternalOrg);
+        const res = await fetchAplikasi();
+        const apps = res.data?.map((app) => ({
+          value: app.idaplikasi,
+          label: app.nama,
+        }));
+        setAplikasiList(apps || []);
       } catch (err) {
-        console.error("Gagal ambil data awal:", err);
-      } finally {
-        setLoading(false);
+        console.error("Gagal ambil aplikasi", err);
       }
     };
-
-    fetchInitialData();
+    loadAplikasi();
   }, []);
 
-  useEffect(() => {
-    const doSearch = async () => {
-      if (!debounced) return;
-
-      if (/^\d+$/.test(debounced)) {
-        setLoadingKantor(true);
-        try {
-          const result = await searchKantor(debounced);
-          setKantorOptions(uniqueByValue(result));
-        } catch (err) {
-          console.error("Gagal search kantor:", err);
-        } finally {
-          setLoadingKantor(false);
-        }
-      } else {
-        const filtered = allKantorCache.filter((item) =>
-          item.label.toLowerCase().includes(debounced.toLowerCase())
-        );
-        setKantorOptions(uniqueByValue(filtered));
-      }
-    };
-
-    doSearch();
-  }, [debounced]);
-
-  useEffect(() => {
-  const selected = form.values.idaplikasi;
-  if (!selected) return;
-
-  const fetchHakAksesFromApi = async () => {
-    setLoadingHakAkses(true);
+  const handleFetch = async () => {
+    setLoading(true);
     try {
-      const encrypted = await encryptId(selected);
-      const data = await fetchHakAkses(encrypted);
-      setHakAksesOptions(data);
-    } catch (err) {
-      console.error("Gagal ambil hak akses:", err);
-      setHakAksesOptions([]);
+      if (!isSuperAdmin()) {
+        const idaplikasi = getIdAplikasi();
+        setIdApp(idaplikasi)
+      }
+      console.log("Gagal fetch:", idApp);
+      const result = await fetchUserByApp(idApp, activeAccount );
+      // setData(result.data);
+      const filtered = result.data.filter((user) => user.statusPegawai === "Non Organik");
+      setData(filtered);
+    } catch (error) {
+      console.error(error);
     } finally {
-      setLoadingHakAkses(false);
+      setLoading(false);
     }
   };
 
-  fetchHakAksesFromApi();
-}, [form.values.idaplikasi]);
-
-
-
-
-  const uniqueByValue = (arr) => {
-    const seen = new Set();
-    return arr.filter((item) => {
-      if (seen.has(item.value)) return false;
-      seen.add(item.value);
-      return true;
-    });
-  };
-
-  const nextStep = () =>
-    setActive((current) => {
-      if (form.validate().hasErrors) {
-        return current;
-      }
-      return current < 3 ? current + 1 : current;
-    });
-
-  const prevStep = () => setActive((current) => (current > 0 ? current - 1 : current));
-
-  // Create Data
-  const handleSubmit = async () => {
-    const values = form.getValues();
-   const encryptedId = await encryptId(form.getValues().idaplikasi);
-    const payloadUser = {
-      nippos: values.nippos,
-      email: values.email,
-      nama: values.nama,
-      codeJabatan: values.codeJabatan,
-      kantor: values.kantor,
-      statuspegawai: 4, //registrasi-user external
-      statusakun: 1,
-      password: values.password,
-      id_external_org: values.externalOrg,
-    };
-    const payloadValidasi={
-      nippos: values.nippos,
-      statusakun: 1,
-    };
-    // const payloadActive = {
-    //   nippos: values.nippos,
-    // };
-
-    const payloadAkses = {
-      nippos: values.nippos,
-      idHakAkses: values.idhakakses,
-      statusUserAkses: 1
-    };
-
-    try {
-      await createUser(payloadUser);
-      await validasiUser(payloadValidasi);
-      // await activeUser(payloadActive);
-      await createUserAkses(payloadAkses);
-
-      showNotification({
-        title: 'User berhasil dibuat',
-        message:(<>
-          <div><strong>📩Email:</strong> {values.email}</div>
-          <div><strong>🔐Encrypted ID:</strong> {encryptedId}</div>
-        </>),
-        icon: <IconCheck size={20} />,
-        color: 'teal',
-        autoClose: false, // biar user bisa salin
-      });
-      router.push("/user");
-    } catch (err) {
-      console.error(err);
-      showNotification({
-        title: "Gagal",
-        message: err.message,
-        color: "red",
-      });
-    }
-  };
+  const columns = useMemo(() => [
+    { accessorKey: "nippos", header: "Nippos", size: 150 },
+    { accessorKey: "nama", header: "Nama", size:100},
+    { accessorKey: "email", header: "Email" },
+    { accessorKey: "jabatan", header: "Jabatan", size:100},
+    { accessorKey: "namaKantor", header: "Nama Kantor" },
+    {
+      accessorKey: "statusAkun",
+      header: "Status Akun",
+      size:115,
+      Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
+    },
+    {
+      accessorKey: "statusPegawai",
+      header: "Status Pegawai",
+      size:125,
+      Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
+    },
+    {
+      accessorKey: "hakAkses",
+      header: "Hak Akses",
+      size:100,
+      Cell: ({ cell }) => {
+        const akses = cell.getValue();
+        return akses?.map((a, i) => (
+          <StatusBadge key={i} value={a.statusUserAkses} />
+        ));
+      },
+    },
+  ], []);
 
   return (
     <>
-      <Title order={3} mb="md">Registrasi User External</Title>
+      <Flex justify="space-between" align="center" mb="md" mt="md">
+        <Title order={2}>Manajemen User</Title>
+      </Flex>
       <Breadcrumb />
-
-      <Card shadow="md" padding="xl" radius="md" withBorder>
-        <Stepper active={active}>
-          <Stepper.Step label="Step 1" description="Data User">
-            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-            <TextInput label="Nippos"
-              required {...form.getInputProps('nippos')}
-              placeholder='Samakan dengan email'
-              onChange={(event) => {
-                const val = event.currentTarget.value;
-                form.setFieldValue("email", val);
-                form.setFieldValue("nippos", val);
-              }}
-              />
-            <TextInput label="Email" required {...form.getInputProps('email')} 
-            placeholder='Samakan dengan Nippos'
-            onChange={(event) => {
-              const val = event.currentTarget.value;
-              form.setFieldValue("nippos", val);
-              form.setFieldValue("email", val);
-            }}
-            />
-            <TextInput label="Nama" required {...form.getInputProps('nama')} />
-            <PasswordInput label="Password" required {...form.getInputProps('password')}  />
+      <Stack>
+        <Paper withBorder p="md" radius="md">
+          <Flex gap="md" wrap="wrap">
             <Select
-              label="Pilih Jabatan"
-              placeholder={loading ? "Loading..." : "Pilih jabatan"}
-              data={jabatanOptions}
-              {...form.getInputProps('codeJabatan')}
+              label="Pilih Aplikasi"
+              placeholder="Pilih aplikasi"
+              data={aplikasiList}
+              value={idApp}
+              onChange={setIdApp}
               searchable
-              clearable
-              disabled={loading}
-              required
+              style={{ flex: 1 }}
             />
-            <Autocomplete
-              label="Pilih Kantor"
-              placeholder="Ketik NOPEND atau Nama Kantor"
-              data={kantorOptions.map((opt) => opt.label)}
-              value={kantorInput}
-              onChange={(val) => {
-                setKantorInput(val);
-                const selected = kantorOptions.find((opt) => opt.label === val);
-                form.setFieldValue("kantor", selected?.value || "");
-              }}
-              rightSection={loadingKantor ? <Loader size="xs" /> : null}
-              clearable
-              disabled={loading}
-              required
-              
+            <TextInput
+              label="Status Akun"
+              value={activeAccount}
+              onChange={(e) => setActiveAccount(e.target.value)}
+              placeholder="Contoh: all / 1 / 0"
+              style={{ flex: 1 }}
             />
-            <Select
-              label="Organisasi Eksternal"
-              placeholder="Pilih organisasi"
-              data={externalOrgOptions}
-              key={form.key('externalOrg')}
-              {...form.getInputProps('externalOrg')}
-              clearable
-              searchable
-              disabled={loading}
-              required
-            />
-            </SimpleGrid>
-          </Stepper.Step>
+            <Button onClick={handleFetch} mt={20} style={{ height: "40px" }}>
+              Tampilkan Data
+            </Button>
+          </Flex>
+        </Paper>
 
-          <Stepper.Step label="Step 2" description="Akses Aplikasi">
-  <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-    <Select
-      label="Pilih Aplikasi"
-      data={aplikasiOptions}
-      placeholder="Pilih aplikasi"
-      searchable
-      clearable
-      required
-      disabled={loading}
-      value={form.values.idaplikasi}
-      onChange={(val) => {
-        form.setFieldValue("idaplikasi", val);  // set aplikasi
-        form.setFieldValue("idhakakses", "");   // reset hak akses
-        setHakAksesOptions([]);                 // kosongkan list hak akses
-      }}
-      rightSection={loading ? <Loader size="xs" /> : null}
-    />
-
-    <Select
-      label="Pilih Hak Akses"
-      data={hakAksesOptions}
-      {...form.getInputProps('idhakakses')}
-      placeholder={loadingHakAkses ? "Memuat..." : "Pilih hak akses"}
-      searchable
-      clearable
-      required
-      disabled={loading || !form.values.idaplikasi || loadingHakAkses}
-      rightSection={loadingHakAkses ? <Loader size="xs" /> : null}
-    />
-  </SimpleGrid>
-</Stepper.Step>
-
-
-
-          <Stepper.Step label="Step 3" description="Review Json">
-            <Code block mt="xl">
-              {JSON.stringify(form.getValues(), null, 2)}
-            </Code>
-          </Stepper.Step>
-
-          <Stepper.Step label="Step 4" description="Selesai">
-            <Grid>
-            <Grid.Col span={6}>
-              <Text><strong>Nippos:</strong> {form.values.nippos}</Text>
-              <Text><strong>Email:</strong> {form.values.email}</Text>
-              <Text><strong>Nama:</strong> {form.values.nama}</Text>
-              <Text><strong>Jabatan:</strong> {form.values.codeJabatan}</Text>
-              <Text><strong>Aplikasi:</strong> {form.values.idaplikasi}</Text>
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <Text><strong>Kantor:</strong> {form.values.kantor}</Text>
-              <Text><strong>Status Pegawai:</strong> External </Text>
-              <Text><strong>Status Akun:</strong> {form.values.statusakun}</Text>
-              <Text><strong>Hak Akses:</strong> {form.values.idhakakses}</Text>
-              <Text><strong>Password:</strong> {form.values.password}</Text>
-            </Grid.Col>
-          </Grid>
-         
-          </Stepper.Step>
-
-          <Stepper.Completed>Registrasi selesai!</Stepper.Completed>
-        </Stepper>
-
-        <Group justify="flex-end" mt="xl">
-          {active !== 0 && <Button variant="default" onClick={prevStep}>Back</Button>}
-          {active !== 3 && <Button onClick={nextStep}>Next step</Button>}
-          {active == 3 && <Button onClick={async () => {
-            const confirm = window.confirm("Apakah kamu yakin ingin menyimpan data?");
-            if (confirm) {
-              await handleSubmit();
-            }
-          }} color="teal">Submit</Button>}
-        </Group>
-      </Card>
+        <GenericTable data={data} columns={columns} loading={loading} />
+      </Stack>
     </>
   );
 }
