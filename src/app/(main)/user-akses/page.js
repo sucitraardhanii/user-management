@@ -24,7 +24,6 @@ import GenericTable from "@/components/GenericTable";
 import StatusBadge from "@/components/StatusBadge";
 // Komponen StatusBadge untuk menampilkan status akses dengan badge.
 import NullBadge from "@/components/NullBadge";
-import Breadcrumb from "@/components/BreadCrumb";
 import CreateButton from "@/components/CreateButton";
 import ButtonAction from "@/components/ButtonAction";
 import UserAksesEditModal from "@/components/UserAksesEditModal";
@@ -37,6 +36,10 @@ import {
   updateUserAkses,
 } from "@/api/userAkses";
 import toast from "react-hot-toast";
+import UserAksesModal from "@/components/UserAksesModal";
+import { getIdAplikasi, isSuperAdmin } from "@/api/auth";
+import PageBreadCrumb from "@/components/PageBreadCrumb";
+
 
 export default function UserAksesPage() {
   const [nippos, setNippos] = useState("");
@@ -44,20 +47,18 @@ export default function UserAksesPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [aplikasiOptions, setAplikasiOptions] = useState([]);
-  // Modal Edit
-  const [modalOpened, setModalOpened] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
-  // State untuk menyimpan data yang dipilih untuk diedit.
-  // nippos, idaplikasi, dan data untuk menyimpan hasil fetch.
-  // selectedRow untuk menyimpan baris yang dipilih untuk diedit.
 
   const handleFetch = async () => {
-    setLoading(true);
-    try {
-      let encryptedId = "";
-      if (idaplikasi) {
-        encryptedId = await encryptId(idaplikasi);
-      }
+  setLoading(true);
+  try {
+    let encryptedId = "";
+    if (idaplikasi){
+      encryptedId = await encryptId(idaplikasi);
+    }
+    
+    if (idaplikasi && nippos) {
+      encryptedId = await encryptId(idaplikasi);
+    }
 
       const result = await fetchUserAkses({
         nippos : nippos,
@@ -108,62 +109,21 @@ export default function UserAksesPage() {
             autoClose: 3000,
           });
 
-          setData((prev) => prev.filter((item) => item.idAkses !== id));
-        } catch (err) {
-          updateNotification({
-            id: "delete-userakses",
-            title: "Gagal",
-            message: `Tidak dapat menghapus ${name}`,
-            color: "red",
-            icon: <IconX size={18} />,
-            autoClose: 3000,
-          });
-        }
-      },
-    });
-  };
-  // untuk menampilkan modal konfirmasi sebelum menghapus data, jika pengguna mengonfirmasi, maka akan menghapus data dengan ID yang diberikan dan memperbarui state data.
+        setData((prev) => prev.filter((item) => item.idAkses !== id));
+      } catch (err) {
+        updateNotification({
+          id: "delete-userakses",
+          title: "Gagal",
+          message: `Tidak dapat menghapus ${name}`,
+          color: "red",
+          icon: <IconX size={18} />,
+          autoClose: 3000,
+        });
+      }
+    },
+  });
+};
 
-  const handleEditSubmit = (row) => {
-    setSelectedRow(row);
-    setNippos(row.nippos);
-    setModalOpened(true);
-  };
-
-  const handleUpdate = async (editData, values) => {
-    console.log("Sending update:", {
-      id: editData.idAkses,
-      idHakAkses: editData.idHakAkses, // ID Hak Akses yang tidak berubah
-      nippos: values.nippos,
-      statusUserAkses: values.statusUserAkses ? 1 : 0,
-    });
-
-    try {
-      const updatedPayload = {
-        id: editData.idAkses, // ID akses yang akan diupdate
-        nippos: values.nippos, // nippos tidak diubah di form
-        idHakAkses:
-          typeof editData.idHakAkses === "object"
-            ? parseInt(editData.idHakAkses.value)
-            : parseInt(editData.idHakAkses),
-        statusUserAkses: values.statusUserAkses ? 1 : 0,
-      };
-
-      console.log("🟡 Payload update:", updatedPayload);
-
-      const response = await updateUserAkses(updatedPayload);
-      console.log("🟢 Respons dari backend:", response);
-
-      toast.success("User akses berhasil diupdate");
-
-      setModalOpened(false); // tutup modal
-      handleFetch(); // fetch ulang data agar tabel terupdate
-    } catch (error) {
-      toast.error("Gagal update user akses");
-      console.error("🔥 Update error:", error);
-    }
-  };
-  // untuk mengirim data yang telah diperbarui ke server, menampilkan notifikasi sukses atau gagal, menutup modal, dan memperbarui data yang ditampilkan di tabel.
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -180,7 +140,6 @@ export default function UserAksesPage() {
 
     fetchInitialData();
   }, []);
-  // untuk mengambil data aplikasi saat komponen pertama kali dimuat, menyimpan hasilnya ke state aplikasiOptions.
 
   const columns = useMemo(
     () => [
@@ -225,6 +184,7 @@ export default function UserAksesPage() {
 
   return (
     <>
+    <PageBreadCrumb />
       <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>User Akses</Title>
         <CreateButton entity="user-akses" />
@@ -237,7 +197,7 @@ export default function UserAksesPage() {
               label="Nippos"
               value={nippos}
               onChange={(e) => setNippos(e.target.value)}
-              placeholder="Masukkan Nippos"
+              placeholder="Cari Menggunakan Nippos/Email"
               style={{ flex: 1 }}
             />
             <Select
@@ -252,13 +212,19 @@ export default function UserAksesPage() {
               rightSection={loading ? <Loader size="xs" /> : null}
               style={{ flex: 1 }}
             />
-            <Button onClick={handleFetch} mt={20} style={{ height: "40px" }}>
+            <Button
+              onClick={handleFetch}
+              mt={20}
+              style={{ height: "40px" }}
+            >
               Tampilkan Data
             </Button>
           </Flex>
         </Paper>
+
         <Breadcrumb />
         <GenericTable data={data} columns={columns} loading={loading} />
+
       </Stack>
 
       {/* Modal Edit */}
