@@ -1,18 +1,27 @@
 import { getToken } from "./auth";
+// mengambil token otentikasi dari modul auth
 
-const token = getToken();
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// Konstanta umum
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL; // URL dasar API, diambil dari .env
 const PROD_URL = process.env.NEXT_PUBLIC_PROD_URL;
-const ENCRYPT_KEY = "$RAI^bYJey2jhDzv+V9FcsUnV";
+const ENCRYPT_KEY = "$RAI^bYJey2jhDzv+V9FcsUnV"; // Kunci untuk enkripsi ID aplikasi
 
-const headers = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${getToken()}`,
-};
+// Header helper dinamis
+function getAuthHeaders() {
+  const token = getToken(); // dipanggil sekali saja saat file di-load
+  if (!token) throw new Error("Token tidak tersedia");
 
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+// header untuk semua fetch request, kecuali delete yang didefinisika ulang
+// setaip request akan mengirimkan token otentikasi dalam header Authorization
 
-// User Akses
+// == USER AKSES API FUNCTIONS ==
 export async function fetchUserAkses({ nippos = "", idaplikasi = "" }) {
+  const token = getToken();
   let endpoint = "/getUserAkses";
   let body = { nippos };
 
@@ -23,7 +32,7 @@ export async function fetchUserAkses({ nippos = "", idaplikasi = "" }) {
 
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     method: "POST",
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify(body),
   });
 
@@ -34,12 +43,16 @@ export async function fetchUserAkses({ nippos = "", idaplikasi = "" }) {
   const json = await res.json();
   return json.data; // ✅ Ambil hanya bagian array-nya
 }
+// Fungsi untuk mengambil data user akses berdasarkan nippos dan idaplikasi
+// Jika hanya nippos yang diberikan, akan mengambil semua user akses berdasarkan nippos.
+// Jika idaplikasi juga diberikan, akan mengambil user akses berdasarkan nippos dan idaplikasi.
+// mengembalikan hanya json.data yang berisi array user akses.
 
-
-
+// == APLIKASI API FUNCTIONS ==
 export async function fetchAplikasi() {
+  const token = getToken();
   const res = await fetch(`${BASE_URL}/getaplikasi/all`, {
-    headers,
+    headers: getAuthHeaders(),
   });
 
   if (!res.ok) throw new Error("Gagal ambil aplikasi");
@@ -53,15 +66,19 @@ export async function fetchAplikasi() {
       value: item.idaplikasi.toString(),
     }))
   );
-
   return encryptedApps;
 }
+// Fungsi untuk mengambil daftar aplikasi dari API
+// Menggunakan fetch untuk mendapatkan data dari endpoint /getaplikasi/all
+// Mengambil semua aplikasi tanpa pagination
+// Data diformat jadi array objek {label, value} untuk dipakai di dropdown
 
-
+// == ENCRYPTION FUNCTION ==
 export async function encryptId(id) {
+  const token = getToken();
   const res = await fetch(`${BASE_URL}/encId`, {
     method: "POST",
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       data: id, // langsung string ID
       key: ENCRYPT_KEY,
@@ -73,71 +90,78 @@ export async function encryptId(id) {
   const result = await res.json();
   return result.data;
 }
+// Fungsi untuk mengenkripsi ID aplikasi
+// Menggunakan endpoint /encId untuk mengenkripsi ID dengan kunci ENCRYPT_KEY
+// Mengembalikan ID terenkripsi sebagai string
 
-
-// Ambil user akses berdasarkan ID
-export const getUserAksesByID = async (id) => {
+// == GET USER AKSES BY Nippos ==
+export const getUserAksesByNippos = async (nippos) => {
   const token = getToken();
-  const res = await fetch(`${BASE_URL}/userAkses/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+  const res = await fetch(`${BASE_URL}/getUserAkses/${nippos}`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ nippos }),
   });
 
   if (!res.ok) throw new Error("Gagal mengambil data aplikasi");
-  const item = await res.json();
-
-  return {
-    id: item.id,
-    nippos: item.nippos,
-    statusUserAkses: item.status,
-    idHakAkses: item.idHakAkses,
-  };
+  const result = await res.json();
+  return result.data;
 };
+// Fungsi untuk mengambil data user akses berdasarkan ID
+// Memanggil data user akses tertentu berdasarkan idAkses
+// Menggunakan POST, meskipun biasanya GET lebih lazim - disesuaikan dengan backend
 
-
-// Update User Akses
-export const updateUserAkses = async (id, data) => {
+// == UPDATE USER AKSES FUNCTIONS ==
+export async function updateUserAkses(payload) {
   const token = getToken();
-  const res = await fetch(`${BASE_URL}/userAkses/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      nippos: data.nippos,
-      statusUserAkses: data.status,
-    }),
-  });
+  try {
+    const res = await fetch(`${BASE_URL}/userAkses`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        id: payload.id,
+        nippos: payload.nippos,
+        idHakAkses: payload.idHakAkses,
+        statusUserAkses: payload.statusUserAkses,
+      }),
+    });
 
-  if (!res.ok) throw new Error("Gagal mengupdate aplikasi");
-  return await res.json();
-};
+    if (!res.ok) throw new Error("Gagal update user akses");
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error updateUserAkses:", error);
+    throw error;
+  }
+}
+// Fungsi untuk memperbarui data user akses
+// Memperbaharui nippos dan statusUserAkses untuk user akses tertentu
+// Menggunakan endpoint /userAkses/{id} dengan metode PUT
 
-
-// Hapus aplikasi
+// == DELETE USER AKSES FUNCTION ==
 export const deleteUserAkses = async (id) => {
   const token = getToken();
   if (!token) throw new Error("Token tidak tersedia");
 
   const res = await fetch(`${BASE_URL}/userAkses`, {
     method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ "id": (id) }),
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ id: id }),
   });
 
   if (!res.ok) throw new Error("Gagal hapus aplikasi");
   return res.json();
 };
+// Fungsi untuk menghapus user akses berdasarkan ID
+// Menghapus data user akses berdasarkan ID yang diberikan
+// Mengirim ID di body karena backend tidak pakai path param untuk DELETE
 
+// == HAK AKSES FUNCTIONS ==
 export async function fetchHakAkses(encryptedId) {
+  const token = getToken();
   const res = await fetch(`${BASE_URL}/getHakAksesByApp`, {
     method: "POST",
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       idApp: encryptedId,
     }),
@@ -152,31 +176,40 @@ export async function fetchHakAkses(encryptedId) {
     value: item.idhakakses.toString(),
   }));
 }
+// Fungsi untuk mengambil hak akses berdasarkan ID aplikasi
+// Mengambil daftar hak akses berdasarkan ID aplikasi yang telah dienkripsi
+// Data diubah ke format dropdown {label, value} untuk digunakan di form
 
+// == CREATE USER AKSES FUNCTION ==
 export async function createUserAkses(payload) {
+  const token = getToken();
   const res = await fetch(`${BASE_URL}/userAkses`, {
-    method: 'POST',
-    headers,
+    method: "POST",
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
   const result = await res.json();
 
   if (!res.ok) {
-    const error = new Error(result.message || 'Gagal');
+    const error = new Error(result.message || "Gagal");
     error.response = { data: result };
     throw error;
   }
 
   return result;
 }
+// Fungsi untuk membuat user akses baru
+// Mengirimkan payload berisi nippos, idAplikasi, dan hak akses
+// Jika gagal, akan melempar error dengan pesan dari response
 
-
+// == FETCH ALL USER NIPPOS FUNCTION ==
 export async function fetchAllUserNippos() {
+  const token = getToken();
   const res = await fetch(`${BASE_URL}/getUser`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ nippos: '' }),
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ nippos: "" }),
   });
 
   const result = await res.json();
@@ -185,18 +218,19 @@ export async function fetchAllUserNippos() {
 
   return arr.map((item) => ({
     value: item.nippos,
-    label: `${item.nippos} - ${item.nama}`,
+    label: `${item.nippos}`,
   }));
 }
+// Fungsi untuk mengambil semua nippos pengguna
+// Mengambil semua user berdasarkan nippos kosong = berarti ambil semua
+// untuk dropdown pencarian user
 
-
+// == SEARCH USER NIPPOS FUNCTION ==
 export async function searchUserNippos(query) {
+  const token = getToken();
   const res = await fetch(`${BASE_URL}/getUser`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ nippos: query }),
   });
 
@@ -208,7 +242,9 @@ export async function searchUserNippos(query) {
 
   return arr.map((item) => ({
     value: item.nippos,
-    label: `${item.nippos} - ${item.nama}`,
+    label: `${item.nippos}`,
   }));
 }
-
+// Fungsi untuk mencari nippos pengguna berdasarkan query
+// Mencari user berdasarkan nippos yang diberikan
+// Hasil diformat jadi array dropdown
