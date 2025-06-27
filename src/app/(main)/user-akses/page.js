@@ -186,7 +186,7 @@ export default function UserAksesPage() {
                 setModalOpened(true);
               }}
               onDelete={() =>
-                handleDelete(row.original.idAkses, row.original.namaAkses)
+                handleDelete(row.original.idAkses, row.original.nippos)
               }
             />
           </Flex>

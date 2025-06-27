@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Card,
@@ -10,21 +10,20 @@ import {
   Group,
   Loader,
   Button,
-} from '@mantine/core';
-import { useState, useEffect } from 'react';
-import { useDebouncedValue } from '@mantine/hooks';
-import { useForm } from '@mantine/form';
-import { IconUserPlus } from '@tabler/icons-react';
-import {
-  fetchAllUserNippos,
-} from '@/api/userAkses';
+} from "@mantine/core";
+import { useState, useEffect } from "react";
+import { useDebouncedValue } from "@mantine/hooks";
+import { useForm } from "@mantine/form";
+import { IconUserPlus } from "@tabler/icons-react";
+import { fetchAllUserNippos } from "@/api/userAkses";
 import {
   fetchAplikasi,
   encryptId,
   fetchHakAkses,
   createUserAkses,
-} from '@/api/userAkses';
-import { showNotification } from '@mantine/notifications';
+} from "@/api/userAkses";
+import { showNotification } from "@mantine/notifications";
+import { useRouter } from "next/navigation";
 
 export default function AddUserAksesForm() {
   const [loading, setLoading] = useState(true);
@@ -33,22 +32,23 @@ export default function AddUserAksesForm() {
 
   const [userOptions, setUserOptions] = useState([]);
   const [allUserCache, setAllUserCache] = useState([]);
-  const [userInput, setUserInput] = useState('');
+  const [userInput, setUserInput] = useState("");
   const [debounced] = useDebouncedValue(userInput, 300);
 
   const [aplikasiOptions, setAplikasiOptions] = useState([]);
   const [hakAksesOptions, setHakAksesOptions] = useState([]);
+  const route = useRouter();
 
   const form = useForm({
     initialValues: {
-      nippos: '',
-      idaplikasi: '',
-      idhakakses: '',
+      nippos: "",
+      idaplikasi: "",
+      idhakakses: "",
       statusUserAkses: true,
     },
     validate: {
-      nippos: (value) => (value ? null : 'NIPPOS tidak boleh kosong'),
-      idhakakses: (value) => (value ? null : 'Pilih hak akses'),
+      nippos: (value) => (value ? null : "NIPPOS tidak boleh kosong"),
+      idhakakses: (value) => (value ? null : "Pilih hak akses"),
     },
   });
 
@@ -73,7 +73,7 @@ export default function AddUserAksesForm() {
         setAplikasiOptions(apps);
         setAllUserCache(users);
       } catch (err) {
-        console.error('Gagal fetch awal:', err);
+        console.error("Gagal fetch awal:", err);
       } finally {
         setLoading(false);
         setLoadingUser(false);
@@ -108,7 +108,7 @@ export default function AddUserAksesForm() {
         const data = await fetchHakAkses(encrypted);
         setHakAksesOptions(data);
       } catch (err) {
-        console.error('Gagal fetch hak akses:', err);
+        console.error("Gagal fetch hak akses:", err);
         setHakAksesOptions([]);
       } finally {
         setLoadingHakAkses(false);
@@ -130,24 +130,31 @@ export default function AddUserAksesForm() {
       });
 
       showNotification({
-        title: 'Akses Berhasil Ditambahkan',
-        message:(<>
-          <div><strong>📩Email:</strong> {values.nippos}</div>
-          <div><strong>🔐Encrypted ID:</strong> {encryptedId}</div>
-        </>),
-        color: 'green',
-        autoClose: false,
+        title: "Akses Berhasil Ditambahkan",
+        message: (
+          <>
+            <div>
+              <strong>📩Email:</strong> {values.nippos}
+            </div>
+            <div>
+              <strong>🔐Encrypted ID:</strong> {encryptedId}
+            </div>
+          </>
+        ),
+        color: "green",
+        autoClose: 3000,
       });
 
       form.reset();
-      setUserInput('');
+      setUserInput("");
+      route.push("/user-akses");
     } catch (err) {
       const errorMessage =
-        err?.response?.data?.message || err.message || 'Terjadi kesalahan.';
+        err?.response?.data?.message || err.message || "Terjadi kesalahan.";
       showNotification({
-        title: 'Gagal',
+        title: "Gagal",
         message: errorMessage,
-        color: 'red',
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -168,7 +175,7 @@ export default function AddUserAksesForm() {
           onChange={(val) => {
             setUserInput(val);
             const selected = userOptions.find((opt) => opt.label === val);
-            form.setFieldValue('nippos', selected?.value || '');
+            form.setFieldValue("nippos", selected?.value || "");
           }}
           rightSection={loadingUser ? <Loader size="xs" /> : null}
           clearable
@@ -186,8 +193,8 @@ export default function AddUserAksesForm() {
           disabled={loading}
           value={form.values.idaplikasi}
           onChange={(val) => {
-            form.setFieldValue('idaplikasi', val);
-            form.setFieldValue('idhakakses', '');
+            form.setFieldValue("idaplikasi", val);
+            form.setFieldValue("idhakakses", "");
             setHakAksesOptions([]);
           }}
           rightSection={loading ? <Loader size="xs" /> : null}
@@ -197,8 +204,8 @@ export default function AddUserAksesForm() {
           label="Pilih Hak Akses"
           data={hakAksesOptions}
           value={form.values.idhakakses}
-          onChange={(val) => form.setFieldValue('idhakakses', val)}
-          placeholder={loadingHakAkses ? 'Memuat data...' : 'Pilih hak akses'}
+          onChange={(val) => form.setFieldValue("idhakakses", val)}
+          placeholder={loadingHakAkses ? "Memuat data..." : "Pilih hak akses"}
           searchable
           clearable
           required
@@ -219,7 +226,7 @@ export default function AddUserAksesForm() {
           mt="md"
           checked={form.values.statusUserAkses}
           onChange={(event) =>
-            form.setFieldValue('statusUserAkses', event.currentTarget.checked)
+            form.setFieldValue("statusUserAkses", event.currentTarget.checked)
           }
         />
 
