@@ -146,12 +146,13 @@ export const deleteUserAkses = async (id) => {
   const res = await fetch(`${BASE_URL}/userAkses`, {
     method: "DELETE",
     headers: getAuthHeaders(),
-    body: JSON.stringify({ id: id }),
+    body: JSON.stringify({ id }),
   });
 
-  if (!res.ok) throw new Error("Gagal hapus aplikasi");
+  if (!res.ok) throw new Error("Gagal hapus user akses");
   return res.json();
 };
+
 // Fungsi untuk menghapus user akses berdasarkan ID
 // Menghapus data user akses berdasarkan ID yang diberikan
 // Mengirim ID di body karena backend tidak pakai path param untuk DELETE

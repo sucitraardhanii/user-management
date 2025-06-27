@@ -1,9 +1,6 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-// useState untuk menyimpan state seperti nippos, data, loading, dll.
-// useMemo untuk menghindari render ulang kolom tabel yang tidak perlu.
-// useEffect untuk mengambil data aplikasi saat komponen pertama kali dimuat.
 import {
   TextInput,
   Button,
@@ -20,9 +17,7 @@ import { IconCheck, IconX } from "@tabler/icons-react";
 import { modals } from "@mantine/modals";
 
 import GenericTable from "@/components/GenericTable";
-// Komponen GenericTable untuk menampilkan data dalam bentuk tabel.
 import StatusBadge from "@/components/StatusBadge";
-// Komponen StatusBadge untuk menampilkan status akses dengan badge.
 import NullBadge from "@/components/NullBadge";
 import Breadcrumb from "@/components/BreadCrumb";
 import CreateButton from "@/components/CreateButton";
@@ -44,12 +39,8 @@ export default function UserAksesPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [aplikasiOptions, setAplikasiOptions] = useState([]);
-  // Modal Edit
   const [modalOpened, setModalOpened] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  // State untuk menyimpan data yang dipilih untuk diedit.
-  // nippos, idaplikasi, dan data untuk menyimpan hasil fetch.
-  // selectedRow untuk menyimpan baris yang dipilih untuk diedit.
 
   const handleFetch = async () => {
     setLoading(true);
@@ -60,7 +51,7 @@ export default function UserAksesPage() {
       }
 
       const result = await fetchUserAkses({
-        nippos : nippos,
+        nippos: nippos,
         idaplikasi: encryptedId || "",
       });
 
@@ -71,9 +62,8 @@ export default function UserAksesPage() {
       setLoading(false);
     }
   };
-  // untuk mengenkripsi ID aplikasi jika ada, lalu mengambil data user akses berdasarkan nippos dan idaplikasi yang diberikan, lalu hasil ke state data.
 
-  const handleDelete = (id, name) => {
+  const handleDelete = (id, nippos) => {
     modals.openConfirmModal({
       title: "Konfirmasi Hapus",
       centered: true,
@@ -81,7 +71,7 @@ export default function UserAksesPage() {
       overlayProps: { blur: 2, opacity: 0.1 },
       children: (
         <Text size="sm">
-          Yakin ingin menghapus <b>{name}</b>?
+          Yakin ingin menghapus <b>{nippos}</b>?
         </Text>
       ),
       labels: { confirm: "Hapus", cancel: "Batal" },
@@ -90,7 +80,7 @@ export default function UserAksesPage() {
         showNotification({
           id: "delete-userakses",
           title: "Menghapus...",
-          message: `Sedang menghapus ${name}`,
+          message: `Sedang menghapus ${nippos}`,
           loading: true,
           autoClose: false,
           withCloseButton: true,
@@ -102,7 +92,7 @@ export default function UserAksesPage() {
           updateNotification({
             id: "delete-userakses",
             title: "Berhasil",
-            message: `${name} berhasil dihapus`,
+            message: `${nippos} berhasil dihapus`,
             color: "teal",
             icon: <IconCheck size={18} />,
             autoClose: 3000,
@@ -113,7 +103,7 @@ export default function UserAksesPage() {
           updateNotification({
             id: "delete-userakses",
             title: "Gagal",
-            message: `Tidak dapat menghapus ${name}`,
+            message: `Tidak dapat menghapus ${nippos}`,
             color: "red",
             icon: <IconX size={18} />,
             autoClose: 3000,
@@ -122,7 +112,6 @@ export default function UserAksesPage() {
       },
     });
   };
-  // untuk menampilkan modal konfirmasi sebelum menghapus data, jika pengguna mengonfirmasi, maka akan menghapus data dengan ID yang diberikan dan memperbarui state data.
 
   const handleEditSubmit = (row) => {
     setSelectedRow(row);
@@ -131,17 +120,10 @@ export default function UserAksesPage() {
   };
 
   const handleUpdate = async (editData, values) => {
-    console.log("Sending update:", {
-      id: editData.idAkses,
-      idHakAkses: editData.idHakAkses, // ID Hak Akses yang tidak berubah
-      nippos: values.nippos,
-      statusUserAkses: values.statusUserAkses ? 1 : 0,
-    });
-
     try {
       const updatedPayload = {
-        id: editData.idAkses, // ID akses yang akan diupdate
-        nippos: values.nippos, // nippos tidak diubah di form
+        id: editData.idAkses,
+        nippos: values.nippos,
         idHakAkses:
           typeof editData.idHakAkses === "object"
             ? parseInt(editData.idHakAkses.value)
@@ -149,21 +131,15 @@ export default function UserAksesPage() {
         statusUserAkses: values.statusUserAkses ? 1 : 0,
       };
 
-      console.log("🟡 Payload update:", updatedPayload);
-
       const response = await updateUserAkses(updatedPayload);
-      console.log("🟢 Respons dari backend:", response);
-
       toast.success("User akses berhasil diupdate");
-
-      setModalOpened(false); // tutup modal
-      handleFetch(); // fetch ulang data agar tabel terupdate
+      setModalOpened(false);
+      handleFetch();
     } catch (error) {
       toast.error("Gagal update user akses");
       console.error("🔥 Update error:", error);
     }
   };
-  // untuk mengirim data yang telah diperbarui ke server, menampilkan notifikasi sukses atau gagal, menutup modal, dan memperbarui data yang ditampilkan di tabel.
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -177,10 +153,8 @@ export default function UserAksesPage() {
         setLoading(false);
       }
     };
-
     fetchInitialData();
   }, []);
-  // untuk mengambil data aplikasi saat komponen pertama kali dimuat, menyimpan hasilnya ke state aplikasiOptions.
 
   const columns = useMemo(
     () => [
@@ -208,7 +182,6 @@ export default function UserAksesPage() {
           <Flex gap="xs" wrap="nowrap">
             <ButtonAction
               onEdit={() => {
-                console.log("Row clicked:", row.original); // cek apakah idAkses ada
                 setSelectedRow(row.original);
                 setModalOpened(true);
               }}
@@ -261,7 +234,6 @@ export default function UserAksesPage() {
         <GenericTable data={data} columns={columns} loading={loading} />
       </Stack>
 
-      {/* Modal Edit */}
       <UserAksesEditModal
         opened={modalOpened}
         onClose={() => setModalOpened(false)}
@@ -271,7 +243,3 @@ export default function UserAksesPage() {
     </>
   );
 }
-// Flex: Header + Tombol Buat
-// Paper: Form Filter (Nippos + Aplikasi)
-// GenericTable: Tabel Data User Akses
-// UserAksesEditModal: Modal untuk mengedit data user akses
