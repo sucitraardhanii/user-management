@@ -24,16 +24,17 @@ export const login = async ({ nippos, password, idaplikasi }) => {
 
   if (!data.token) throw new Error("Token tidak ditemukan");
 
-  saveToken(data.token, idaplikasi);
+  saveToken(data.token, idaplikasi, nippos);
   return data.token;
 };
 
-export function saveToken(token, idaplikasi) {
+export function saveToken(token, idaplikasi, nippos) {
   const now = new Date();
   const expiry = now.getTime() + 60 * 60 * 10000; // 10 jam
   const item = {
     token,
     idaplikasi,
+    nippos,
     expiry,
   };
   localStorage.setItem("auth_token", JSON.stringify(item));
