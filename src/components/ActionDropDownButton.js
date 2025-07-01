@@ -24,7 +24,7 @@ export default function ActionDropDownButton({ actions = [] }) {
             variant="outline"
             leftSection={<IconDotsVertical size={16} />}
           >
-            Aksi
+          Aksi Lainnya
           </Button>
         </Menu.Target>
 

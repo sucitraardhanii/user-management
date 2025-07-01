@@ -3,7 +3,7 @@
 
 import { MantineReactTable } from "mantine-react-table";
 import { Paper, Flex, Button, Loader, Center } from "@mantine/core";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 export default function GenericTable({
   data = [],
@@ -24,6 +24,9 @@ export default function GenericTable({
     pageIndex * pageSize,
     pageIndex * pageSize + pageSize
   );
+useEffect(() => {
+  setPageIndex(0); // reset ke halaman awal saat data berubah
+}, [data]);
 
   const renderCustomHeader = ({ column, header }) => (
     <div
@@ -79,7 +82,14 @@ export default function GenericTable({
           )}
           renderColumnHeaderContent={renderCustomHeader}
           meta={{ pageIndex, pageSize }}
+          state={{
+            showEmptyRows: false,
+            isLoading: loading,
+            showSkeletons: false,
+            noRecordsText: "Data tidak ditemukan",
+          }}
         />
+
         <Flex
           justify="flex-end"
           align="center"

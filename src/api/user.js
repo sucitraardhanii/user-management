@@ -1,114 +1,195 @@
 import { getToken } from "./auth";
 
-const token = getToken();
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const ENCRYPT_KEY = "$RAI^bYJey2jhDzv+V9FcsUnV";
 const XKEYAPP = "MkYCK2kBErcUVDO0ygpt_w==";
 const XKEYACCESS = "Cz5JcSefOw8Hl7X--3okow2pg3h75KZdvZ6REDjpfP4=";
 
-const headers = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${getToken()}`,
-  "x-key-app": XKEYAPP,
-  "x-key-access":XKEYACCESS
-};
+function getHeaders() {
+  const token = getToken();
+  if (!token) throw new Error("Token tidak tersedia");
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
 
-//get user external sesuai login
+function headersXKey() {
+ const token = getToken();
+  if (!token) throw new Error("Token tidak tersedia");
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+    "x-key-app": XKEYAPP,
+    "x-key-access": XKEYACCESS,
+  };
+}
+
+function handleErrorResponse(res, result, defaultMsg) {
+  if (res.status === 401) return { error: "invalid_token" };
+  if (res.status === 400 && result?.message?.toLowerCase().includes("data tidak ditemukan")) {
+    return { error: "not_found" };
+  }
+  if (!res.ok) return { error: "server_error", detail: result?.message || defaultMsg };
+  return null;
+}
+
 export async function fetchUserByApp(idApp) {
-  const res = await fetch(`${BASE_URL}/userAllByApp`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ idApp:idApp, activeAccount:"all" })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) throw new Error(data.message || 'Gagal mengambil user by app');
-  return data;
+  try {
+    const res = await fetch(`${BASE_URL}/userAllByApp`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ idApp, activeAccount: "all" }),
+    });
+    const data = await res.json();
+    const error = handleErrorResponse(res, data, 'Gagal mengambil user by app');
+    if (error) return error;
+    return { data };
+  } catch (err) {
+    return { error: "network_error", detail: err.message };
+  }
 }
 
 export async function fetchUserByNippos(nippos) {
-  const res = await fetch(`${BASE_URL}/getUser`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ nippos }),
-  });
+  try {
+    const res = await fetch(`${BASE_URL}/getUser`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ nippos }),
+    });
+    const result = await res.json();
+    const error = handleErrorResponse(res, result, "Gagal ambil data user by nippos");
+    if (error) return error;
 
-  const result = await res.json();
-  if (!res.ok) throw new Error(result.message || "Gagal ambil data user by nippos");
-
-  return (result.data || []).map((user) => ({
-    ...user,
-    // mapping ulang biar cocok dengan struktur tabel & modal
-    nippos: user.nippos,
-    nama: user.nama,
-    email: user.email,
-    jabatan: user.jabatan,
-    kantor: user.kantor,
-    namaKantor: user.kantor,
-    statusPegawai: user.status_pegawai === 4 ? "Non Organik" : "Organik",
-    statusAkun: user.status_akun === 1 ? "Aktif" : "Non-Aktif",
-  }));
+    return {
+      data: (result.data || []).map((user) => ({
+        ...user,
+        nippos: user.nippos,
+        nama: user.nama,
+        email: user.email,
+        jabatan: user.jabatan,
+        kantor: user.kantor,
+        namaKantor: user.kantor,
+        statusPegawai: user.status_pegawai === 4 ? "Non Organik" : "Organik",
+        statusAkun: user.status_akun === 1 ? "Aktif" : "Non-Aktif",
+      }))
+    };
+  } catch (err) {
+    return { error: "network_error", detail: err.message };
+  }
 }
 
 export async function fetchUserByAppOrg(idApp, idExternal) {
-  const res = await fetch(`${BASE_URL}/userAllByAppOrg`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      idApp,
-      idExternal:[idExternal], // <- array of 1
-    }),
-  });
-
-  const result = await res.json();
-
-  // ✅ Tangani respon 400 = data tidak ditemukan, tetap kembalikan array kosong
-  if (res.status === 400 && result.message?.toLowerCase().includes("data tidak ditemukan")) {
-    return { data: [] }; // ⬅️ agar tetap bisa .data tanpa error
+  try {
+    const res = await fetch(`${BASE_URL}/userAllByAppOrg`, {
+      method: "POST",
+      headers: headersXKey(),
+      body: JSON.stringify({ idApp, idExternal: [idExternal] }),
+    });
+    const result = await res.json();
+    const error = handleErrorResponse(res, result, "Gagal fetch user by organisasi");
+    if (error) return error;
+    return { data: result };
+  } catch (err) {
+    return { error: "network_error", detail: err.message };
   }
-
-  if (!res.ok) {
-    throw new Error(result.message || "Gagal fetch user by organisasi");
-  }
-
-  return result;
 }
 
-
-
-//Update Data USer
 export async function updateUser(payload) {
-  const res = await fetch(`${BASE_URL}/user`, {
-    method: "PUT",
-    headers,
-    body: JSON.stringify(payload),
-  });
-
-  const result = await res.json();
-
-  if (!res.ok) {
-    throw new Error(result.message || "Gagal update user");
+  try {
+    const res = await fetch(`${BASE_URL}/user`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
+    const error = handleErrorResponse(res, result, "Gagal update user");
+    if (error) return error;
+    return { data: result };
+  } catch (err) {
+    return { error: "network_error", detail: err.message };
   }
-
-  return result;
 }
-
 
 export async function checkActiveUser(nippos) {
-  const res = await fetch(`${BASE_URL}/activeUser`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ nippos }),
-  });
-  return res.json();
+  try {
+    const res = await fetch(`${BASE_URL}/activeUser`, {
+      method: "POST",
+      headers: headersXKey(),
+      body: JSON.stringify({ nippos }),
+    });
+    const data = await res.json();
+    return { data };
+  } catch (err) {
+    return { error: "network_error", detail: err.message };
+  }
 }
 
 export async function validateUser(nippos) {
-  const res = await fetch(`${BASE_URL}/validasiUser`, {
+  try {
+    const res = await fetch(`${BASE_URL}/validasiUser`, {
+      method: "POST",
+      headers: headersXKey(),
+      body: JSON.stringify({ nippos, statusakun: 1 }),
+    });
+    const data = await res.json();
+    return { data };
+  } catch (err) {
+    return { error: "network_error", detail: err.message };
+  }
+}
+
+export async function selectAplikasi() {
+  try {
+    const token = getToken();
+    if (!token) return { error: "invalid_token" };
+
+    const res = await fetch(`${BASE_URL}/getaplikasi/all`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await res.json();
+    const error = handleErrorResponse(res, data, "Gagal fetch aplikasi");
+    if (error) return error;
+
+    return {
+      data: data.map((item) => ({
+        value: String(item.idaplikasi),
+        label: item.nama,
+      })),
+    };
+  } catch (err) {
+    return { error: "network_error", detail: err.message };
+  }
+}
+
+export async function fetchExternalOrg() {
+  const res = await fetch(`${BASE_URL}/getExternalOrgAll`, {
     method: "POST",
-    headers,
-    body: JSON.stringify({ nippos, statusakun: 1 }),
+    headers: getHeaders(),
+    body: JSON.stringify({ statusActive: "all" }),
   });
-  return res.json();
+
+  const result = await res.json();
+  return { data: result.data };
+}
+
+
+export async function encryptId(id) {
+  try {
+    const res = await fetch(`${BASE_URL}/encId`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ data: id, key: ENCRYPT_KEY }),
+    });
+    const result = await res.json();
+    const error = handleErrorResponse(res, result, "Gagal encrypt ID aplikasi");
+    if (error) return error;
+    return { data: result.data };
+  } catch (err) {
+    return { error: "network_error", detail: err.message };
+  }
 }
