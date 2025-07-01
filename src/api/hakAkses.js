@@ -24,7 +24,6 @@ export async function fetchHakAkses({ idaplikasi } = {}) {
 
   // Jika ada idaplikasi, gunakan POST dan endpoint yang berbeda
   if (idaplikasi) {
-  console.log("📡 fetchHakAkses → by app:", idaplikasi);
     endpoint = "/getHakAksesByApp";
     options = {
       method: "POST",
@@ -88,7 +87,6 @@ export async function encryptId(id) {
   });
 
   const json = await res.json();
-  console.log("🔐 Encrypted ID:", json.data);
   return json.data;
 }
 
