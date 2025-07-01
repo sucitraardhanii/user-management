@@ -1,22 +1,91 @@
-// file ini ditulis dengan react (next.js client component) dan menggunakan mantine UI 
-
+// file ini ditulis dengan react (next.js client component) dan menggunakan mantine UI
 
 "use client"; // dibutuhkan untuk next.js app router
 
-import { Box, Burger, Group, Flex, Text, Avatar, Menu, UnstyledButton } from "@mantine/core";
-import { IconUser, IconChevronDown, IconLogout, IconSettings } from "@tabler/icons-react";
+import {
+  Box,
+  Burger,
+  Group,
+  Flex,
+  Text,
+  Avatar,
+  Menu,
+  UnstyledButton,
+} from "@mantine/core";
+import {
+  IconUser,
+  IconChevronDown,
+  IconLogout,
+  IconSettings,
+} from "@tabler/icons-react";
 import { logout } from "@/api/auth";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Header({ sidebarOpened, onToggleSidebar }) {
-// sidebarOpened: state boolean untuk sidebar (apakah terbuka atau tidak)
-// onToggleSidebar: fungsi untuk membuka/tutup sidebar saat tombol burger di klik
-const router = useRouter();
+  // sidebarOpened: state boolean untuk sidebar (apakah terbuka atau tidak)
+  // onToggleSidebar: fungsi untuk membuka/tutup sidebar saat tombol burger di klik
+  const router = useRouter();
+  const [userData, setUserData] = useState(null);
 
-const handleLogout = () => {
-  logout();            // hapus token dari localStorage
-  router.replace("/login"); // redirect ke halaman login
-};
+  useEffect(() => {
+    const itemStr = localStorage.getItem("auth_token");
+    if (!itemStr) return;
+
+    try {
+      const item = JSON.parse(itemStr);
+      const nippos = item?.nippos;
+      const token = item?.token;
+
+      console.log("nippos dari localstorage:", nippos);
+      console.log("token dari localStorage:", token);
+      console.log("body request:", JSON.stringify({ nippos }));
+
+
+      if (!nippos) return;
+
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/getUser`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ nippos }),
+      })
+        .then(async (res) => {
+          const contentType = res.headers.get("content-type");
+          if (!contentType?.includes("application/json")) {
+            const raw = await res.text();
+            console.error("❌ Bukan JSON:", raw);
+            return;
+          }
+
+          const data = await res.json();
+          console.log("✅ data user dari API:", data);
+
+          if (data.data && data.data.length > 0) {
+            setUserData(data.data[0]);
+          } else {
+            setUserData({
+              nama: "Tidak Ditemukan",
+              jabatan: "Tidak ditemukan",
+              nopend: "",
+              status_pegawai: "",
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("❌ Gagal fetch user:", err);
+        });
+    } catch (err) {
+      console.error("Gagal parsing token:", err);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    logout(); // hapus token dari localStorage
+    router.replace("/login"); // redirect ke halaman login
+  };
 
   return (
     <Box
@@ -24,7 +93,8 @@ const handleLogout = () => {
       px="md" //padding horizontal medium
       py="xs" // padding vertikal kecil
       bg="white" // background putih
-      c="black" style={{ borderBottom: "1px solid #eee" }} // garis abu di bawah header
+      c="black"
+      style={{ borderBottom: "1px solid #eee" }} // garis abu di bawah header
     >
       <Flex h="100%" align="center" justify="space-between">
         {/* Kiri */}
@@ -42,7 +112,7 @@ const handleLogout = () => {
 
         {/* Kanan */}
         <Menu withArrow position="bottom-end" shadow="md">
-          <Menu.Target> 
+          <Menu.Target>
             <UnstyledButton>
               <Group spacing={5}>
                 <Avatar radius="xl" color="blue">
@@ -54,11 +124,24 @@ const handleLogout = () => {
           </Menu.Target>
 
           <Menu.Dropdown>
-            <Menu.Label>Account</Menu.Label>
-            <Menu.Item icon={<IconUser size={18} />} onClick={() => router.push("/profile")} >My Profile</Menu.Item>
-            <Menu.Item icon={<IconSettings size={18} />}>Settings</Menu.Item>
+            <Box px="sm" py="xs">
+              <Text fw={700}>{userData?.nama || "Tidak Ditemukan"}</Text>
+              <Text size="sm" c="dimmed">
+                {userData?.jabatan || "Tidak ditemukan"}
+              </Text>
+              <Text size="xs" c="dimmed">
+                Nopend: {userData?.nopend}
+              </Text>
+              <Text size="xs" c="dimmed">
+                Status: {userData?.status_pegawai}
+              </Text>
+            </Box>
             <Menu.Divider />
-            <Menu.Item color="red" icon={<IconLogout size={18} />} onClick={handleLogout}>
+            <Menu.Item
+              color="red"
+              icon={<IconLogout size={18} />}
+              onClick={handleLogout}
+            >
               Logout
             </Menu.Item>
           </Menu.Dropdown>
