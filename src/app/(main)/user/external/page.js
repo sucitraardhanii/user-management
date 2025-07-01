@@ -10,7 +10,7 @@ import {
   encryptId,
   fetchExternalOrg,
 } from "@/api/user";
-import { getIdAplikasi, isSuperAdmin } from "@/api/auth";
+import { getIdAplikasi, isInternalAdmin, isSuperAdmin } from "@/api/auth";
 import GenericTable from "@/components/GenericTable";
 import { handleApiResponse } from "@/utils/handleApiResponse";
 import { useRouter } from "next/navigation";
@@ -26,56 +26,7 @@ import ActionDropDownButton from "@/components/ActionDropDownButton";
 import { checkActiveUser, validateUser } from "@/api/user";
 
 export default function UserManagementPage() {
-  const columns = useMemo(
-    () => [
-      { accessorKey: "nippos", header: "NIPPOS" },
-      { accessorKey: "nama", header: "Nama" },
-      { accessorKey: "email", header: "Email" },
-      { accessorKey: "jabatan", header: "Jabatan", size: 100},
-      { accessorKey: "kantor", header: "Kantor" },
-      { accessorKey: "nameExternalOrg", header: "Organisasi Eksternal", size:150 },
-      {
-        accessorKey: "status_pegawai",
-        header: "Status Pegawai",
-        size: 150,
-        Cell: ({ cell }) => <StatusPegawaiBadge value={cell.getValue()} />,
-      },
-      {
-        accessorKey: "status_akun",
-        header: "Status Akun",
-        size:100,
-        Cell: ({ cell }) => <StatusAkunBadge value={cell.getValue()} />,
-      },
-      {
-        id: "actions",
-          header: "Aksi",
-          Cell: ({ row }) => (
-            <Flex gap="xs" wrap="nowrap">
-              <Button
-                size="xs"
-                variant="light"
-                color="blue"
-                component={Link}
-                href={`/user-akses/${row.original.id}/edit`}
-                leftSection={<IconEdit size={14} />}
-              >
-                Edit
-              </Button>
-              <Button
-                size="xs"
-                variant="light"
-                color="red"
-                onClick={() => handleDelete(row.original.id, row.original.name)}
-                leftSection={<IconTrash size={14} />}
-              >
-                Delete
-              </Button>
-            </Flex>
-          ),
-        },
-    ],
-    []
-  );
+  
   const router = useRouter();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -89,6 +40,8 @@ export default function UserManagementPage() {
 
   const idApp = getIdAplikasi();
   const isSuper = isSuperAdmin();
+  const isInternal = isInternalAdmin();
+  
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -237,7 +190,7 @@ if (success) await loadOrg();
     if (handleApiResponse(response, router)) {
   const rawData = Array.isArray(response.data?.data) ? response.data.data : response.data;
   const mapped = Array.isArray(rawData)
-  ? rawData.map(normalizeUser).filter(user => isSuper || user.status_pegawai !== 1)
+  ? rawData.map(normalizeUser).filter(user => isSuper || isInternal || user.status_pegawai !== 1)
   : [];
   setData(mapped);
 }
@@ -245,13 +198,67 @@ if (success) await loadOrg();
     setLoading(false);
   };
 
+  const columns = useMemo(
+    () => [
+      { accessorKey: "nippos", header: "NIPPOS" },
+      { accessorKey: "nama", header: "Nama" },
+      { accessorKey: "email", header: "Email" },
+      { accessorKey: "jabatan", header: "Jabatan", size: 100},
+      { accessorKey: "kantor", header: "Kantor" },
+      { accessorKey: "nameExternalOrg", header: "Organisasi Eksternal", size:150 },
+      {
+        accessorKey: "status_pegawai",
+        header: "Status Pegawai",
+        size: 150,
+        Cell: ({ cell }) => <StatusPegawaiBadge value={cell.getValue()} />,
+      },
+      {
+        accessorKey: "status_akun",
+        header: "Status Akun",
+        size:100,
+        Cell: ({ cell }) => <StatusAkunBadge value={cell.getValue()} />,
+      },
+      {
+        id: "actions",
+          header: "Aksi",
+          Cell: ({ row }) => (
+            <Flex gap="xs" wrap="nowrap">
+              <Button
+                size="xs"
+                variant="light"
+                color="blue"
+                component={Link}
+                href={`/user-akses/${row.original.id}/edit`}
+                leftSection={<IconEdit size={14} />}
+              >
+                Edit
+              </Button>
+              <Button
+                size="xs"
+                variant="light"
+                color="red"
+                onClick={() => handleDelete(row.original.id, row.original.name)}
+                leftSection={<IconTrash size={14} />}
+              >
+                Delete
+              </Button>
+            </Flex>
+          ),
+        },
+    ],
+    []
+  );
+
   return (
     <>
     <PageBreadCrumb />
       <Flex justify="space-between" align="center" mb="md">
         <Title order={2}>Manajemen User External</Title>
         <Group>
-          <CreateButton entity="user" useModal onClick={() => setOpened(true)} />
+          <CreateButton entity="user/external" label={"User External"}/>
+          {(isSuper || isInternal) && (
+          <CreateButton entity="user/internal" label={"User Internal"}/>
+          )}
         <ActionDropDownButton
             actions={[
               {

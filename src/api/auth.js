@@ -115,3 +115,21 @@ export function isSuperAdmin() {
     return false;
   }
 }
+
+export function getUserInfo() {
+  if (typeof window === "undefined") return {};
+  const raw = localStorage.getItem("auth_token");
+  if (!raw) return {};
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed || {};
+  } catch {
+    return {};
+  }
+}
+
+export function isInternalAdmin() {
+  const { nippos, idaplikasi } = getUserInfo() || {};
+  return /^\d+$/.test(nippos) && String(nippos) === "1" && idaplikasi !== SUPER_ADMIN_APP_ID;
+}

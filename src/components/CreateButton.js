@@ -6,7 +6,7 @@ import { IconPlus } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function CreateButton({ entity, onClick, useModal = false }) {
+export default function CreateButton({ entity, label, onClick, useModal = false }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +30,8 @@ export default function CreateButton({ entity, onClick, useModal = false }) {
       color="blue"
       radius="md"
     >
-      Buat {entity.replace("-", " ")}
+      Buat {label || entity.replace("-", " ")}
     </Button>
   );
 }
+
