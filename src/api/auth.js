@@ -1,7 +1,8 @@
-export const login = async ({ nippos, password, idaplikasi }) => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  const res = await fetch(`${apiUrl}/authMob`, {
+export const login = async ({ nippos, password, idaplikasi }) => {
+
+  const res = await fetch(`${BASE_URL}/authMob`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -61,19 +62,6 @@ export function getToken() {
   }
 }
 
-export function getIdAplikasi() {
-  if (typeof window === "undefined") return null;
-
-  const itemStr = localStorage.getItem("auth_token");
-  if (!itemStr) return null;
-
-  try {
-    const item = JSON.parse(itemStr);
-    return item.idaplikasi || null;
-  } catch (err) {
-    return null;
-  }
-}
 
 export function isTokenExpired() {
   if (typeof window === "undefined") return true;
@@ -98,19 +86,22 @@ export const logout = () => {
   removeToken();
 };
 
-function decodeJwt(token) {
-  const payload = token.split('.')[1];
-  const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-  const jsonPayload = decodeURIComponent(
-    atob(base64)
-      .split('')
-      .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-      .join('')
-  );
-  return JSON.parse(jsonPayload);
-}
 
 export const SUPER_ADMIN_APP_ID = "kkTF3FKfnK0sWExTZZquhw==";
+
+export function getIdAplikasi() {
+  if (typeof window === "undefined") return null;
+
+  const itemStr = localStorage.getItem("auth_token");
+  if (!itemStr) return null;
+
+  try {
+    const item = JSON.parse(itemStr);
+    return item.idaplikasi || null;
+  } catch (err) {
+    return null;
+  }
+}
 
 export function isSuperAdmin() {
   if (typeof window === "undefined") return false;
