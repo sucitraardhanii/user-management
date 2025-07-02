@@ -5,11 +5,13 @@ import { Modal, TextInput, Button, Group } from "@mantine/core";
 
 export default function ModalCekNippos({ opened, onClose, onSubmit, title }) {
   const [nippos, setNippos] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!nippos) return;
-    onSubmit(nippos);
-    setNippos("");
+    setLoading(true);
+    await onSubmit(nippos);
+    setLoading(false);
     onClose();
   };
 
@@ -23,7 +25,7 @@ export default function ModalCekNippos({ opened, onClose, onSubmit, title }) {
         required
       />
       <Group justify="end" mt="md">
-        <Button onClick={handleSubmit}>Submit</Button>
+        <Button onClick={handleSubmit} disabled={loading}>Submit</Button>
       </Group>
     </Modal>
   );

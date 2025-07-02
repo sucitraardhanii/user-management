@@ -1,272 +1,349 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
+import { Title, Loader, Select, Group, Stack, Button, TextInput, Flex, Card } from "@mantine/core";
 import {
-  TextInput,
-  Button,
-  Paper,
-  Flex,
-  Stack,
-  Title,
-  Select,
-  Loader
-} from "@mantine/core";
+  fetchUserByApp,
+  fetchUserByAppOrg,
+  fetchUserByNippos,
+  selectAplikasi,
+  encryptId,
+  fetchExternalOrg,
+} from "@/api/user";
+import { getIdAplikasi, isInternalAdmin, isSuperAdmin } from "@/api/auth";
 import GenericTable from "@/components/GenericTable";
-import { fetchUserByApp, fetchUserByNippos, updateUser,fetchUserByAppOrg } from "@/api/user";
-import { fetchAplikasi } from "@/api/aplikasi"; // fungsi ambil aplikasi
-import StatusBadge from "@/components/StatusBadge";
-import { getIdAplikasi, isSuperAdmin } from "@/api/auth";
-import ButtonAction from "@/components/ButtonAction";
+import { handleApiResponse } from "@/utils/handleApiResponse";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { IconEdit, IconTrash, IconSearch, IconCheck } from "@tabler/icons-react";
+import { showNotification } from "@mantine/notifications";
+import { useMemo } from "react";
+import StatusPegawaiBadge from "@/components/StatusPegawaiBadge";
+import StatusAkunBadge from "@/components/StatusAkunBadge";
 import PageBreadCrumb from "@/components/PageBreadCrumb";
 import CreateButton from "@/components/CreateButton";
-import UserEditModal from "@/components/UserEditModal";
-import { showNotification } from "@mantine/notifications";
-import { fetchExternalOrg } from "@/api/regisUserExtern";
 import ActionDropDownButton from "@/components/ActionDropDownButton";
-import { IconEdit, IconUpload, IconUserCheck,IconUserQuestion } from "@tabler/icons-react";
 import { checkActiveUser, validateUser } from "@/api/user";
 
-export default function UserByAppPage() {
-   const [idApp, setIdApp] = useState(() => {
-    return isSuperAdmin() ? "" : getIdAplikasi();
-  });
-  //const [activeAccount, setActiveAccount] = useState("all");
+export default function UserManagementPage() {
+  
+  const router = useRouter();
   const [data, setData] = useState([]);
-  const [aplikasiOptions, setAplikasiOptions] = useState([]);
-  const [nippos, setNippos] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedOrg, setSelectedOrg] = useState("");
-  const [externalOrgOptions, setExternalOrgOptions] = useState([]);
+  const [aplikasiOptions, setAplikasiOptions] = useState([]);
+  const [selectedApp, setSelectedApp] = useState(null);
+  const [externalOptions, setExternalOptions] = useState([]);
+  const [selectedExternal, setSelectedExternal] = useState(null);
+  const [nippos, setNippos] = useState("");
+  const [loadingAplikasi, setLoadingAplikasi] = useState(false);
+  const [loadingOrg, setLoadingOrg] = useState(false);
 
-  //Buat Edit MOdal
-  const [editNippos, setEditNippos] = useState(null);
-  const [editOpened, setEditOpened] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const idApp = getIdAplikasi();
+  const isSuper = isSuperAdmin();
+  const isInternal = isInternalAdmin();
+  
 
-  // Ambil list aplikasi saat pertama render
   useEffect(() => {
-  const loadExternalOrg = async () => {
-    const data = await fetchExternalOrg(); // sudah dalam format { label, value }
-    setExternalOrgOptions(data);
+    const timeout = setTimeout(() => {
+      const runFetchSequential = async () => {
+        const now = Date.now();
+        const lastAplikasiFetch = localStorage.getItem("last_aplikasi_fetch");
+        const lastOrgFetch = localStorage.getItem("last_externalorg_fetch");
+
+        let retryCount = 0;
+        const maxRetries = 2;
+
+        const loadAplikasi = async () => {
+          if (lastAplikasiFetch && now - Number(lastAplikasiFetch) < 300000) {
+            const cached = localStorage.getItem("aplikasi_options");
+            if (cached) {
+              setAplikasiOptions(JSON.parse(cached));
+              return true;
+            }
+          }
+
+          setLoadingAplikasi(true);
+          let res;
+          while (retryCount <= maxRetries) {
+            res = await selectAplikasi();
+            if (handleApiResponse(res, router)) {
+              setAplikasiOptions(res.data);
+              localStorage.setItem("aplikasi_options", JSON.stringify(res.data));
+              localStorage.setItem("last_aplikasi_fetch", now.toString());
+              setLoadingAplikasi(false);
+              return true;
+            } else {
+              retryCount++;
+              if (retryCount > maxRetries) {
+                setAplikasiOptions([]);
+                showNotification({
+                  title: "Gagal memuat aplikasi",
+                  message: "Server mungkin sedang bermasalah. Silakan coba beberapa saat lagi.",
+                  color: "red",
+                });
+                setLoadingAplikasi(false);
+                return false;
+              }
+              await new Promise((resolve) => setTimeout(resolve, 500));
+            }
+          }
+          setLoadingAplikasi(false);
+          return false;
+        };
+
+        const loadOrg = async () => {
+          retryCount = 0;
+          if (lastOrgFetch && now - Number(lastOrgFetch) < 300000) {
+            const cached = localStorage.getItem("external_options");
+            if (cached) {
+              setExternalOptions(JSON.parse(cached));
+              return;
+            }
+          }
+
+          setLoadingOrg(true);
+          let res;
+          while (retryCount <= maxRetries) {
+            res = await fetchExternalOrg();
+            if (handleApiResponse(res, router)) {
+              const mapped = res.data.map((org) => ({
+                label: org.nameOrganization,
+                value: org.id_external_org,
+              }));
+              const finalOptions = [{ value: "all", label: "Semua" }, ...mapped];
+              setExternalOptions(finalOptions);
+              localStorage.setItem("external_options", JSON.stringify(finalOptions));
+              localStorage.setItem("last_externalorg_fetch", now.toString());
+              break;
+            } else {
+              retryCount++;
+              if (retryCount > maxRetries) {
+                setExternalOptions([]);
+                showNotification({
+                  title: "Gagal memuat organisasi eksternal",
+                  message: "Server mungkin sedang bermasalah. Silakan coba beberapa saat lagi.",
+                  color: "red",
+                });
+                break;
+              }
+              await new Promise((resolve) => setTimeout(resolve, 500));
+            }
+          }
+          setLoadingOrg(false);
+        };
+
+        const success = isSuper ? await loadAplikasi() : true;
+if (success) await loadOrg();
+      };
+      runFetchSequential();
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [idApp, router]);
+
+  const normalizeUser = (user) => ({
+  nippos: user.nippos,
+  nama: user.nama,
+  email: user.email,
+  jabatan: user.jabatan,
+  kantor: user.namaKantor || user.kantor || "-",
+  nameExternalOrg: user.nameExternalOrg || "-",
+  status_pegawai: user.status_pegawai ?? user.codeStatusPegawai,
+  status_akun: user.status_akun ?? user.codeStatusAkun,
+  id: user.id || user.nippos,
+});
+
+  const handleFetch = async () => {
+    setLoading(true);
+    let response;
+
+    const noInput = !nippos && (!selectedApp || selectedApp === '') && !selectedExternal;
+
+    if (noInput) {
+      if (isSuper) {
+        response = await fetchUserByNippos("");
+      } else {
+        response = await fetchUserByApp(idApp);
+      }
+    } else if (nippos) {
+      response = await fetchUserByNippos(nippos);
+    } else if (isSuper && selectedApp && selectedExternal) {
+      const res = await encryptId(selectedApp);
+      if (!handleApiResponse(res, router)) {
+        setLoading(false);
+        return;
+      }
+      response = await fetchUserByAppOrg(res.data, selectedExternal);
+    } else if (isSuper && selectedApp) {
+      const res = await encryptId(selectedApp);
+      if (!handleApiResponse(res, router)) {
+        setLoading(false);
+        return;
+      }
+      response = await fetchUserByApp(res.data);
+    } else if (!isSuper && selectedExternal) {
+      response = await fetchUserByAppOrg(idApp, selectedExternal);
+    } else {
+      response = await fetchUserByApp(idApp);
+    }
+
+    if (handleApiResponse(response, router)) {
+  const rawData = Array.isArray(response.data?.data) ? response.data.data : response.data;
+  const mapped = Array.isArray(rawData)
+  ? rawData.map(normalizeUser).filter(user => isSuper || isInternal || user.status_pegawai !== 1)
+  : [];
+  setData(mapped);
+}
+
+    setLoading(false);
   };
 
-  loadExternalOrg();
-}, []);
-
-
-useEffect(() => {
-    const fetchInitialData = async () => {
-      setLoading(true);
-      try {
-        const aplikasi = await fetchAplikasi();
-        setAplikasiOptions(aplikasi);
-        const organisasi = await fetchExternalOrg();
-        setAplikasiOptions(organisasi);
-      } catch (err) {
-        console.error("Gagal ambil data aplikasi & organisasi:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInitialData();
-  }, []);
-
-const handleFetch = async () => {
-  setLoading(true);
-  try {
-    const usedIdApp = isSuperAdmin() ? idApp : getIdAplikasi();
-
-    if (nippos) {
-      const result = await fetchUserByNippos(nippos);
-      setData(result);
-    } else if (selectedOrg) {
-      const result = await fetchUserByAppOrg(usedIdApp,selectedOrg);
-      setData(result.data);
-    } else {
-      const result = await fetchUserByApp(usedIdApp);
-      const filtered = result.data.filter(user => user.statusPegawai === "Non Organik");
-      setData(filtered);
-    }
-  } catch (error) {
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-// Tombol Edit buat Buka modal
-const handleEditClick = async (nippos) => {
-  try {
-    const res = await fetchUserByNippos(nippos);
-    if (res.length > 0) {
-      setSelectedUser(res[0]);
-      setEditOpened(true);
-    }
-  } catch (err) {
-    console.error("Gagal ambil data user", err);
-  }
-};
-
-  const columns = useMemo(() => [
-    { accessorKey: "nippos", header: "Nippos", size: 150 },
-    { accessorKey: "nama", header: "Nama", size:100},
-    { accessorKey: "email", header: "Email" },
-    { accessorKey: "jabatan", header: "Jabatan", size:100},
-    { accessorKey: "namaKantor", header: "Nama Kantor" },
-    {
-      accessorKey: "statusAkun",
-      header: "Status Akun",
-      size:115,
-      Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
-    },
-    {
-      accessorKey: "statusPegawai",
-      header: "Status Pegawai",
-      size:125,
-      Cell: ({ cell }) => <StatusBadge value={cell.getValue()} />,
-    },
-    {
-      accessorKey: "hakAkses",
-      header: "Hak Akses",
-      size:100,
-      Cell: ({ cell }) => {
-        const akses = cell.getValue();
-        return akses?.map((a, i) => (
-          <StatusBadge key={i} value={a.statusUserAkses} />
-        ));
+  const columns = useMemo(
+    () => [
+      { accessorKey: "nippos", header: "NIPPOS" },
+      { accessorKey: "nama", header: "Nama" },
+      { accessorKey: "email", header: "Email" },
+      { accessorKey: "jabatan", header: "Jabatan", size: 100},
+      { accessorKey: "kantor", header: "Kantor" },
+      { accessorKey: "nameExternalOrg", header: "Organisasi Eksternal", size:150 },
+      {
+        accessorKey: "status_pegawai",
+        header: "Status Pegawai",
+        size: 150,
+        Cell: ({ cell }) => <StatusPegawaiBadge value={cell.getValue()} />,
       },
-    },
-    {
-            id: "actions",
-            header: "Aksi",
-            Cell: ({ row }) => (
-              <ButtonAction
-                onEdit={() => handleEditClick(row.original.nippos)}
-                onDelete={() => handleDelete(row.original.nippos, row.original.name)}
-              />
-            ),
-          },
-  ], []);
+      {
+        accessorKey: "status_akun",
+        header: "Status Akun",
+        size:100,
+        Cell: ({ cell }) => <StatusAkunBadge value={cell.getValue()} />,
+      },
+      {
+        id: "actions",
+          header: "Aksi",
+          Cell: ({ row }) => (
+            <Flex gap="xs" wrap="nowrap">
+              <Button
+                size="xs"
+                variant="light"
+                color="blue"
+                component={Link}
+                href={`/user-akses/${row.original.id}/edit`}
+                leftSection={<IconEdit size={14} />}
+              >
+                Edit
+              </Button>
+              <Button
+                size="xs"
+                variant="light"
+                color="red"
+                onClick={() => handleDelete(row.original.id, row.original.name)}
+                leftSection={<IconTrash size={14} />}
+              >
+                Delete
+              </Button>
+            </Flex>
+          ),
+        },
+    ],
+    []
+  );
 
   return (
     <>
-      <PageBreadCrumb />
-      <Flex justify="space-between" align="center" mb="md" mt="md">
-        <Title order={2}>Manajemen User</Title>
-        <Flex gap="sm">
-        <CreateButton entity="user" />
+    <PageBreadCrumb />
+      <Flex justify="space-between" align="center" mb="md">
+        <Title order={2}>Manajemen User External</Title>
+        <Group>
+          <CreateButton entity="user/external" label={"User External"}/>
+          {(isSuper || isInternal) && (
+          <CreateButton entity="user/internal" label={"User Internal"}/>
+          )}
         <ActionDropDownButton
-          actions={[
-            {
-              label: "Cek Status Aktif",
-              icon: <IconUserCheck size={16} />,
-              type: "modal",
-              modalTitle: "Cek Status User Aktif",
-              onSubmitNippos: async (nippos) => {
-                const res = await checkActiveUser(nippos);
-                if (res.statusCode==200){
-                  showNotification({
-                  title: "Berhasil Check Status",
-                  message:"Akun User Aktif",
-                  color: "green",
-                });
-                return
-                }
-                showNotification({
-                  title: "Gagal",
-                  message: "Akun User Tidak Aktif",
-                  color: "red",
-                });
+            actions={[
+              {
+                label: "Cek Status Akun",
+                icon: <IconSearch size={16} />,
+                color: "blue",
+                type: "modal",
+                modalTitle: "Cek Status Akun",
+                onSubmitNippos: async (nippos) => {
+                  const res = await checkActiveUser(nippos);
+                  if (handleApiResponse(res, router)) {
+                    showNotification({
+                      title: "Berhasil Check Akun",
+                      message: "Status Akun User Aktif",
+                      color: "green",
+                    });
+                  }
+                },
               },
-            },
-            {
-              label: "Validasi Akun",
-              icon: <IconUserQuestion size={16} />,
-              type: "modal",
-              modalTitle: "Validasi Akun",
-              onSubmitNippos: async (nippos) => {
-                const res = await validateUser(nippos);
-                if (res.statusCode==400){
-                  showNotification({
-                  title: "Gagal Validasi",
-                  message: "Akun User Tidak Ditemukan/Ada Kesalahan",
-                  color: "red",
-                });
-                return
-                }
-                showNotification({
-                  title: "Berhasil Validasi akun",
-                  message:"Akun User Sudah Aktif",
-                  color: "green",
-                });
+              {
+                label: "Validasi Akun",
+                icon: <IconCheck size={16} />,
+                color: "teal",
+                type: "modal",
+                modalTitle: "Validasi Akun",
+                onSubmitNippos: async (nippos) => {
+                  const res = await validateUser(nippos);
+                  if (handleApiResponse(res, router)) {
+                    showNotification({
+                      title: "Validasi Berhasil",
+                      message: "Akun berhasil divalidasi",
+                      color: "green",
+                    });
+                  }
+                },
               },
-            },
-            {
-              label: "Export Data",
-              icon: <IconUpload size={16} />,
-              color: "blue",
-              onClick: () => alert("Export jalan"),
-            },
-          ]}
-        />
-      </Flex>
+            ]}
+          />
+        </Group>
+
       </Flex>
       <Stack>
-        <Paper withBorder p="md" radius="md">
-          <Flex gap="md" wrap="wrap">
-             <TextInput
-              label="Nippos"
-              value={nippos}
-              onChange={(e) => setNippos(e.target.value)}
-              placeholder="Cari Menggunakan Nippos/Email"
-              style={{ flex: 1 }}
-            />
-            <Select
-              label="Organisasi Eksternal"
-              data={externalOrgOptions}
-              value={selectedOrg}
-              onChange={setSelectedOrg}
-              placeholder="Pilih organisasi"
-              searchable
-              clearable
-              style={{ flex: 1 }}
-            />
-
-            <Button onClick={handleFetch} mt={20} style={{ height: "40px" }}>
-              Tampilkan Data
-            </Button>
-          </Flex>
-        </Paper>
-
-        <GenericTable data={data} columns={columns} loading={loading} />
-
-          <UserEditModal
-            opened={editOpened}
-            onClose={() => setEditOpened(false)}
-            userData={selectedUser}
-            onSubmit={async (updatedUser) => {
-              try {
-                await updateUser(updatedUser);
-                await handleFetch(); // refresh data
-                showNotification({
-                  title: "Sukses",
-                  message: "User berhasil diupdate",
-                  color: "teal",
-                });
-              } catch (err) {
-                console.error("Gagal update user", err);
-                showNotification({
-                  title: "Gagal",
-                  message: err.message,
-                  color: "red",
-                });
-              }
-              setEditOpened(false);
-            }}
+      <Card shadow="sm" padding="xl" radius="md" withBorder style={{ backgroundColor: "white" }}>
+      <Group align="flex-end" grow>
+        <TextInput
+        label="Cari Berdasarkan NIPPOS"
+        placeholder="Masukkan nippos..."
+        value={nippos}
+        onChange={(e) => setNippos(e.currentTarget.value)}
+      />
+        {isSuper && (
+          <Select
+            label="Pilih Aplikasi"
+            placeholder="Pilih Aplikasi"
+            data={aplikasiOptions}
+            value={selectedApp}
+            onChange={setSelectedApp}
+            clearable
+            rightSection={loadingAplikasi ? <Loader size="xs" /> : null}
           />
-      </Stack>
+        )}
+
+        <Select
+          label="Pilih Organisasi Eksternal"
+          placeholder="Pilih Organisasi"
+          data={externalOptions}
+          value={selectedExternal}
+          onChange={setSelectedExternal}
+          clearable
+          disabled={isSuper && !selectedApp}
+          rightSection={loadingOrg ? <Loader size="xs" /> : null}
+        />
+        <Button onClick={handleFetch} disabled={loading} loading={loading}>
+          Tampilkan Data
+        </Button>
+      </Group>
+      </Card>
+        {loading && (
+          <Flex justify="center" align="center" style={{ minHeight: 200 }}>
+            <Loader variant="bars" color="blue" size="lg" />
+          </Flex>
+        )}
+
+      {data.length > 0 && <GenericTable data={data} columns={columns} />}
+    </Stack>
     </>
   );
 }
