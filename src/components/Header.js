@@ -21,6 +21,7 @@ import {
 import { logout } from "@/api/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import StatusPegawaiBadge from "./StatusPegawaiBadge";
 
 export default function Header({ sidebarOpened, onToggleSidebar }) {
   // sidebarOpened: state boolean untuk sidebar (apakah terbuka atau tidak)
@@ -40,7 +41,6 @@ export default function Header({ sidebarOpened, onToggleSidebar }) {
       console.log("nippos dari localstorage:", nippos);
       console.log("token dari localStorage:", token);
       console.log("body request:", JSON.stringify({ nippos }));
-
 
       if (!nippos) return;
 
@@ -132,9 +132,12 @@ export default function Header({ sidebarOpened, onToggleSidebar }) {
               <Text size="xs" c="dimmed">
                 Nopend: {userData?.nopend}
               </Text>
-              <Text size="xs" c="dimmed">
-                Status: {userData?.status_pegawai}
-              </Text>
+              <Group gap="xs">
+                <Text size="xs" c="dimmed">
+                  Status:
+                </Text>
+                <StatusPegawaiBadge value={userData?.status_pegawai} />
+              </Group>
             </Box>
             <Menu.Divider />
             <Menu.Item
