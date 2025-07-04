@@ -95,22 +95,6 @@ export async function fetchUserByAppOrg(idApp, idExternal) {
   }
 }
 
-export async function updateUser(payload) {
-  try {
-    const res = await fetch(`${BASE_URL}/user`, {
-      method: "PUT",
-      headers: getHeaders(),
-      body: JSON.stringify(payload),
-    });
-    const result = await res.json();
-    const error = handleErrorResponse(res, result, "Gagal update user");
-    if (error) return error;
-    return { data: result };
-  } catch (err) {
-    return { error: "network_error", detail: err.message };
-  }
-}
-
 export async function checkActiveUser(nippos) {
   try {
     const res = await fetch(`${BASE_URL}/activeUser`, {
@@ -166,16 +150,16 @@ export async function selectAplikasi() {
   }
 }
 
-export async function fetchExternalOrg() {
-  const res = await fetch(`${BASE_URL}/getExternalOrgAll`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ statusActive: "all" }),
-  });
+// export async function fetchExternalOrg() {
+//   const res = await fetch(`${BASE_URL}/getExternalOrgAll`, {
+//     method: "POST",
+//     headers: getHeaders(),
+//     body: JSON.stringify({ statusActive: "all" }),
+//   });
 
-  const result = await res.json();
-  return { data: result.data };
-}
+//   const result = await res.json();
+//   return { data: result.data };
+// }
 
 
 export async function encryptId(id) {
@@ -192,4 +176,75 @@ export async function encryptId(id) {
   } catch (err) {
     return { error: "network_error", detail: err.message };
   }
+}
+
+export async function updateUser(payload) {
+  try {
+    const res = await fetch(`${BASE_URL}/user`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
+    const error = handleErrorResponse(res, result, "Gagal update user");
+    if (error) return error;
+    return { data: result };
+  } catch (err) {
+    return { error: "network_error", detail: err.message };
+  }
+}
+
+// DELETE USER
+export async function deleteUser(nippos) {
+  const res = await fetch(`${BASE_URL}/user`, {
+    method: "DELETE",
+    headers: getHeaders(),
+    body: JSON.stringify({ nippos }),
+  });
+  return await res.json();
+}
+
+export async function fetchUser(nippos) {
+  const res = await fetch(`${BASE_URL}/getUser`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ nippos }),
+  });
+
+  return res.json();
+}
+
+export async function fetchJabatan() {
+  const res = await fetch(`${BASE_URL}/getJabatan`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ codeJabatan: "" }),
+  });
+
+  const result = await res.json();
+
+  // kalau API return { data: [...] }, kita ambil dari situ
+  const data = Array.isArray(result)
+    ? result
+    : Array.isArray(result?.data)
+    ? result.data
+    : [];
+
+  return data
+    .filter((item) => item.status === 1)
+    .map((item) => ({
+      value: item.code_jabatan,
+      label: `${item.code_jabatan} - ${item.namajabatan}`,
+    }));
+}
+
+export async function fetchExternalOrg() {
+  const res = await fetch(`${BASE_URL}/getExternalOrgAll`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ statusActive: "all" }),
+  });
+
+  const result = await res.json();
+  return { data: result.data };
 }

@@ -1,62 +1,68 @@
-"use client";
+import { Menu, Button, Text, Group } from "@mantine/core";
+import { modals } from "@mantine/modals";
+import { IconChevronDown } from "@tabler/icons-react";
 
-import { useState } from "react";
-import { Menu, Button } from "@mantine/core";
-import { IconDotsVertical } from "@tabler/icons-react";
-import ModalCekNippos from "./ModalCekNippos"; // modal input nippos
-
-export default function ActionDropDownButton({ actions = [] }) {
-  const [modalIndex, setModalIndex] = useState(null);
-
-  const handleModalSubmit = async (nippos) => {
-    const action = actions[modalIndex];
-    if (action?.onSubmitNippos) {
-      await action.onSubmitNippos(nippos);
+export default function ActionDropDownButton({
+  buttonLabel = "Actions",
+  buttonProps = {},
+  actions = [],
+  icon = <IconChevronDown size={14} />, // icon dropdown
+}) {
+  const handleActionClick = (action) => {
+    if (action.type === "confirm-delete") {
+      modals.openConfirmModal({
+        title: action.confirmTitle || "Konfirmasi Hapus",
+        centered: true,
+        size: "sm",
+        overlayProps: { blur: 2, opacity: 0.1 },
+        children: (
+          <Text size="sm">
+            {action.confirmMessage || (
+              <>Yakin ingin menghapus <b>{action.name || "data ini"}</b>?</>
+            )}
+          </Text>
+        ),
+        labels: { confirm: action.confirmLabel || "Hapus", cancel: "Batal" },
+        confirmProps: { color: action.color || "red" },
+        onConfirm: action.onClick,
+      });
+    } else if (action.type === "modal-nippos") {
+      modals.openContextModal({
+        modal: "nippos-input",
+        title: action.modalTitle || "Input Nippos",
+        innerProps: {
+          onSubmit: action.onSubmitNippos,
+        },
+      });
+    } else {
+      action.onClick();
     }
-    setModalIndex(null);
   };
 
   return (
-    <>
-      <Menu shadow="md" width={200} position="bottom-end">
-        <Menu.Target>
-          <Button
-            variant="outline"
-            leftSection={<IconDotsVertical size={16} />}
+    <Menu shadow="md" width={200}>
+      <Menu.Target>
+        <Button {...buttonProps}>
+          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {icon}
+            {buttonLabel}
+          </span>
+        </Button>
+      </Menu.Target>
+      <Menu.Dropdown>
+        {actions.map((action, index) => (
+          <Menu.Item
+            key={index}
+            color={action.color}
+            onClick={() => handleActionClick(action)}
           >
-          Aksi Lainnya
-          </Button>
-        </Menu.Target>
-
-        <Menu.Dropdown>
-          {actions.map((action, index) => (
-            <Menu.Item
-              key={index}
-              leftSection={action.icon}
-              color={action.color}
-              onClick={() => {
-                if (action.type === "modal") {
-                  setModalIndex(index);
-                } else {
-                  action.onClick?.();
-                }
-              }}
-            >
-              {action.label}
-            </Menu.Item>
-          ))}
-        </Menu.Dropdown>
-      </Menu>
-
-      {/* Modal input NIPPOS jika ada aksi bertipe modal */}
-      {modalIndex !== null && (
-        <ModalCekNippos
-          opened
-          title={actions[modalIndex]?.modalTitle || "Input NIPPOS"}
-          onClose={() => setModalIndex(null)}
-          onSubmit={handleModalSubmit}
-        />
-      )}
-    </>
+            <Group spacing={6}>
+              {action.icon}
+              <span>{action.label}</span>
+            </Group>
+          </Menu.Item>
+        ))}
+      </Menu.Dropdown>
+    </Menu>
   );
 }

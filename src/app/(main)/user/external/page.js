@@ -15,7 +15,7 @@ import GenericTable from "@/components/GenericTable";
 import { handleApiResponse } from "@/utils/handleApiResponse";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IconEdit, IconTrash, IconSearch, IconCheck } from "@tabler/icons-react";
+import { IconEdit, IconTrash, IconSearch, IconCheck, IconSettings } from "@tabler/icons-react";
 import { showNotification } from "@mantine/notifications";
 import { useMemo } from "react";
 import StatusPegawaiBadge from "@/components/StatusPegawaiBadge";
@@ -222,27 +222,34 @@ if (success) await loadOrg();
         id: "actions",
           header: "Aksi",
           Cell: ({ row }) => (
-            <Flex gap="xs" wrap="nowrap">
-              <Button
-                size="xs"
-                variant="light"
-                color="blue"
-                component={Link}
-                href={`/user-akses/${row.original.id}/edit`}
-                leftSection={<IconEdit size={14} />}
-              >
-                Edit
-              </Button>
-              <Button
-                size="xs"
-                variant="light"
-                color="red"
-                onClick={() => handleDelete(row.original.id, row.original.name)}
-                leftSection={<IconTrash size={14} />}
-              >
-                Delete
-              </Button>
-            </Flex>
+            <ActionDropDownButton
+            buttonLabel="Actions"
+            icon={<IconSettings size={18} />}
+            buttonProps={{
+              color: "grape",
+              variant: "filled",
+              size: "sm",
+              radius: "xl",
+              className: "uppercase font-semibold",
+            }}
+            actions={[
+              {
+                label: "Edit Data",
+                icon: <IconEdit size={16} />,
+                color: "blue",
+                type: "modal",
+                onClick: () => openEditModal(data),
+              },
+              {
+                label: "Hapus Data",
+                icon: <IconTrash size={16} />,
+                color: "red",
+                type: "confirm-delete",
+                onClick: () => handleDelete(data.id),
+              },
+            ]}
+          />
+
           ),
         },
     ],
@@ -259,13 +266,13 @@ if (success) await loadOrg();
           {(isSuper || isInternal) && (
           <CreateButton entity="user/internal" label={"User Internal"}/>
           )}
-        <ActionDropDownButton
+       <ActionDropDownButton
             actions={[
               {
                 label: "Cek Status Akun",
                 icon: <IconSearch size={16} />,
                 color: "blue",
-                type: "modal",
+                type: "modal-nippos",
                 modalTitle: "Cek Status Akun",
                 onSubmitNippos: async (nippos) => {
                   const res = await checkActiveUser(nippos);
@@ -282,7 +289,7 @@ if (success) await loadOrg();
                 label: "Validasi Akun",
                 icon: <IconCheck size={16} />,
                 color: "teal",
-                type: "modal",
+                type: "modal-nippos",
                 modalTitle: "Validasi Akun",
                 onSubmitNippos: async (nippos) => {
                   const res = await validateUser(nippos);
@@ -297,6 +304,7 @@ if (success) await loadOrg();
               },
             ]}
           />
+
         </Group>
 
       </Flex>
