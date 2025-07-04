@@ -1,9 +1,16 @@
-// app/user/external/edit/[nippos]/page.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { TextInput, Select, Button, Card, Group, Flex, Title } from "@mantine/core";
+import {
+  TextInput,
+  Select,
+  Button,
+  Card,
+  Group,
+  Flex,
+  Title
+} from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
 import PageBreadCrumb from "@/components/PageBreadCrumb";
@@ -14,11 +21,7 @@ import {
   updateUser,
   fetchUser
 } from "@/api/user";
-
-import {
-  fetchAllKantor,
-  fetchJabatan,
-} from "@/api/menu";
+import { fetchAllKantor, fetchJabatan } from "@/api/menu";
 
 export default function EditUserExternalPage() {
   const { nippos } = useParams();
@@ -28,6 +31,8 @@ export default function EditUserExternalPage() {
   const [kantorOptions, setKantorOptions] = useState([]);
   const [jabatanOptions, setJabatanOptions] = useState([]);
   const [externalOrgOptions, setExternalOrgOptions] = useState([]);
+  const [isExternalOrgMissing, setIsExternalOrgMissing] = useState(false);
+
 
   const form = useForm({
     initialValues: {
@@ -46,99 +51,100 @@ export default function EditUserExternalPage() {
     }
   });
 
-useEffect(() => {
-  const fetchData = async () => {
-    setLoading(true);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
 
-    try {
-      // Fetch semua data
-      const [userRes, jabatanResRaw, orgRes] = await Promise.all([
-        fetchUser(decodedNippos),
-        fetchJabatan(), // boleh dikomen kalau nggak perlu
-        fetchExternalOrg(),
-      ]);
+      try {
+        const [userRes, jabatanResRaw, orgResRaw] = await Promise.all([
+          fetchUser(decodedNippos),
+          fetchJabatan(),
+          fetchExternalOrg()
+        ]);
 
-      // Validasi user
-      const user = Array.isArray(userRes?.data)
-        ? userRes.data[0]
-        : userRes.data;
+        const user = Array.isArray(userRes?.data)
+          ? userRes.data[0]
+          : userRes.data;
 
-      if (!user) {
+        if (!user) {
+          showNotification({
+            title: "User tidak ditemukan",
+            message: `Data untuk ${decodedNippos} tidak ditemukan`,
+            color: "red"
+          });
+          router.push("/user");
+          return;
+        }
+
+        const codeJabatanStr = String(user.code_jabatan ?? "").trim();
+
+        // Set jabatan
+        let finalJabatanOptions = Array.isArray(jabatanResRaw) ? [...jabatanResRaw] : [];
+        const isJabatanAda = finalJabatanOptions.some(
+          (j) => j.value === codeJabatanStr
+        );
+        if (!isJabatanAda && codeJabatanStr) {
+          finalJabatanOptions.push({
+            value: codeJabatanStr,
+            label: `${codeJabatanStr} - (Jabatan dari user)`
+          });
+        }
+        setJabatanOptions(finalJabatanOptions);
+
+        // Set external org
+        const orgList = orgResRaw?.data || [];
+        const activeOrgOnly = orgList.filter((org) => org.statusCodeAktif === 1);
+
+        
+
+        const orgMatch = activeOrgOnly.find(
+          (o) =>
+            o.nameOrganization?.trim().toLowerCase() ===
+            (user.nameExternalOrg ?? "").trim().toLowerCase()
+        );
+
+        setExternalOrgOptions(
+          activeOrgOnly.map((item) => ({
+            value: item.id_external_org,
+            label: item.nameOrganization
+          }))
+        );
+        
+
+        if (!orgMatch && user.nameExternalOrg) {
+          console.warn("⚠️ External Org tidak ditemukan:", user.nameExternalOrg);
+        }
+
+        setIsExternalOrgMissing(!user.nameExternalOrg);
+
+        form.setValues({
+          nippos: user.nippos || "",
+          nama: user.nama || "",
+          email: user.nippos || "",
+          codeJabatan: codeJabatanStr,
+          kantor: user.kantor || "",
+          id_external_org: orgMatch?.id_external_org || "",
+          statuspegawai: String(user.status_pegawai ?? ""),
+          statusakun: String(user.status_akun ?? ""),
+          regional: user.regional || "",
+          kcu: user.kcu || "",
+          kc: user.kc || "",
+          kcp: user.kcp || ""
+        });
+      } catch (err) {
+        console.error("❌ Gagal memuat data:", err);
         showNotification({
-          title: "User tidak ditemukan",
-          message: `Data untuk ${decodedNippos} tidak ditemukan`,
-          color: "red",
+          title: "Error",
+          message: "Gagal memuat data. Silakan coba lagi.",
+          color: "red"
         });
-        router.push("/user");
-        return;
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const codeJabatanStr = String(user.code_jabatan ?? "").trim();
-
-      // --- JABATAN ---
-      let finalJabatanOptions = Array.isArray(jabatanResRaw) ? [...jabatanResRaw] : [];
-      const isJabatanAda = finalJabatanOptions.some(
-        (j) => j.value === codeJabatanStr
-      );
-      if (!isJabatanAda && codeJabatanStr) {
-        finalJabatanOptions.push({
-          value: codeJabatanStr,
-          label: `${codeJabatanStr} - (Jabatan dari user)`,
-        });
-      }
-      setJabatanOptions(finalJabatanOptions);
-
-      // --- EXTERNAL ORG ---
-      const orgList = Array.isArray(orgRes?.data) ? orgRes.data : [];
-      setExternalOrgOptions(
-        orgList.map((o) => ({
-          value: o.id_external_org,
-          label: o.nameOrganization,
-        }))
-      );
-
-      const orgMatch = orgList.find(
-        (org) =>
-          org.nameOrganization?.toLowerCase().trim() ===
-          user.nameExternalOrg?.toLowerCase().trim()
-      );
-
-      if (!orgMatch && user.nameExternalOrg) {
-        console.warn("⚠️ External Org tidak ditemukan untuk:", user.nameExternalOrg);
-      }
-
-      // --- SET FORM (terakhir) ---
-      form.setValues({
-        nippos: user.nippos || "",
-        nama: user.nama || "",
-        email: user.nippos || "",
-        codeJabatan: codeJabatanStr,
-        kantor: user.kantor || "",
-        id_external_org: orgMatch?.id_external_org || "",
-        statuspegawai: String(user.status_pegawai ?? ""),
-        statusakun: String(user.status_akun ?? ""),
-        regional: user.regional || "",
-        kcu: user.kcu || "",
-        kc: user.kc || "",
-        kcp: user.kcp || "",
-      });
-    } catch (err) {
-      console.error("❌ Gagal memuat data:", err);
-      showNotification({
-        title: "Error",
-        message: "Gagal memuat data. Silakan coba lagi.",
-        color: "red",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchData();
-}, [decodedNippos]);
-
-
-
+    fetchData();
+  }, [decodedNippos]);
 
   const handleSubmit = async (values) => {
     const payload = {
@@ -217,21 +223,28 @@ useEffect(() => {
               {...form.getInputProps("kantor")}
             />
             <Select
-            label="Jabatan"
-            data={jabatanOptions}
-            searchable
-            disabled={loading}
-            {...form.getInputProps("codeJabatan")}
-          />
-
-
+              label="Jabatan"
+              data={jabatanOptions}
+              searchable
+              disabled={loading}
+              {...form.getInputProps("codeJabatan")}
+            />
+            <div style={{ flex: 1 }}>
             <Select
               label="External Organisasi"
               data={externalOrgOptions}
               searchable
               required
+              error={isExternalOrgMissing ? "User belum memiliki data External Org" : undefined}
               {...form.getInputProps("id_external_org")}
             />
+            {isExternalOrgMissing && (
+              <p style={{ color: "red", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+                Data external org belum dilengkapi oleh user.
+              </p>
+            )}
+          </div>
+
           </Group>
 
           <Group align="flex-end" grow>
