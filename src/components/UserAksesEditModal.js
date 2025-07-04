@@ -27,17 +27,17 @@ export default function UserAksesEditModal({
   });
 
   useEffect(() => {
-  if (editData) {
-    form.setFieldValue("nippos", editData.nippos);
-    form.setFieldValue("statusUserAkses", editData.statusUserAkses == 1);
-  }
+    if (editData) {
+      form.setFieldValue("nippos", editData.nippos);
+      form.setFieldValue("statusUserAkses", editData.statusUserAkses == 1);
+    }
 
-  // 🔄 Ambil list nippos
-  fetchAllUserNippos().then((result) => {
-    const options = result.map((item) => item.nippos); 
-    setNipposOptions(result); // pastikan result berupa list nippos
-  });
-}, [editData]);
+    // 🔄 Ambil list nippos
+    fetchAllUserNippos().then((result) => {
+      const options = result.map((item) => item.nippos);
+      setNipposOptions(result); // pastikan result berupa list nippos
+    });
+  }, [editData]);
 
   // ketika Editdata berubah (biasanya setelah user klik tombol edit), form otomatis terisi dengan data tsb.
   // statusUserAkses diubah menjadi boolean (true/false) berdasarkan nilai yang diterima (1 untuk true, 0 untuk false).
@@ -63,9 +63,11 @@ export default function UserAksesEditModal({
           label="Nippos"
           data={nipposOptions}
           value={form.values.nippos}
-          onChange={(value) => form.setFieldValue("nippos", value)}
           placeholder="Masukkan nippos"
-          onSearchChange={handleSearch} // ini memicu fetch API
+          onChange={(value) => {
+            form.setFieldValue("nippos", value);
+            handleSearch(value); // ini memicu fetch API
+          }}
         />
 
         <Switch
