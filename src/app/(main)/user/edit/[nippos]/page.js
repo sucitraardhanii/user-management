@@ -19,19 +19,25 @@ import {
   fetchUserByNippos,
   fetchExternalOrg,
   updateUser,
-  fetchUser
+  fetchUser,
+  searchKantor,
+  fetchAllKantor
 } from "@/api/user";
-import { fetchAllKantor, fetchJabatan } from "@/api/menu";
+import { fetchJabatan } from "@/api/menu";
+import { useDebouncedValue } from "@mantine/hooks";
 
 export default function EditUserExternalPage() {
   const { nippos } = useParams();
   const router = useRouter();
   const decodedNippos = decodeURIComponent(nippos);
   const [loading, setLoading] = useState(true);
-  const [kantorOptions, setKantorOptions] = useState([]);
   const [jabatanOptions, setJabatanOptions] = useState([]);
   const [externalOrgOptions, setExternalOrgOptions] = useState([]);
   const [isExternalOrgMissing, setIsExternalOrgMissing] = useState(false);
+
+  const [kantorOptions, setKantorOptions] = useState([]);
+  const [searchKantorValue, setSearchKantorValue] = useState("");
+  const [debouncedSearchKantor] = useDebouncedValue(searchKantorValue, 100);
 
 
   const form = useForm({
@@ -75,6 +81,40 @@ export default function EditUserExternalPage() {
           router.push("/user");
           return;
         }
+
+        // Coba ambil kantor awal (jika ada)
+       if (user.nopend) {
+        try {
+          const kantorList = await searchKantor(user.nopend);
+          const selected = kantorList.find((k) => k.value === user.nopend);
+
+          if (selected) {
+            setKantorOptions((prev) => mergeUniqueKantor(prev, [selected]));
+          } else {
+            // fallback manual jika tidak ditemukan di hasil API
+            setKantorOptions((prev) =>
+              mergeUniqueKantor(prev, [
+                {
+                  value: user.nopend,
+                  label: user.kantor || user.nopend
+                }
+              ])
+            );
+          }
+        } catch (err) {
+          console.warn("⚠️ Gagal ambil kantor dari nopend:", user.nopend);
+          setKantorOptions((prev) =>
+            mergeUniqueKantor(prev, [
+              {
+                value: user.nopend,
+                label: user.kantor || user.nopend
+              }
+            ])
+          );
+        }
+      }
+
+
 
         const codeJabatanStr = String(user.code_jabatan ?? "").trim();
 
@@ -122,7 +162,7 @@ export default function EditUserExternalPage() {
           nama: user.nama || "",
           email: user.nippos || "",
           codeJabatan: codeJabatanStr,
-          kantor: user.kantor || "",
+          kantor: user.nopend || "",
           id_external_org: orgMatch?.id_external_org || "",
           statuspegawai: String(user.status_pegawai ?? ""),
           statusakun: String(user.status_akun ?? ""),
@@ -146,6 +186,27 @@ export default function EditUserExternalPage() {
     fetchData();
   }, [decodedNippos]);
 
+useEffect(() => {
+  const loadKantor = async () => {
+    const result = await searchKantor(debouncedSearchKantor);
+    setKantorOptions((prev) => mergeUniqueKantor(prev, result));
+  };
+
+  if (debouncedSearchKantor.length >= 2) {
+    loadKantor();
+  }
+}, [debouncedSearchKantor]);
+
+const mergeUniqueKantor = (...arrays) => {
+  const seen = new Set();
+  return arrays.flat().filter((item) => {
+    const val = String(item.value);
+    if (seen.has(val)) return false;
+    seen.add(val);
+    return true;
+  });
+};
+
   const handleSubmit = async (values) => {
     const payload = {
       ...values,
@@ -154,7 +215,14 @@ export default function EditUserExternalPage() {
       statuspegawai: Number(values.statuspegawai),
       statusakun: Number(values.statusakun)
     };
+
     delete payload.code_jabatan;
+      // Hapus field kosong
+      ["kc", "kcp", "kcu", "regional"].forEach((key) => {
+        if (!payload[key]) {
+          delete payload[key];
+        }
+      });
 
     const res = await updateUser(payload);
 
@@ -216,12 +284,15 @@ export default function EditUserExternalPage() {
 
           <Group align="flex-end" grow>
             <Select
-              label="Kantor"
-              data={kantorOptions}
-              searchable
-              required
-              {...form.getInputProps("kantor")}
-            />
+            label="Kantor"
+            searchable
+            data={kantorOptions}
+            value={form.values.kantor}
+            onChange={(val) => form.setFieldValue("kantor", val)}
+            onSearchChange={setSearchKantorValue}
+            required
+          />
+
             <Select
               label="Jabatan"
               data={jabatanOptions}
