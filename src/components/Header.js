@@ -38,9 +38,6 @@ export default function Header({ sidebarOpened, onToggleSidebar }) {
       const nippos = item?.nippos;
       const token = item?.token;
 
-      console.log("nippos dari localstorage:", nippos);
-      console.log("token dari localStorage:", token);
-      console.log("body request:", JSON.stringify({ nippos }));
 
       if (!nippos) return;
 
@@ -61,7 +58,6 @@ export default function Header({ sidebarOpened, onToggleSidebar }) {
           }
 
           const data = await res.json();
-          console.log("✅ data user dari API:", data);
 
           if (data.data && data.data.length > 0) {
             setUserData(data.data[0]);
