@@ -58,32 +58,32 @@ export default function EditUserExternalPage() {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+  const fetchData = async () => {
+    setLoading(true);
 
-      try {
-        const [userRes, jabatanResRaw, orgResRaw] = await Promise.all([
-          fetchUser(decodedNippos),
-          fetchJabatan(),
-          fetchExternalOrg()
-        ]);
+    try {
+      // Fetch user & jabatan terlebih dahulu
+      const [userRes, jabatanResRaw] = await Promise.all([
+        fetchUser(decodedNippos),
+        fetchJabatan()
+      ]);
 
-        const user = Array.isArray(userRes?.data)
-          ? userRes.data[0]
-          : userRes.data;
+      const user = Array.isArray(userRes?.data)
+        ? userRes.data[0]
+        : userRes.data;
 
-        if (!user) {
-          showNotification({
-            title: "User tidak ditemukan",
-            message: `Data untuk ${decodedNippos} tidak ditemukan`,
-            color: "red"
-          });
-          router.push("/user");
-          return;
-        }
+      if (!user) {
+        showNotification({
+          title: "User tidak ditemukan",
+          message: `Data untuk ${decodedNippos} tidak ditemukan`,
+          color: "red"
+        });
+        router.push("/user");
+        return;
+      }
 
-        // Coba ambil kantor awal (jika ada)
-       if (user.nopend) {
+      // Ambil kantor berdasarkan nopend user
+      if (user.nopend) {
         try {
           const kantorList = await searchKantor(user.nopend);
           const selected = kantorList.find((k) => k.value === user.nopend);
@@ -91,7 +91,6 @@ export default function EditUserExternalPage() {
           if (selected) {
             setKantorOptions((prev) => mergeUniqueKantor(prev, [selected]));
           } else {
-            // fallback manual jika tidak ditemukan di hasil API
             setKantorOptions((prev) =>
               mergeUniqueKantor(prev, [
                 {
@@ -114,77 +113,84 @@ export default function EditUserExternalPage() {
         }
       }
 
-
-
-        const codeJabatanStr = String(user.code_jabatan ?? "").trim();
-
-        // Set jabatan
-        let finalJabatanOptions = Array.isArray(jabatanResRaw) ? [...jabatanResRaw] : [];
-        const isJabatanAda = finalJabatanOptions.some(
-          (j) => j.value === codeJabatanStr
-        );
-        if (!isJabatanAda && codeJabatanStr) {
-          finalJabatanOptions.push({
-            value: codeJabatanStr,
-            label: `${codeJabatanStr} - (Jabatan dari user)`
-          });
-        }
-        setJabatanOptions(finalJabatanOptions);
-
-        // Set external org
-        const orgList = orgResRaw?.data || [];
-        const activeOrgOnly = orgList.filter((org) => org.statusCodeAktif === 1);
-
-        
-
-        const orgMatch = activeOrgOnly.find(
-          (o) =>
-            o.nameOrganization?.trim().toLowerCase() ===
-            (user.nameExternalOrg ?? "").trim().toLowerCase()
-        );
-
-        setExternalOrgOptions(
-          activeOrgOnly.map((item) => ({
-            value: item.id_external_org,
-            label: item.nameOrganization
-          }))
-        );
-        
-
-        if (!orgMatch && user.nameExternalOrg) {
-          console.warn("⚠️ External Org tidak ditemukan:", user.nameExternalOrg);
-        }
-
-        setIsExternalOrgMissing(!user.nameExternalOrg);
-
-        form.setValues({
-          nippos: user.nippos || "",
-          nama: user.nama || "",
-          email: user.nippos || "",
-          codeJabatan: codeJabatanStr,
-          kantor: user.nopend || "",
-          id_external_org: orgMatch?.id_external_org || "",
-          statuspegawai: String(user.status_pegawai ?? ""),
-          statusakun: String(user.status_akun ?? ""),
-          regional: user.regional || "",
-          kcu: user.kcu || "",
-          kc: user.kc || "",
-          kcp: user.kcp || ""
+      // Set jabatan
+      const codeJabatanStr = String(user.code_jabatan ?? "").trim();
+      let finalJabatanOptions = Array.isArray(jabatanResRaw) ? [...jabatanResRaw] : [];
+      const isJabatanAda = finalJabatanOptions.some(
+        (j) => j.value === codeJabatanStr
+      );
+      if (!isJabatanAda && codeJabatanStr) {
+        finalJabatanOptions.push({
+          value: codeJabatanStr,
+          label: `${codeJabatanStr} - (Jabatan dari user)`
         });
-      } catch (err) {
-        console.error("❌ Gagal memuat data:", err);
-        showNotification({
-          title: "Error",
-          message: "Gagal memuat data. Silakan coba lagi.",
-          color: "red"
-        });
-      } finally {
-        setLoading(false);
       }
-    };
+      setJabatanOptions(finalJabatanOptions);
 
-    fetchData();
-  }, [decodedNippos]);
+      // Ambil External Org hanya jika user eksternal
+      let orgMatch = null;
+      if (user.status_pegawai === 4) {
+        try {
+          const orgResRaw = await fetchExternalOrg();
+          const orgList = orgResRaw?.data || [];
+          const activeOrgOnly = orgList.filter((org) => org.statusCodeAktif === 1);
+
+          orgMatch = activeOrgOnly.find(
+            (o) =>
+              o.nameOrganization?.trim().toLowerCase() ===
+              (user.nameExternalOrg ?? "").trim().toLowerCase()
+          );
+
+          setExternalOrgOptions(
+            activeOrgOnly.map((item) => ({
+              value: item.id_external_org,
+              label: item.nameOrganization
+            }))
+          );
+
+          if (!orgMatch && user.nameExternalOrg) {
+            console.warn("⚠️ External Org tidak ditemukan:", user.nameExternalOrg);
+          }
+
+          setIsExternalOrgMissing(!user.nameExternalOrg);
+        } catch (err) {
+          console.warn("⚠️ Gagal ambil external org");
+        }
+      } else {
+        setExternalOrgOptions([]);
+        setIsExternalOrgMissing(false);
+      }
+
+      // Set nilai form
+      form.setValues({
+        nippos: user.nippos || "",
+        nama: user.nama || "",
+        email: user.nippos || "",
+        codeJabatan: codeJabatanStr,
+        kantor: user.nopend || "",
+        id_external_org: orgMatch?.id_external_org || "",
+        statuspegawai: String(user.status_pegawai ?? ""),
+        statusakun: String(user.status_akun ?? ""),
+        regional: user.regional || "",
+        kcu: user.kcu || "",
+        kc: user.kc || "",
+        kcp: user.kcp || ""
+      });
+    } catch (err) {
+      console.error("❌ Gagal memuat data:", err);
+      showNotification({
+        title: "Error",
+        message: "Gagal memuat data. Silakan coba lagi.",
+        color: "red"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [decodedNippos]);
+
 
 useEffect(() => {
   const loadKantor = async () => {
@@ -196,6 +202,30 @@ useEffect(() => {
     loadKantor();
   }
 }, [debouncedSearchKantor]);
+
+useEffect(() => {
+  const fetchOrgIfEksternal = async () => {
+    if (form.values.statuspegawai === "4" && externalOrgOptions.length === 0) {
+      try {
+        const orgResRaw = await fetchExternalOrg();
+        const orgList = orgResRaw?.data || [];
+        const activeOrgOnly = orgList.filter((org) => org.statusCodeAktif === 1);
+
+        setExternalOrgOptions(
+          activeOrgOnly.map((item) => ({
+            value: item.id_external_org,
+            label: item.nameOrganization
+          }))
+        );
+      } catch (err) {
+        console.warn("⚠️ Gagal fetch external org saat status pegawai = 4");
+      }
+    }
+  };
+
+  fetchOrgIfEksternal();
+}, [form.values.statuspegawai]);
+
 
 const mergeUniqueKantor = (...arrays) => {
   const seen = new Set();
@@ -301,14 +331,15 @@ const mergeUniqueKantor = (...arrays) => {
               {...form.getInputProps("codeJabatan")}
             />
             <div style={{ flex: 1 }}>
+            {form.values.statuspegawai === "4" && (
             <Select
               label="External Organisasi"
               data={externalOrgOptions}
               searchable
               required
-              error={isExternalOrgMissing ? "User belum memiliki data External Org" : undefined}
               {...form.getInputProps("id_external_org")}
             />
+          )}
             {isExternalOrgMissing && (
               <p style={{ color: "red", fontSize: "0.875rem", marginTop: "0.25rem" }}>
                 Data external org belum dilengkapi oleh user.
@@ -317,13 +348,14 @@ const mergeUniqueKantor = (...arrays) => {
           </div>
 
           </Group>
-
-          <Group align="flex-end" grow>
-            <TextInput label="Regional" {...form.getInputProps("regional")} />
-            <TextInput label="KCU" {...form.getInputProps("kcu")} />
-            <TextInput label="KC" {...form.getInputProps("kc")} />
-            <TextInput label="KCP" {...form.getInputProps("kcp")} />
-          </Group>
+           {form.values.statuspegawai === "1" && (
+            <Group align="flex-end" grow>
+              <TextInput label="Regional" {...form.getInputProps("regional")} />
+              <TextInput label="KCU" {...form.getInputProps("kcu")} />
+              <TextInput label="KC" {...form.getInputProps("kc")} />
+              <TextInput label="KCP" {...form.getInputProps("kcp")} />
+            </Group>
+          )}
 
           <Group mt="md" position="right">
             <CancelButton />
