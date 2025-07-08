@@ -9,7 +9,7 @@ import {
   Card,
   Group,
   Flex,
-  Title
+  Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
@@ -19,9 +19,9 @@ import {
   fetchUserByNippos,
   fetchExternalOrg,
   updateUser,
-  fetchUser
+  fetchUser,
 } from "@/api/user";
-import { fetchAllKantor, fetchJabatan } from "@/api/menu";
+import { fetchAllKantor, fetchJabatan } from "@/api/Allmenu";
 
 export default function EditUserExternalPage() {
   const { nippos } = useParams();
@@ -32,7 +32,6 @@ export default function EditUserExternalPage() {
   const [jabatanOptions, setJabatanOptions] = useState([]);
   const [externalOrgOptions, setExternalOrgOptions] = useState([]);
   const [isExternalOrgMissing, setIsExternalOrgMissing] = useState(false);
-
 
   const form = useForm({
     initialValues: {
@@ -47,8 +46,8 @@ export default function EditUserExternalPage() {
       regional: "",
       kcu: "",
       kc: "",
-      kcp: ""
-    }
+      kcp: "",
+    },
   });
 
   useEffect(() => {
@@ -59,7 +58,7 @@ export default function EditUserExternalPage() {
         const [userRes, jabatanResRaw, orgResRaw] = await Promise.all([
           fetchUser(decodedNippos),
           fetchJabatan(),
-          fetchExternalOrg()
+          fetchExternalOrg(),
         ]);
 
         const user = Array.isArray(userRes?.data)
@@ -70,7 +69,7 @@ export default function EditUserExternalPage() {
           showNotification({
             title: "User tidak ditemukan",
             message: `Data untuk ${decodedNippos} tidak ditemukan`,
-            color: "red"
+            color: "red",
           });
           router.push("/user");
           return;
@@ -79,23 +78,25 @@ export default function EditUserExternalPage() {
         const codeJabatanStr = String(user.code_jabatan ?? "").trim();
 
         // Set jabatan
-        let finalJabatanOptions = Array.isArray(jabatanResRaw) ? [...jabatanResRaw] : [];
+        let finalJabatanOptions = Array.isArray(jabatanResRaw)
+          ? [...jabatanResRaw]
+          : [];
         const isJabatanAda = finalJabatanOptions.some(
           (j) => j.value === codeJabatanStr
         );
         if (!isJabatanAda && codeJabatanStr) {
           finalJabatanOptions.push({
             value: codeJabatanStr,
-            label: `${codeJabatanStr} - (Jabatan dari user)`
+            label: `${codeJabatanStr} - (Jabatan dari user)`,
           });
         }
         setJabatanOptions(finalJabatanOptions);
 
         // Set external org
         const orgList = orgResRaw?.data || [];
-        const activeOrgOnly = orgList.filter((org) => org.statusCodeAktif === 1);
-
-        
+        const activeOrgOnly = orgList.filter(
+          (org) => org.statusCodeAktif === 1
+        );
 
         const orgMatch = activeOrgOnly.find(
           (o) =>
@@ -106,13 +107,15 @@ export default function EditUserExternalPage() {
         setExternalOrgOptions(
           activeOrgOnly.map((item) => ({
             value: item.id_external_org,
-            label: item.nameOrganization
+            label: item.nameOrganization,
           }))
         );
-        
 
         if (!orgMatch && user.nameExternalOrg) {
-          console.warn("⚠️ External Org tidak ditemukan:", user.nameExternalOrg);
+          console.warn(
+            "⚠️ External Org tidak ditemukan:",
+            user.nameExternalOrg
+          );
         }
 
         setIsExternalOrgMissing(!user.nameExternalOrg);
@@ -129,14 +132,14 @@ export default function EditUserExternalPage() {
           regional: user.regional || "",
           kcu: user.kcu || "",
           kc: user.kc || "",
-          kcp: user.kcp || ""
+          kcp: user.kcp || "",
         });
       } catch (err) {
         console.error("❌ Gagal memuat data:", err);
         showNotification({
           title: "Error",
           message: "Gagal memuat data. Silakan coba lagi.",
-          color: "red"
+          color: "red",
         });
       } finally {
         setLoading(false);
@@ -152,7 +155,7 @@ export default function EditUserExternalPage() {
       codeJabatan: values.codeJabatan,
       email: values.nippos,
       statuspegawai: Number(values.statuspegawai),
-      statusakun: Number(values.statusakun)
+      statusakun: Number(values.statusakun),
     };
     delete payload.code_jabatan;
 
@@ -162,13 +165,13 @@ export default function EditUserExternalPage() {
       showNotification({
         title: "Gagal Update",
         message: res?.detail || "Terjadi kesalahan",
-        color: "red"
+        color: "red",
       });
     } else {
       showNotification({
         title: "Berhasil",
         message: "Data user berhasil diperbarui",
-        color: "green"
+        color: "green",
       });
       router.push("/user/external");
     }
@@ -183,22 +186,40 @@ export default function EditUserExternalPage() {
         <Title order={2}>Edit Data User</Title>
       </Flex>
 
-      <Card shadow="sm" padding="xl" radius="md" withBorder style={{ backgroundColor: "white" }}>
+      <Card
+        shadow="sm"
+        padding="xl"
+        radius="md"
+        withBorder
+        style={{ backgroundColor: "white" }}
+      >
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Group align="flex-end" grow>
-            <TextInput label="NIPPOS" disabled {...form.getInputProps("nippos")} />
-            <TextInput label="Email (otomatis)" disabled {...form.getInputProps("email")} />
+            <TextInput
+              label="NIPPOS"
+              disabled
+              {...form.getInputProps("nippos")}
+            />
+            <TextInput
+              label="Email (otomatis)"
+              disabled
+              {...form.getInputProps("email")}
+            />
           </Group>
 
           <Group align="flex-end" grow>
-            <TextInput label="Nama Lengkap" required {...form.getInputProps("nama")} />
+            <TextInput
+              label="Nama Lengkap"
+              required
+              {...form.getInputProps("nama")}
+            />
             <Select
               label="Status Pegawai"
               data={[
                 { value: "1", label: "Organik" },
                 { value: "2", label: "Non-Organik" },
                 { value: "3", label: "Bypass" },
-                { value: "4", label: "Eksternal" }
+                { value: "4", label: "Eksternal" },
               ]}
               required
               {...form.getInputProps("statuspegawai")}
@@ -207,7 +228,7 @@ export default function EditUserExternalPage() {
               label="Status Akun"
               data={[
                 { value: "1", label: "Aktif" },
-                { value: "0", label: "Tidak Aktif" }
+                { value: "0", label: "Tidak Aktif" },
               ]}
               required
               {...form.getInputProps("statusakun")}
@@ -230,21 +251,30 @@ export default function EditUserExternalPage() {
               {...form.getInputProps("codeJabatan")}
             />
             <div style={{ flex: 1 }}>
-            <Select
-              label="External Organisasi"
-              data={externalOrgOptions}
-              searchable
-              required
-              error={isExternalOrgMissing ? "User belum memiliki data External Org" : undefined}
-              {...form.getInputProps("id_external_org")}
-            />
-            {isExternalOrgMissing && (
-              <p style={{ color: "red", fontSize: "0.875rem", marginTop: "0.25rem" }}>
-                Data external org belum dilengkapi oleh user.
-              </p>
-            )}
-          </div>
-
+              <Select
+                label="External Organisasi"
+                data={externalOrgOptions}
+                searchable
+                required
+                error={
+                  isExternalOrgMissing
+                    ? "User belum memiliki data External Org"
+                    : undefined
+                }
+                {...form.getInputProps("id_external_org")}
+              />
+              {isExternalOrgMissing && (
+                <p
+                  style={{
+                    color: "red",
+                    fontSize: "0.875rem",
+                    marginTop: "0.25rem",
+                  }}
+                >
+                  Data external org belum dilengkapi oleh user.
+                </p>
+              )}
+            </div>
           </Group>
 
           <Group align="flex-end" grow>
