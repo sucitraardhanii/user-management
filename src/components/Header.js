@@ -38,6 +38,7 @@ export default function Header({ sidebarOpened, onToggleSidebar }) {
       const nippos = item?.nippos;
       const token = item?.token;
 
+
       if (!nippos) return;
 
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/getUser`, {

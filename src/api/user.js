@@ -248,3 +248,47 @@ export async function fetchExternalOrg() {
   const result = await res.json();
   return { data: result.data };
 }
+
+export async function fetchAllKantor() {
+  const res = await fetch(`${BASE_URL}/getKantor`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ codeKantor: "" }),
+  });
+
+  const result = await res.json();
+
+  return result.data?.map((item) => ({
+    value: item.nopend,
+    label: `${item.nopend} - ${item.namaKantor}`,
+  })) || [];
+}
+
+export async function searchKantor(keyword = "") {
+  if (!keyword || keyword.length < 2) return [];
+
+  const res = await fetch(`${BASE_URL}/getKantor`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ codeKantor: keyword })
+  });
+
+  const result = await res.json();
+
+  const rawData = result.data?.map((item) => ({
+    value: item.nopend,
+    label: `${item.nopend} - ${item.namaKantor}`
+  })) || [];
+
+  // Hapus duplikat berdasarkan value
+  const uniqueByValue = (arr) => {
+    const seen = new Set();
+    return arr.filter((item) => {
+      if (seen.has(item.value)) return false;
+      seen.add(item.value);
+      return true;
+    });
+  };
+
+  return uniqueByValue(rawData);
+}

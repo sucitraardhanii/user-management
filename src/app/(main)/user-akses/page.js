@@ -31,7 +31,7 @@ import {
   deleteUserAkses,
   updateUserAkses,
 } from "@/api/userAkses";
-import toast from "react-hot-toast";
+import PageBreadCrumb from "@/components/PageBreadCrumb";
 
 export default function UserAksesPage() {
   const [nippos, setNippos] = useState("");
@@ -132,7 +132,11 @@ export default function UserAksesPage() {
       };
 
       const response = await updateUserAkses(updatedPayload);
-      toast.success("User akses berhasil diupdate");
+      showNotification({
+        title: "Berhasil",
+        message: "User Berhasil Di Rubah",
+        color: "green",
+      });
       setModalOpened(false);
       handleFetch();
     } catch (error) {
@@ -198,6 +202,7 @@ export default function UserAksesPage() {
 
   return (
     <>
+    <PageBreadCrumb/>
       <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>User Akses</Title>
         <CreateButton entity="user-akses" />
@@ -230,7 +235,6 @@ export default function UserAksesPage() {
             </Button>
           </Flex>
         </Paper>
-        <Breadcrumb />
         <GenericTable data={data} columns={columns} loading={loading} />
       </Stack>
 

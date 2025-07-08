@@ -13,7 +13,7 @@ import {
 } from "@mantine/core";
 import { showNotification, updateNotification } from "@mantine/notifications";
 import GenericTable from "@/components/GenericTable";
-import StatusBadge from "@/components/StatusBadge";
+import StatusBadge from "@/components/StatusAkunBadge";
 import Breadcrumb from "@/components/BreadCrumb";
 import CreateButton from "@/components/CreateButton";
 import { modals } from "@mantine/modals";
@@ -26,6 +26,7 @@ import {
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import Link from "next/link";
+import PageBreadCrumb from "@/components/PageBreadCrumb";
 
 export default function HakAksesPage() {
   const [idaplikasi, setIdaplikasi] = useState("");
@@ -166,6 +167,7 @@ export default function HakAksesPage() {
 
   return (
     <>
+    <PageBreadCrumb/>
       <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>Hak Akses</Title>
         <CreateButton entity="hak-akses" />
@@ -192,7 +194,6 @@ export default function HakAksesPage() {
           </Flex>
         </Paper>
 
-        <Breadcrumb />
         <GenericTable data={data} columns={columns} loading={loading} />
       </Stack>
     </>
