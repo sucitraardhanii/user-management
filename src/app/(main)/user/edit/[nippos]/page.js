@@ -23,7 +23,7 @@ import {
   searchKantor,
   fetchAllKantor,
 } from "@/api/user";
-import { fetchAllKantor, fetchJabatan } from "@/api/menu";
+import { fetchJabatan } from "@/api/menu";
 
 export default function EditUserExternalPage() {
   const { nippos } = useParams();
