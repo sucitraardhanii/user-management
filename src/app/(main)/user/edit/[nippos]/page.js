@@ -9,7 +9,7 @@ import {
   Card,
   Group,
   Flex,
-  Title
+  Title,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { showNotification } from "@mantine/notifications";
@@ -21,10 +21,9 @@ import {
   updateUser,
   fetchUser,
   searchKantor,
-  fetchAllKantor
+  fetchAllKantor,
 } from "@/api/user";
 import { fetchJabatan } from "@/api/menu";
-import { useDebouncedValue } from "@mantine/hooks";
 
 export default function EditUserExternalPage() {
   const { nippos } = useParams();
@@ -34,10 +33,6 @@ export default function EditUserExternalPage() {
   const [jabatanOptions, setJabatanOptions] = useState([]);
   const [externalOrgOptions, setExternalOrgOptions] = useState([]);
   const [isExternalOrgMissing, setIsExternalOrgMissing] = useState(false);
-
-  const [kantorOptions, setKantorOptions] = useState([]);
-  const [searchKantorValue, setSearchKantorValue] = useState("");
-  const [debouncedSearchKantor] = useDebouncedValue(searchKantorValue, 100);
 
 
   const form = useForm({
@@ -53,8 +48,8 @@ export default function EditUserExternalPage() {
       regional: "",
       kcu: "",
       kc: "",
-      kcp: ""
-    }
+      kcp: "",
+    },
   });
 
   useEffect(() => {
@@ -243,7 +238,7 @@ const mergeUniqueKantor = (...arrays) => {
       codeJabatan: values.codeJabatan,
       email: values.nippos,
       statuspegawai: Number(values.statuspegawai),
-      statusakun: Number(values.statusakun)
+      statusakun: Number(values.statusakun),
     };
 
     delete payload.code_jabatan;
@@ -260,13 +255,13 @@ const mergeUniqueKantor = (...arrays) => {
       showNotification({
         title: "Gagal Update",
         message: res?.detail || "Terjadi kesalahan",
-        color: "red"
+        color: "red",
       });
     } else {
       showNotification({
         title: "Berhasil",
         message: "Data user berhasil diperbarui",
-        color: "green"
+        color: "green",
       });
       router.push("/user/external");
     }
@@ -281,22 +276,40 @@ const mergeUniqueKantor = (...arrays) => {
         <Title order={2}>Edit Data User</Title>
       </Flex>
 
-      <Card shadow="sm" padding="xl" radius="md" withBorder style={{ backgroundColor: "white" }}>
+      <Card
+        shadow="sm"
+        padding="xl"
+        radius="md"
+        withBorder
+        style={{ backgroundColor: "white" }}
+      >
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Group align="flex-end" grow>
-            <TextInput label="NIPPOS" disabled {...form.getInputProps("nippos")} />
-            <TextInput label="Email (otomatis)" disabled {...form.getInputProps("email")} />
+            <TextInput
+              label="NIPPOS"
+              disabled
+              {...form.getInputProps("nippos")}
+            />
+            <TextInput
+              label="Email (otomatis)"
+              disabled
+              {...form.getInputProps("email")}
+            />
           </Group>
 
           <Group align="flex-end" grow>
-            <TextInput label="Nama Lengkap" required {...form.getInputProps("nama")} />
+            <TextInput
+              label="Nama Lengkap"
+              required
+              {...form.getInputProps("nama")}
+            />
             <Select
               label="Status Pegawai"
               data={[
                 { value: "1", label: "Organik" },
                 { value: "2", label: "Non-Organik" },
                 { value: "3", label: "Bypass" },
-                { value: "4", label: "Eksternal" }
+                { value: "4", label: "Eksternal" },
               ]}
               required
               {...form.getInputProps("statuspegawai")}
@@ -305,7 +318,7 @@ const mergeUniqueKantor = (...arrays) => {
               label="Status Akun"
               data={[
                 { value: "1", label: "Aktif" },
-                { value: "0", label: "Tidak Aktif" }
+                { value: "0", label: "Tidak Aktif" },
               ]}
               required
               {...form.getInputProps("statusakun")}

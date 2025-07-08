@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Stepper,
   Button,
@@ -15,15 +15,23 @@ import {
   SimpleGrid,
   Loader,
   Grid,
-  Text
-} from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { useDebouncedValue } from '@mantine/hooks';
+  Text,
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { useDebouncedValue } from "@mantine/hooks";
 import Breadcrumb from "@/components/BreadCrumb";
-import { fetchJabatan, searchKantor, fetchAllKantor } from "@/api/menu";
-import { fetchAplikasi, encryptId, fetchHakAkses,fetchExternalOrg, createUser,createUserAkses, validasiUser } from "@/api/regisUserExtern";
+import { fetchJabatan, searchKantor, fetchAllKantor } from "@/api/Allmenu";
+import {
+  fetchAplikasi,
+  encryptId,
+  fetchHakAkses,
+  fetchExternalOrg,
+  createUser,
+  createUserAkses,
+  validasiUser,
+} from "@/api/regisUserExtern";
 import { showNotification } from "@mantine/notifications";
-import { IconCheck } from '@tabler/icons-react';
+import { IconCheck } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 
 export default function RegistrasiUser() {
@@ -42,36 +50,39 @@ export default function RegistrasiUser() {
   const [debounced] = useDebouncedValue(kantorInput, 300);
 
   const form = useForm({
-    mode: 'uncontrolled',
+    mode: "uncontrolled",
     initialValues: {
-      nippos: '',
-      email: '',
-      nama: '',
-      codeJabatan: '',
-      kantor: '',
-      statusakun: '',
-      password: '',
-      idaplikasi: '',
-      idhakakses: '',
-      encryptId:'',
+      nippos: "",
+      email: "",
+      nama: "",
+      codeJabatan: "",
+      kantor: "",
+      statusakun: "",
+      password: "",
+      idaplikasi: "",
+      idhakakses: "",
+      encryptId: "",
     },
     validate: (values) => {
       if (active === 0) {
         return {
-          password: values.password.length < 6 ? 'Password minimal 6 karakter' : null,
+          password:
+            values.password.length < 6 ? "Password minimal 6 karakter" : null,
         };
       }
 
       if (active === 1) {
         return {
-          email: /^\S+@\S+$/.test(values.email) ? null : 'Format email tidak valid',
+          email: /^\S+@\S+$/.test(values.email)
+            ? null
+            : "Format email tidak valid",
         };
       }
       if (values.nippos !== values.email) {
         errors.nippos = "Nippos dan Email harus sama";
         errors.email = "Email dan Nippos harus sama";
       }
-      
+
       return {};
     },
   });
@@ -79,12 +90,13 @@ export default function RegistrasiUser() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [jabatan, semuaKantor, aplikasi, eksternalOrg] = await Promise.all([
-          fetchJabatan(),
-          fetchAllKantor(),
-          fetchAplikasi(),
-          fetchExternalOrg(),
-        ]);
+        const [jabatan, semuaKantor, aplikasi, eksternalOrg] =
+          await Promise.all([
+            fetchJabatan(),
+            fetchAllKantor(),
+            fetchAplikasi(),
+            fetchExternalOrg(),
+          ]);
         setJabatanOptions(jabatan);
         setAllKantorCache(semuaKantor);
         setAplikasiOptions(aplikasi);
@@ -125,26 +137,25 @@ export default function RegistrasiUser() {
   }, [debounced]);
 
   useEffect(() => {
-  const selected = form.values.idaplikasi;
-  if (!selected) return;
+    const selected = form.values.idaplikasi;
+    if (!selected) return;
 
-  const fetchHakAksesFromApi = async () => {
-    setLoadingHakAkses(true);
-    try {
-      const encrypted = await encryptId(selected);
-      const data = await fetchHakAkses(encrypted);
-      setHakAksesOptions(data);
-    } catch (err) {
-      console.error("Gagal ambil hak akses:", err);
-      setHakAksesOptions([]);
-    } finally {
-      setLoadingHakAkses(false);
-    }
-  };
+    const fetchHakAksesFromApi = async () => {
+      setLoadingHakAkses(true);
+      try {
+        const encrypted = await encryptId(selected);
+        const data = await fetchHakAkses(encrypted);
+        setHakAksesOptions(data);
+      } catch (err) {
+        console.error("Gagal ambil hak akses:", err);
+        setHakAksesOptions([]);
+      } finally {
+        setLoadingHakAkses(false);
+      }
+    };
 
   fetchHakAksesFromApi();
 }, [form.values.idaplikasi]);
-
 
   const uniqueByValue = (arr) => {
     const seen = new Set();
@@ -163,12 +174,13 @@ export default function RegistrasiUser() {
       return current < 3 ? current + 1 : current;
     });
 
-  const prevStep = () => setActive((current) => (current > 0 ? current - 1 : current));
+  const prevStep = () =>
+    setActive((current) => (current > 0 ? current - 1 : current));
 
   // Create Data
   const handleSubmit = async () => {
     const values = form.getValues();
-   const encryptedId = await encryptId(form.getValues().idaplikasi);
+    const encryptedId = await encryptId(form.getValues().idaplikasi);
     const payloadUser = {
       nippos: values.nippos,
       email: values.email,
@@ -180,7 +192,7 @@ export default function RegistrasiUser() {
       password: values.password,
       id_external_org: values.externalOrg,
     };
-    const payloadValidasi={
+    const payloadValidasi = {
       nippos: values.nippos,
       statusakun: 1,
     };
@@ -191,7 +203,7 @@ export default function RegistrasiUser() {
     const payloadAkses = {
       nippos: values.nippos,
       idHakAkses: values.idhakakses,
-      statusUserAkses: 1
+      statusUserAkses: 1,
     };
 
     try {
@@ -201,13 +213,19 @@ export default function RegistrasiUser() {
       await createUserAkses(payloadAkses);
 
       showNotification({
-        title: 'User berhasil dibuat',
-        message:(<>
-          <div><strong>📩Email:</strong> {values.email}</div>
-          <div><strong>🔐Encrypted ID:</strong> {encryptedId}</div>
-        </>),
+        title: "User berhasil dibuat",
+        message: (
+          <>
+            <div>
+              <strong>📩Email:</strong> {values.email}
+            </div>
+            <div>
+              <strong>🔐Encrypted ID:</strong> {encryptedId}
+            </div>
+          </>
+        ),
         icon: <IconCheck size={20} />,
-        color: 'teal',
+        color: "teal",
         autoClose: false,
       });
       router.push("/user");
@@ -223,69 +241,85 @@ export default function RegistrasiUser() {
 
   return (
     <>
-      <Title order={3} mb="md">Registrasi User External</Title>
+      <Title order={3} mb="md">
+        Registrasi User External
+      </Title>
       <Breadcrumb />
 
       <Card shadow="md" padding="xl" radius="md" withBorder>
         <Stepper active={active}>
           <Stepper.Step label="Step 1" description="Data User">
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-            <TextInput label="Nippos"
-              required {...form.getInputProps('nippos')}
-              placeholder='Samakan dengan email'
-              onChange={(event) => {
-                const val = event.currentTarget.value;
-                form.setFieldValue("email", val);
-                form.setFieldValue("nippos", val);
-              }}
+              <TextInput
+                label="Nippos"
+                required
+                {...form.getInputProps("nippos")}
+                placeholder="Samakan dengan email"
+                onChange={(event) => {
+                  const val = event.currentTarget.value;
+                  form.setFieldValue("email", val);
+                  form.setFieldValue("nippos", val);
+                }}
               />
-            <TextInput label="Email" required {...form.getInputProps('email')} 
-            placeholder='Samakan dengan Nippos'
-            onChange={(event) => {
-              const val = event.currentTarget.value;
-              form.setFieldValue("nippos", val);
-              form.setFieldValue("email", val);
-            }}
-            />
-            <TextInput label="Nama" required {...form.getInputProps('nama')} />
-            <PasswordInput label="Password" required {...form.getInputProps('password')}  />
-            <Select
-              label="Pilih Jabatan"
-              placeholder={loading ? "Loading..." : "Pilih jabatan"}
-              data={jabatanOptions}
-              {...form.getInputProps('codeJabatan')}
-              searchable
-              clearable
-              disabled={loading}
-              required
-            />
-            <Autocomplete
-              label="Pilih Kantor"
-              placeholder="Ketik NOPEND atau Nama Kantor"
-              data={kantorOptions.map((opt) => opt.label)}
-              value={kantorInput}
-              onChange={(val) => {
-                setKantorInput(val);
-                const selected = kantorOptions.find((opt) => opt.label === val);
-                form.setFieldValue("kantor", selected?.value || "");
-              }}
-              rightSection={loadingKantor ? <Loader size="xs" /> : null}
-              clearable
-              disabled={loading}
-              required
-              
-            />
-            <Select
-              label="Organisasi Eksternal"
-              placeholder="Pilih organisasi"
-              data={externalOrgOptions}
-              key={form.key('externalOrg')}
-              {...form.getInputProps('externalOrg')}
-              clearable
-              searchable
-              disabled={loading}
-              required
-            />
+              <TextInput
+                label="Email"
+                required
+                {...form.getInputProps("email")}
+                placeholder="Samakan dengan Nippos"
+                onChange={(event) => {
+                  const val = event.currentTarget.value;
+                  form.setFieldValue("nippos", val);
+                  form.setFieldValue("email", val);
+                }}
+              />
+              <TextInput
+                label="Nama"
+                required
+                {...form.getInputProps("nama")}
+              />
+              <PasswordInput
+                label="Password"
+                required
+                {...form.getInputProps("password")}
+              />
+              <Select
+                label="Pilih Jabatan"
+                placeholder={loading ? "Loading..." : "Pilih jabatan"}
+                data={jabatanOptions}
+                {...form.getInputProps("codeJabatan")}
+                searchable
+                clearable
+                disabled={loading}
+                required
+              />
+              <Autocomplete
+                label="Pilih Kantor"
+                placeholder="Ketik NOPEND atau Nama Kantor"
+                data={kantorOptions.map((opt) => opt.label)}
+                value={kantorInput}
+                onChange={(val) => {
+                  setKantorInput(val);
+                  const selected = kantorOptions.find(
+                    (opt) => opt.label === val
+                  );
+                  form.setFieldValue("kantor", selected?.value || "");
+                }}
+                rightSection={loadingKantor ? <Loader size="xs" /> : null}
+                clearable
+                disabled={loading}
+                required
+              />
+              <Select
+                label="Organisasi Eksternal"
+                placeholder="Pilih organisasi"
+                data={externalOrgOptions}
+                key={form.key("externalOrg")}
+                {...form.getInputProps("externalOrg")}
+                clearable
+                searchable
+                disabled={loading}
+                required
+              />
             </SimpleGrid>
           </Stepper.Step>
 
@@ -330,36 +364,68 @@ export default function RegistrasiUser() {
 
           <Stepper.Step label="Step 4" description="Selesai">
             <Grid>
-            <Grid.Col span={6}>
-              <Text><strong>Nippos:</strong> {form.values.nippos}</Text>
-              <Text><strong>Email:</strong> {form.values.email}</Text>
-              <Text><strong>Nama:</strong> {form.values.nama}</Text>
-              <Text><strong>Jabatan:</strong> {form.values.codeJabatan}</Text>
-              <Text><strong>Aplikasi:</strong> {form.values.idaplikasi}</Text>
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <Text><strong>Kantor:</strong> {form.values.kantor}</Text>
-              <Text><strong>Status Pegawai:</strong> External </Text>
-              <Text><strong>Status Akun:</strong> {form.values.statusakun}</Text>
-              <Text><strong>Hak Akses:</strong> {form.values.idhakakses}</Text>
-              <Text><strong>Password:</strong> {form.values.password}</Text>
-            </Grid.Col>
-          </Grid>
-         
+              <Grid.Col span={6}>
+                <Text>
+                  <strong>Nippos:</strong> {form.values.nippos}
+                </Text>
+                <Text>
+                  <strong>Email:</strong> {form.values.email}
+                </Text>
+                <Text>
+                  <strong>Nama:</strong> {form.values.nama}
+                </Text>
+                <Text>
+                  <strong>Jabatan:</strong> {form.values.codeJabatan}
+                </Text>
+                <Text>
+                  <strong>Aplikasi:</strong> {form.values.idaplikasi}
+                </Text>
+              </Grid.Col>
+              <Grid.Col span={6}>
+                <Text>
+                  <strong>Kantor:</strong> {form.values.kantor}
+                </Text>
+                <Text>
+                  <strong>Status Pegawai:</strong> External{" "}
+                </Text>
+                <Text>
+                  <strong>Status Akun:</strong> {form.values.statusakun}
+                </Text>
+                <Text>
+                  <strong>Hak Akses:</strong> {form.values.idhakakses}
+                </Text>
+                <Text>
+                  <strong>Password:</strong> {form.values.password}
+                </Text>
+              </Grid.Col>
+            </Grid>
           </Stepper.Step>
 
           <Stepper.Completed>Registrasi selesai!</Stepper.Completed>
         </Stepper>
 
         <Group justify="flex-end" mt="xl">
-          {active !== 0 && <Button variant="default" onClick={prevStep}>Back</Button>}
+          {active !== 0 && (
+            <Button variant="default" onClick={prevStep}>
+              Back
+            </Button>
+          )}
           {active !== 3 && <Button onClick={nextStep}>Next step</Button>}
-          {active == 3 && <Button onClick={async () => {
-            const confirm = window.confirm("Apakah kamu yakin ingin menyimpan data?");
-            if (confirm) {
-              await handleSubmit();
-            }
-          }} color="teal">Submit</Button>}
+          {active == 3 && (
+            <Button
+              onClick={async () => {
+                const confirm = window.confirm(
+                  "Apakah kamu yakin ingin menyimpan data?"
+                );
+                if (confirm) {
+                  await handleSubmit();
+                }
+              }}
+              color="teal"
+            >
+              Submit
+            </Button>
+          )}
         </Group>
       </Card>
     </>

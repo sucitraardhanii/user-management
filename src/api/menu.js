@@ -1,87 +1,83 @@
 import { getToken } from "./auth";
-
-const token = getToken();
+import { notifications } from "@mantine/notifications";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export async function fetchJabatan() {
-  const res = await fetch(`${BASE_URL}/getJabatan`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ codeJabatan: "" }),
-  });
+function getAuthHeaders() {
+  const token = getToken();
+  if (!token) throw new Error("Token tidak tersedia");
 
-  const result = await res.json();
-
-  return result
-    .filter((item) => item.status === 1)
-    .map((item) => ({
-      value: item.code_jabatan,
-      label: `${item.code_jabatan} - ${item.namajabatan}`,
-    }));
-}
-
-// export async function fetchKantor() {
-//     const token = getToken();
-//   const res = await fetch(`${BASE_URL}/getKantor`, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${token}`,
-//     },
-//     body: JSON.stringify({ nopend: "" }),
-//   });
-
-//   const result = await res.json();
-
-//  const seen = new Set();
-//   return result.data
-//     .map((item) => ({
-//       value: item.nopend,
-//       label: `${item.nopend} - ${item.namaKantor}`,
-//     }))
-//     .filter((item) => {
-//       if (seen.has(item.value)) return false;
-//       seen.add(item.value);
-//       return true;
-//     });
-// }
-
-export async function fetchAllKantor() {
-  const res = await fetch(`${BASE_URL}/getKantor`, {
-    method: "POST",
-    headers: { 
+  return {
+    "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json" },
-    body: JSON.stringify({ codeKantor: "" }),
-  });
-
-  const result = await res.json();
-
-  return result.data?.map((item) => ({
-    value: item.nopend,
-    label: `${item.nopend} - ${item.namaKantor}`,
-  })) || [];
+  };
 }
 
-export async function searchKantor(query) {
-  const res = await fetch(`${BASE_URL}/getKantor`, {
-    method: "POST",
-    headers: { 
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-     },
-    body: JSON.stringify({ codeKantor: query }),
-  });
+export async function getMenu({ idAplikasi, idHakAkses }) {
+  try {
+    const payload = { idAplikasi, idHakAkses };
+    console.log("Payload getMenu:", payload);
 
-  const result = await res.json();
+    const res = await fetch(`${BASE_URL}/getmenu`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
 
-  return result.data?.map((item) => ({
-    value: item.nopend,
-    label: `${item.nopend} - ${item.namaKantor}`,
-  })) || [];
+    if (!res.ok) {
+      const errMsg = await res.text();
+      console.error("Error response body:", errMsg);
+
+      if (errMsg.includes("Data Tidak Ditemukan")) {
+        throw new Error("Data Tidak Ditemukan");
+      }
+
+      throw new Error("Gagal fetch menu");
+    }
+
+    const result = await res.json();
+    return result.data || result;
+  } catch (err) {
+    throw err;
+  }
 }
 
+export async function fetchAplikasi() {
+  try {
+    const res = await fetch(`${BASE_URL}/getaplikasi/all`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!res.ok) throw new Error("Gagal ambil aplikasi");
+
+    const result = await res.json();
+    return result;
+  } catch (err) {
+    console.error("Gagal ambil aplikasi:", err);
+    return [];
+  }
+}
+
+export async function fetchHakAkses() {
+  try {
+    const res = await fetch(`${BASE_URL}/getlisthakakses/all`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (!res.ok) throw new Error("Gagal ambil hak akses");
+
+    const result = await res.json();
+
+    return result.data
+      .filter((item) => !isNaN(item.namaAkses) && item.namaAkses.trim() !== "")
+      .map((item) => ({
+        idhakakses: parseInt(item.namaAkses),
+        namaAkses: item.namaAkses,
+        namaAplikasi: item.namaAplikasi,
+      }));
+  } catch (err) {
+    console.error("Gagal ambil hak akses:", err);
+    return [];
+  }
+}
