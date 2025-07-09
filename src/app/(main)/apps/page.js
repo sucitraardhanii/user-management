@@ -6,11 +6,9 @@ import {
   Button,
   Flex,
   Text,
-  TagsInput,
+  TagsInput, Box
 } from "@mantine/core";
-import {
-  IconCheck,
-  IconX,
+import { IconCheck,IconX,
 } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
 import {
@@ -18,65 +16,57 @@ import {
   deleteAplikasi,
   encryptId,
 } from "@/api/aplikasi";
-import StatusBadge from "@/components/StatusBadge";
+import StatusBadge from "@/components/StatusAkunBadge";
 import {
   showNotification,
   updateNotification,
 } from "@mantine/notifications";
 import CreateButton from "@/components/CreateButton";
+import Breadcrumb from "@/components/BreadCrumb";
 import { modals } from "@mantine/modals";
 import ButtonAction from "@/components/ButtonAction";
 import PageBreadCrumb from "@/components/PageBreadCrumb";
 import AppModal from "@/components/AppModal";
 import AppEditModal from "@/components/AppEditModal";
-import ForbiddenPage from "@/app/forbidden/page";
 import { isSuperAdmin } from "@/api/auth";
+import ForbiddenPage from "@/app/forbidden/page";
 
 export default function AppPage() {
   if (!isSuperAdmin()) {
     return <ForbiddenPage />;
   }
+  
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTags, setSearchTags] = useState([]);
   const [opened, setOpened] = useState(false);
   const [editId, setEditId] = useState(null);
-
-  const ADMIN_ID = "kkTF3FKfnK0sWExTZZquhw==";
+  const [data, setData] = useState([]);
 
   const getAplikasi = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchAplikasi();
-
-      const stored = localStorage.getItem("auth_token");
-      const parsed = stored ? JSON.parse(stored) : null;
-      const idAplikasi = parsed?.idAplikasi;
-
-      const filtered = idAplikasi === ADMIN_ID
-        ? data
-        : data.filter((item) => item.encrypted_id === idAplikasi);
-
-      setApps(filtered);
-    } catch (err) {
-      console.error("Gagal fetch aplikasi:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        try {
+          setLoading(true); // opsional, bisa dipindah
+          const data = await fetchAplikasi(); // ambil dari API
+          setApps(data); // update state
+        } catch (err) {
+          console.error("Gagal fetch aplikasi:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
 
   useEffect(() => {
-    getAplikasi();
+    getAplikasi()
   }, []);
 
   const filteredData = useMemo(() => {
-    if (searchTags.length === 0) return apps;
-    return apps.filter((item) =>
-      searchTags.every((tag) =>
-        item.name?.toLowerCase().includes(tag.toLowerCase())
-      )
-    );
-  }, [apps, searchTags]);
+  if (searchTags.length === 0) return apps;
+  return apps.filter((item) =>
+    searchTags.every((tag) =>
+      (item.name?.toLowerCase().includes(tag.toLowerCase()))
+    )
+  );
+}, [apps, searchTags]);
 
   const handleDelete = (id, name) => {
     modals.openConfirmModal({
@@ -141,11 +131,10 @@ export default function AppPage() {
       },
       { accessorKey: "name", header: "Nama" },
       { accessorKey: "address", header: "Alamat" },
-      { accessorKey: "idaplikasi", header: "ID Aplikasi", size: 100 },
+      { accessorKey: "idaplikasi", header: "ID Aplikasi", size:100 },
       {
         accessorKey: "encryptedId",
-        header: "Encrypted ID",
-        size: 125,
+        header: "Encrypted ID", size: 125,
         Cell: ({ row }) => {
           const [loading, setLoading] = useState(false);
 
@@ -155,7 +144,7 @@ export default function AppPage() {
               const res = await encryptId(row.original.idaplikasi);
               showNotification({
                 title: "Encrypted ID",
-                message: `ID: ${row.original.idaplikasi}\n\nEncrypted: ${res}`,
+                message: `ID: ${row.original.idaplikasi}\n \n Encrypted: ${res}`,
                 icon: <IconCheck size={18} />,
                 color: "teal",
                 autoClose: false,
@@ -206,27 +195,23 @@ export default function AppPage() {
     <>
       <PageBreadCrumb />
 
+      {/* Title dan tombol dalam 1 baris */}
       <Flex justify="space-between" align="center" mb="md">
         <Title order={2}>Daftar Aplikasi</Title>
         <CreateButton entity="aplikasi" useModal onClick={() => setOpened(true)} />
       </Flex>
-
-      <TagsInput
-        label="Filter berdasarkan Nama Akses / Aplikasi"
-        placeholder="Ketik dan tekan Enter"
+      <TagsInput label="Filter berdasarkan Aplikasi" placeholder="Ketik dan tekan Enter"
         value={searchTags}
         onChange={setSearchTags}
         clearable
         mb="md"
       />
-
       <GenericTable
         data={filteredData}
         columns={columns}
         loading={loading}
         defaultPageSize={5}
       />
-
       <AppModal
         opened={opened}
         onClose={() => setOpened(false)}
