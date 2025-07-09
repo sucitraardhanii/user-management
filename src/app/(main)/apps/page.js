@@ -134,6 +134,7 @@ export default function AppPage() {
         id: "number",
         header: "No.",
         size: 50,
+        color: "#2E4070",
         Cell: ({ row, table }) => {
           const { pageIndex, pageSize } = table.options.meta || {};
           return (pageIndex ?? 0) * (pageSize ?? 5) + row.index + 1;
@@ -172,7 +173,7 @@ export default function AppPage() {
           };
 
           return (
-            <Button size="xs" loading={loading} onClick={handleEncrypt}>
+            <Button size="xs" color="#2E4070" loading={loading} onClick={handleEncrypt}>
               Encrypt
             </Button>
           );

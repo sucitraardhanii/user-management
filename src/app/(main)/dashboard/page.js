@@ -37,7 +37,7 @@ export default function DashboardPage() {
               <Text size="lg" fw={500}>
                 Total Aplikasi
               </Text>
-              <Text size="xl" color="blue" fw={700}>
+              <Text size="xl" color="#2E4070" fw={700}>
                 {totalAplikasi}
               </Text>
             </Card>

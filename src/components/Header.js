@@ -111,7 +111,7 @@ export default function Header({ sidebarOpened, onToggleSidebar }) {
           <Menu.Target>
             <UnstyledButton>
               <Group spacing={5}>
-                <Avatar radius="xl" color="blue">
+                <Avatar radius="xl" color="#1C2D5A">
                   <IconUser size={20} />
                 </Avatar>
                 <IconChevronDown size={18} />
