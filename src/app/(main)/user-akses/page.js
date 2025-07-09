@@ -230,7 +230,7 @@ export default function UserAksesPage() {
               rightSection={loading ? <Loader size="xs" /> : null}
               style={{ flex: 1 }}
             />
-            <Button onClick={handleFetch} mt={20} style={{ height: "40px" }}>
+            <Button color="#2E4070" onClick={handleFetch} mt={20} style={{ height: "40px" }}>
               Tampilkan Data
             </Button>
           </Flex>

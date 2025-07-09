@@ -6,6 +6,7 @@ import {
   Stack,
   Loader,
   Collapse,
+  Image,
 } from "@mantine/core";
 import {
   IconChevronDown,
@@ -81,11 +82,15 @@ export default function Sidebar() {
             }
             styles={{
               root: {
-                color: "white",
                 backgroundColor:
-                  openedDropdown === link.label ? "#1c7ed6" : "transparent",
+                  openedDropdown === link.label ? "#1C2D5A" : "transparent",
+                color: openedDropdown === link.label ? "#ffffff" : "#1C2D5A",
+                fontWeight: 600,
                 borderRadius: 8,
-                cursor: "pointer",
+                transition: "all 0.2s",
+              },
+              label: {
+                fontSize: "14px",
               },
             }}
           />
@@ -98,30 +103,40 @@ export default function Sidebar() {
     return renderSingleLink(link);
   };
 
-  const renderSingleLink = (link, isChild = false) => (
-    <NavLink
-      key={link.href}
-      label={link.label}
-      onClick={() => handleClick(link.href)}
-      active={pathname === link.href}
-      pl={isChild ? "lg" : undefined}
-      rightSection={
-        loadingPath === link.href ? <Loader size="xs" color="white" /> : null
-      }
-      styles={{
-        root: {
-          color: "white",
-          backgroundColor:
-            pathname === link.href ? "#1c7ed6" : "transparent",
-          borderRadius: 8,
-          cursor: "pointer",
-        },
-      }}
-    />
-  );
+  const renderSingleLink = (link, isChild = false) => {
+    const active = pathname === link.href;
+    return (
+      <NavLink
+        key={link.href}
+        label={link.label}
+        onClick={() => handleClick(link.href)}
+        active={active}
+        pl={isChild ? "lg" : undefined}
+        rightSection={
+          loadingPath === link.href ? <Loader size="xs" color="gray" /> : null
+        }
+        styles={{
+          root: {
+            backgroundColor: active ? "#1C2D5A" : "transparent",
+            color: active ? "#ffffff" : "#1C2D5A",
+            fontWeight: active ? 600 : 500,
+            borderRadius: 8,
+            padding: "8px 12px",
+            transition: "all 0.2s",
+          },
+          label: {
+            fontSize: "14px",
+          },
+        }}
+      />
+    );
+  };
 
   return (
-    <Box w={220} p="md" bg="blue.6" h="100vh" style={{ color: "white" }}>
+    <Box w={220} p="md" bg="#F7F7F7" h="100vh">
+      <Box mb="lg" style={{textAlign: "center"}}>
+        <Image  src="/img/posind-logo.png" alt="Logo" style={{maxWidth: "30%", maxHeight: "50", margin: "0 auto 8px auto",}}/>
+      </Box>
       <Stack gap="xs">{links.map(renderLink)}</Stack>
     </Box>
   );

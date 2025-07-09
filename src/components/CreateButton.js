@@ -27,7 +27,7 @@ export default function CreateButton({ entity, label, onClick, useModal = false 
       loading={loading}
       onClick={handleClick}
       variant="filled"
-      color="blue"
+      color="#2E4070"
       radius="md"
     >
       Buat {label || entity.replace("-", " ")}

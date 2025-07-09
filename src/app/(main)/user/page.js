@@ -297,7 +297,7 @@ if (success) await loadOrg();
               {
                 label: "Cek Status Akun",
                 icon: <IconSearch size={16} />,
-                color: "blue",
+                color: "#2E4070",
                 type: "modal-nippos",
                 modalTitle: "Cek Status Akun",
                 onSubmitNippos: async (nippos) => {
@@ -365,7 +365,7 @@ if (success) await loadOrg();
           disabled={isSuper && !selectedApp}
           rightSection={loadingOrg ? <Loader size="xs" /> : null}
         />
-        <Button onClick={handleFetch} disabled={loading} loading={loading}>
+        <Button color="#2E4070" onClick={handleFetch} disabled={loading} loading={loading}>
           Tampilkan Data
         </Button>
       </Group>

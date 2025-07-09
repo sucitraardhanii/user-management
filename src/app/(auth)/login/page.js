@@ -60,7 +60,7 @@ export default function LoginPage() {
       justify="center"
       align="center"
       h="100vh"
-      bg="#F7F7F7"
+      bg="#1C2D5A"
     >
       <Paper
         radius="lg"
@@ -85,7 +85,7 @@ export default function LoginPage() {
           }}
         >
           <Image
-            src="/img/login-ilustrasi.png"
+            src="/img/icon-login.png"
             alt="Login Illustration"
             width={220}
             fit="contain"
