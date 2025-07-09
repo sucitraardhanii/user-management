@@ -78,7 +78,7 @@ export default function MenuPage() {
   return (
     <>
     <PageBreadCrumb/>
-    <Flex>
+    <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>Manajemen Menu</Title>
     </Flex>
       <Stack>

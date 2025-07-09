@@ -50,9 +50,9 @@ export default function Sidebar() {
     {
       label: "Referensi",
       children: [
-        { label: "Jabatan", href: "referensi/jabatan" },
-        { label: "Kantor", href: "referensi/kantor" },
-        { label: "Menu", href: "referensi/menu" },
+        { label: "Jabatan", href: "/referensi/jabatan" },
+        { label: "Kantor", href: "/referensi/kantor" },
+        { label: "Menu", href: "/referensi/menu" },
       ],
     },
   ];
