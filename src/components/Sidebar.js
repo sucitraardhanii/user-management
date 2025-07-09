@@ -47,11 +47,11 @@ export default function Sidebar() {
       href: "/user",
     },
     {
-      label: "Menu",
+      label: "Referensi",
       children: [
-        { label: "Jabatan", href: "/menu/jabatan" },
-        { label: "Kantor", href: "/menu/kantor" },
-        { label: "Menu", href: "/menu/menu" },
+        { label: "Jabatan", href: "/jabatan" },
+        { label: "Kantor", href: "referensi/kantor" },
+        { label: "Menu", href: "referensi/menu/menu" },
       ],
     },
   ];
