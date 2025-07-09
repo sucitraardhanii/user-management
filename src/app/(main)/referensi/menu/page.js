@@ -1,176 +1,124 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import {
-  Button,
-  Group,
-  Select,
-  Tabs,
-  Card,
-  Title,
-  Container,
-} from "@mantine/core";
-import { IconPlus } from "@tabler/icons-react";
-import GenericTable from "@/components/GenericTable";
-import { fetchAplikasi, fetchHakAkses, getMenu } from "@/api/menu";
-import { notifications } from "@mantine/notifications";
+import { useEffect, useState } from 'react';
+import { Select, Paper, Title, Stack, Button, Group, Loader, Flex } from '@mantine/core';
+import GenericTable from '@/components/GenericTable';
+import { fetchAplikasi, fetchHakAkses, fetchMenu, encryptId } from '@/api/menu';
+import PageBreadCrumb from '@/components/PageBreadCrumb';
 
 export default function MenuPage() {
+  const [aplikasi, setAplikasi] = useState([]);
   const [idAplikasi, setIdAplikasi] = useState(null);
+  const [hakAkses, setHakAkses] = useState([]);
   const [idHakAkses, setIdHakAkses] = useState(null);
-  const [data, setData] = useState([]);
+  const [menuData, setMenuData] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  const [aplikasiOptions, setAplikasiOptions] = useState([]);
-  const [hakAksesOptions, setHakAksesOptions] = useState([]);
-
-  const handleTampilkan = async () => {
-    if (
-      !idAplikasi ||
-      !idHakAkses ||
-      isNaN(Number(idAplikasi)) ||
-      isNaN(Number(idHakAkses))
-    ) {
-      notifications.show({
-        title: "Input tidak valid",
-        message: "Silakan pilih Aplikasi dan Hak Akses yang sesuai",
-        color: "orange",
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await getMenu({
-        idAplikasi: Number(idAplikasi),
-        idHakAkses: Number(idHakAkses),
-      });
-
-      if (!res || res.length === 0) {
-        notifications.show({
-          title: "Tidak ada data",
-          message: "Menu tidak ditemukan untuk kombinasi tersebut.",
-          color: "yellow",
-        });
-      }
-
-      setData(res);
-    } catch (err) {
-      if (err.message === "Data Tidak Ditemukan") {
-        notifications.show({
-          title: "Menu Kosong",
-          message: "Tidak ada data menu untuk kombinasi tersebut.",
-          color: "blue",
-        });
-      } else {
-        notifications.show({
-          title: "Gagal Menampilkan Menu",
-          message: err.message,
-          color: "red",
-        });
-      }
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadFilters = async () => {
-    try {
-      const apps = await fetchAplikasi();
-      setAplikasiOptions(
-        apps?.map((a) => ({
-          value: String(a.idaplikasi),
-          label: a.nama,
-        })) || []
-      );
-
-      const akses = await fetchHakAkses();
-      setHakAksesOptions(
-        akses?.map((h) => ({
-          value: String(h.idhakakses),
-          label: `${h.namaAkses} (${h.namaAplikasi})`,
-          app: h.namaAplikasi,
-        })) || []
-      );
-    } catch (err) {
-      console.error("Gagal ambil data filter:", err);
-    }
-  };
+  const [loadingApp, setLoadingApp] = useState(false);
+  const [loadingHakAkses, setLoadingHakAkses] = useState(false);
 
   useEffect(() => {
-    loadFilters();
+    const loadAplikasi = async () => {
+      try {
+        setLoadingApp(true);
+        const data = await fetchAplikasi();
+        setAplikasi(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingApp(false);
+      }
+    };
+    loadAplikasi();
   }, []);
 
+  useEffect(() => {
+    const loadHakAkses = async () => {
+      if (!idAplikasi) return;
+      try {
+        setLoadingHakAkses(true);
+        const encrypted = await encryptId(idAplikasi);
+        const akses = await fetchHakAkses(encrypted);
+        setHakAkses(akses);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingHakAkses(false);
+      }
+    };
+
+    if (idAplikasi) {
+      loadHakAkses();
+    } else {
+      setHakAkses([]);
+      setIdHakAkses(null);
+    }
+  }, [idAplikasi]);
+
+  const handleSubmit = async () => {
+    if (!idAplikasi || !idHakAkses) return;
+    setLoading(true);
+    try {
+      const data = await fetchMenu({ idAplikasi, idHakAkses });
+      setMenuData(data);
+    } catch (err) {
+      console.error('Gagal ambil menu:', err);
+    }
+    setLoading(false);
+  };
+
   const columns = [
-    { accessorKey: "alamatAkses", header: "Alamat Aplikasi" },
-    { accessorKey: "idmenu", header: "ID Menu" },
-    { accessorKey: "idParent", header: "ID Parent" },
-    { accessorKey: "nama", header: "Nama Menu" },
-    { accessorKey: "idaplikasi", header: "ID Aplikasi" },
-    { accessorKey: "idhakakses", header: "ID Hak Akses" },
-    { accessorKey: "layer", header: "Layer" },
-    { accessorKey: "statusParent", header: "Status" },
+    { accessor: 'idmenu', header: 'ID Menu' },
+    { accessor: 'nama', header: 'Nama Menu' },
+    { accessor: 'alamatAkses', header: 'Akses' },
+    { accessor: 'layer', header: 'Layer' },
+    { accessor: 'idParent', header: 'Parent' },
+    { accessor: 'statusParent', header: 'Status Parent' },
   ];
 
-  const filteredHakAkses = hakAksesOptions.filter((opt) => {
-    if (!idAplikasi) return true;
-    const selectedApp = aplikasiOptions.find((a) => a.value === idAplikasi);
-    return selectedApp && opt.app === selectedApp.label;
-  });
-
   return (
-    <Container size="xl">
-      <Title order={2} mb="md">
-        Menu Management
-      </Title>
-
-      <Card withBorder p="md" radius="md" mb="lg">
-        <Group align="flex-end" grow>
-          <Select
+    <>
+    <PageBreadCrumb/>
+    <Flex>
+        <Title order={2}>Manajemen Menu</Title>
+    </Flex>
+      <Stack>
+        <Paper withBorder p="md" radius="md">
+        <Flex gap="md" wrap="wrap">
+            <Select
             label="Pilih Aplikasi"
-            data={aplikasiOptions}
-            placeholder="Pilih aplikasi"
+            placeholder="Pilih aplikasi..."
+            data={aplikasi}
             value={idAplikasi}
             onChange={setIdAplikasi}
             searchable
             clearable
+            rightSection={loadingApp ? <Loader size={16} /> : null}
+            style={{ flex: 1 }}
           />
           <Select
             label="Pilih Hak Akses"
-            data={filteredHakAkses}
-            placeholder="Pilih hak akses"
+            placeholder="Pilih hak akses..."
+            data={hakAkses}
             value={idHakAkses}
             onChange={setIdHakAkses}
             searchable
-            clearable
+            disabled={!hakAkses.length}
+            rightSection={loadingHakAkses ? <Loader size={16} /> : null}
+            style={{ flex: 1 }}
           />
-          <Button variant="filled" onClick={handleTampilkan}>
-            Tampilkan Data
-          </Button>
-        </Group>
+           <Button color="#2E4070" onClick={handleSubmit} disabled={!idAplikasi || !idHakAkses} mt={20} style={{ height: "40px" }}>
+              Tampilkan Data
+            </Button>
+        </Flex>
+      </Paper>
 
-        <Group justify="flex-end" mt="md">
-          <Button leftSection={<IconPlus size={18} />}>Buat Menu</Button>
-        </Group>
-      </Card>
-
-      <Tabs defaultValue="menu">
-        <Tabs.List>
-          <Tabs.Tab value="menu">Daftar Menu</Tabs.Tab>
-        </Tabs.List>
-
-        <Tabs.Panel value="menu" pt="xs">
-          <GenericTable
-            data={data}
-            columns={columns}
-            loading={loading}
-            searchable={false}
-            exportable
-            pagination
-          />
-        </Tabs.Panel>
-      </Tabs>
-    </Container>
+      <GenericTable
+        data={menuData}
+        columns={columns}
+        loading={loading}
+        defaultPageSize={10}
+      />
+      </Stack>
+    </>
   );
 }
