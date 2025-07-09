@@ -154,8 +154,8 @@ export default function RegistrasiUser() {
       }
     };
 
-    fetchHakAksesFromApi();
-  }, [form.values.idaplikasi]);
+  fetchHakAksesFromApi();
+}, [form.values.idaplikasi]);
 
   const uniqueByValue = (arr) => {
     const seen = new Set();
@@ -335,9 +335,9 @@ export default function RegistrasiUser() {
                 disabled={loading}
                 value={form.values.idaplikasi}
                 onChange={(val) => {
-                  form.setFieldValue("idaplikasi", val); // set aplikasi
-                  form.setFieldValue("idhakakses", ""); // reset hak akses
-                  setHakAksesOptions([]); // kosongkan list hak akses
+                  form.setFieldValue("idaplikasi", val);  // set aplikasi
+                  form.setFieldValue("idhakakses", "");   // reset hak akses
+                  setHakAksesOptions([]);                 // kosongkan list hak akses
                 }}
                 rightSection={loading ? <Loader size="xs" /> : null}
               />
@@ -345,7 +345,7 @@ export default function RegistrasiUser() {
               <Select
                 label="Pilih Hak Akses"
                 data={hakAksesOptions}
-                {...form.getInputProps("idhakakses")}
+                {...form.getInputProps('idhakakses')}
                 placeholder={loadingHakAkses ? "Memuat..." : "Pilih hak akses"}
                 searchable
                 clearable

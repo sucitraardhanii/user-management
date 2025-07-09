@@ -13,7 +13,11 @@ export default function GenericTable({
   onDelete,
   pageSizeOptions = [5, 10, 20, 50],
   defaultPageSize = 5,
+  enableSearch = false,
+  onSearchChange,
+  searchPlaceholder = "Cari...",
 }) {
+
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(defaultPageSize);
 
@@ -61,6 +65,23 @@ useEffect(() => {
       `}</style>
 
       <Paper shadow="xs" p="md" withBorder style={{ overflowX: "auto" }}>
+        {enableSearch && (
+          <Flex justify="flex-end" mb="sm">
+            <input
+              type="text"
+              placeholder={searchPlaceholder}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              style={{
+                padding: "6px 12px",
+                border: "1px solid #ccc",
+                borderRadius: 6,
+                fontSize: 14,
+                width: 240,
+              }}
+            />
+          </Flex>
+        )}
+
         <MantineReactTable
           columns={columns}
           data={paginatedData}

@@ -2,7 +2,7 @@ import { getToken } from "./auth";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-function getAuthHeaders() {
+function getHeaders() {
   const token = getToken();
   return {
     "Content-Type": "application/json",
@@ -10,48 +10,22 @@ function getAuthHeaders() {
   };
 }
 
-export async function fetchJabatan() {
-  const res = await fetch(`${BASE_URL}/getJabatan`, {
+export async function fetchKantor(nopend = "") {
+  const res = await fetch(`${BASE_URL}/getKantor`, {
     method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ codeJabatan: "" }),
+    headers: getHeaders(),
+    body: JSON.stringify({ nopend }),
   });
 
-  const result = await res.json();
+  if (!res.ok) throw new Error("Failed to fetch kantor");
 
-  return result
-    .filter((item) => item.status === 1)
-    .map((item) => ({
-      value: item.code_jabatan,
-      label: `${item.code_jabatan} - ${item.namajabatan}`,
-    }));
+  const json = await res.json();
+  // Tambahan fallback jika json.data tidak ada
+  return {
+    data: Array.isArray(json.data) ? json.data : [],
+  };
 }
 
-// export async function fetchKantor() {
-//     const token = getToken();
-//   const res = await fetch(`${BASE_URL}/getKantor`, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${token}`,
-//     },
-//     body: JSON.stringify({ nopend: "" }),
-//   });
-
-//   const result = await res.json();
-
-//  const seen = new Set();
-//   return result.data
-//     .map((item) => ({
-//       value: item.nopend,
-//       label: `${item.nopend} - ${item.namaKantor}`,
-//     }))
-//     .filter((item) => {
-//       if (seen.has(item.value)) return false;
-//       seen.add(item.value);
-//       return true;
-//     });
-// }
 
 export async function fetchAllKantor() {
   const res = await fetch(`${BASE_URL}/getKantor`, {
