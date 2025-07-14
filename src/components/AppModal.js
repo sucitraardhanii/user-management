@@ -7,6 +7,8 @@ import {
   Modal,
   Box,
   Group,
+  Select,
+  Stack,
 } from "@mantine/core";
 import { showNotification, updateNotification } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons-react";
@@ -16,7 +18,7 @@ export default function AppModal({ opened, onClose, onSuccess }) {
   const [app, setApp] = useState({
     name: "",
     address: "",
-    status: "",
+    status: "Aktif",
   });
 
   const handleSubmit = async (e) => {
@@ -25,10 +27,10 @@ export default function AppModal({ opened, onClose, onSuccess }) {
     showNotification({
       id: "add-aplikasi",
       title: "Menyimpan...",
-      message: "Mohon tunggu, kami sedang menyimpan data",
+      message: "Mohon tunggu, sedang menyimpan data aplikasi",
       loading: true,
       autoClose: false,
-      withCloseButton: true,
+      withCloseButton: false,
     });
 
     try {
@@ -37,21 +39,21 @@ export default function AppModal({ opened, onClose, onSuccess }) {
       updateNotification({
         id: "add-aplikasi",
         title: "Berhasil",
-        message: "Data Aplikasi Berhasil Ditambahkan",
+        message: "Aplikasi berhasil ditambahkan",
         color: "teal",
         icon: <IconCheck size={18} />,
         autoClose: 3000,
       });
 
-      setApp({ name: "", address: "", status: "" });
+      setApp({ name: "", address: "", status: "Aktif" });
       onClose();
-      onSuccess?.(); // reload list, kalau ada
+      onSuccess?.();
     } catch (err) {
       console.error("Gagal Ditambahkan:", err);
       updateNotification({
         id: "add-aplikasi",
         title: "Gagal",
-        message: "Data Aplikasi Gagal Ditambahkan",
+        message: "Gagal menambahkan aplikasi",
         color: "red",
         icon: <IconX size={18} />,
         autoClose: 3000,
@@ -60,24 +62,55 @@ export default function AppModal({ opened, onClose, onSuccess }) {
   };
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Tambah Aplikasi Baru" centered>
-      <Box component="form" onSubmit={handleSubmit}>
-        <TextInput
-          label="Nama"
-          value={app.name}
-          onChange={(e) => setApp({ ...app, name: e.target.value })}
-          required
-          mb="sm"
-        />
-        <TextInput
-          label="Alamat URL"
-          value={app.address}
-          onChange={(e) => setApp({ ...app, address: e.target.value })}
-          mb="sm"
-        />
-        <Group position="right" mt="md">
-          <Button variant="default" onClick={onClose}>Batal</Button>
-          <Button type="submit">Simpan</Button>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title="Tambah Aplikasi Baru"
+      centered
+      radius="md"
+      overlayProps={{ blur: 2 }}
+    >
+      <Box component="form" onSubmit={handleSubmit} p="sm">
+        <Stack>
+          <TextInput
+            label="Nama Aplikasi"
+            placeholder="Masukkan nama aplikasi"
+            value={app.name}
+            onChange={(e) => setApp({ ...app, name: e.target.value })}
+            required
+          />
+          <TextInput
+            label="Alamat URL"
+            placeholder="Contoh: https://example.com"
+            value={app.address}
+            onChange={(e) => setApp({ ...app, address: e.target.value })}
+            required
+          />
+          <Select
+            label="Status"
+            placeholder="Pilih status"
+            value={app.status}
+            onChange={(val) => setApp({ ...app, status: val })}
+            data={["Aktif", "Tidak Aktif"]}
+            required
+          />
+        </Stack>
+
+        <Group mt="lg" position="right">
+          <Button variant="default" onClick={onClose}>
+            Batal
+          </Button>
+          <Button
+            type="submit"
+            styles={{
+              root: {
+                backgroundColor: "#1C2D5A",
+                "&:hover": { backgroundColor: "#162447" },
+              },
+            }}
+          >
+            Simpan
+          </Button>
         </Group>
       </Box>
     </Modal>

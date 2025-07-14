@@ -138,6 +138,7 @@ useEffect(() => {
           <Button.Group>
             <Button
               size="xs"
+              color="#2E4070"
               onClick={() => setPageIndex(0)}
               disabled={pageIndex === 0}
             >
@@ -145,6 +146,7 @@ useEffect(() => {
             </Button>
             <Button
               size="xs"
+              color="#2E4070"
               onClick={() => setPageIndex((prev) => Math.max(prev - 1, 0))}
               disabled={pageIndex === 0}
             >
@@ -152,6 +154,7 @@ useEffect(() => {
             </Button>
             <Button
               size="xs"
+              color="#2E4070"
               onClick={() =>
                 setPageIndex((prev) =>
                   Math.min(prev + 1, Math.floor(totalRows / pageSize))
@@ -163,6 +166,7 @@ useEffect(() => {
             </Button>
             <Button
               size="xs"
+              color="#2E4070"
               onClick={() => setPageIndex(Math.floor(totalRows / pageSize))}
               disabled={pageIndex >= Math.floor(totalRows / pageSize)}
             >

@@ -3,12 +3,15 @@ import { getToken } from "./auth";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const ENCRYPT_KEY = "$RAI^bYJey2jhDzv+V9FcsUnV";
 
-const token = getToken();
+function getAuthHeaders() {
+  const token = getToken(); // dipanggil sekali saja saat file di-load
+  if (!token) throw new Error("Token tidak tersedia");
 
-const headers = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${getToken()}`,
-};
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
 
 // Ambil semua aplikasi
 export const fetchAplikasi = async () => {
@@ -16,7 +19,7 @@ export const fetchAplikasi = async () => {
   if (!token) throw new Error("Token tidak tersedia");
 
   const res = await fetch(`${BASE_URL}/getaplikasi/all`, {
-    headers,
+    headers: getAuthHeaders(),
   });
 
   if (!res.ok) throw new Error("Gagal fetch aplikasi");
@@ -39,10 +42,7 @@ export const deleteAplikasi = async (idaplikasi) => {
 
   const res = await fetch(`${BASE_URL}/deletaplikasi`, {
     method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ idaplikasi: String(idaplikasi) }),
   });
 
@@ -58,10 +58,7 @@ export const createAplikasi = async (data) => {
 
   const res = await fetch(`${BASE_URL}/addaplikasi`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       nama: data.name,
       alamat: data.address,
@@ -76,10 +73,7 @@ export const createAplikasi = async (data) => {
 export const getAplikasiById = async (id) => {
   const token = getToken();
   const res = await fetch(`${BASE_URL}/getaplikasi/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!res.ok) {

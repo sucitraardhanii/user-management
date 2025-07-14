@@ -19,7 +19,7 @@ export default function Breadcrumb() {
               <Text
                 size="sm"
                 fw={500}
-                color="#2E4070"
+                color="#2E4070A"
                 style={{ textTransform: "capitalize" }}
               >
                 {segment.replace(/-/g, " ")}
