@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TextInput, Stack, Loader, Title, Button, Group } from "@mantine/core";
+import { TextInput, Stack, Loader, Title, Button, Group, Paper } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
 import { fetchKantor } from "@/api/kantor";
@@ -34,18 +34,22 @@ export default function KantorPage() {
 
   return (
     <Stack>
-      <PageBreadCrumb items={["Master Data", "Daftar Kantor"]} />
+      <PageBreadCrumb/>
       <Title order={2}>Daftar Kantor</Title>
 
-      <Group grow>
+      <Paper withBorder p="md" radius="md">
+        <Group align="end">
         <TextInput
           placeholder="Cari Nopend / Nama Kantor"
           icon={<IconSearch size={16} />}
           value={searchInput}
+          style={{ flex: 1 }}
           onChange={(e) => setSearchInput(e.currentTarget.value)}
         />
-        <Button onClick={handleSearch}>Cari</Button>
+        <Button onClick={handleSearch}>Tampilkan Data</Button>
       </Group>
+      </Paper>
+      
 
       {loading ? (
         <Loader mt="md" />

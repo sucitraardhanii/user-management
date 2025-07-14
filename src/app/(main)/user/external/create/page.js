@@ -20,7 +20,6 @@ import {
 import { useForm } from "@mantine/form";
 import { useDebouncedValue } from "@mantine/hooks";
 import Breadcrumb from "@/components/BreadCrumb";
-import { fetchJabatan, searchKantor, fetchAllKantor } from "@/api/Allmenu";
 import {
   fetchAplikasi,
   encryptId,
@@ -29,6 +28,9 @@ import {
   createUser,
   createUserAkses,
   validasiUser,
+  fetchJabatan,
+  searchKantor,
+  fetchAllKantor
 } from "@/api/regisUserExtern";
 import { showNotification } from "@mantine/notifications";
 import { IconCheck } from "@tabler/icons-react";
