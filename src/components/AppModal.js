@@ -7,12 +7,15 @@ import {
   Modal,
   Box,
   Group,
-  Select,
+  Switch,
+  ThemeIcon,
   Stack,
+  Text,
 } from "@mantine/core";
 import { showNotification, updateNotification } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { createAplikasi } from "@/api/aplikasi";
+import { IconPlus } from "@tabler/icons-react";
 
 export default function AppModal({ opened, onClose, onSuccess }) {
   const [app, setApp] = useState({
@@ -65,10 +68,24 @@ export default function AppModal({ opened, onClose, onSuccess }) {
     <Modal
       opened={opened}
       onClose={onClose}
-      title="Tambah Aplikasi Baru"
       centered
-      radius="md"
       overlayProps={{ blur: 2 }}
+      styles={{
+        header: {
+          marginTop: "-10px", // hilangkan jarak bawah header
+          marginBottom: "5px", // tambahkan jarak bawah header
+        },
+      }}
+      title={
+        <Group spacing="xs" align="center">
+          <ThemeIcon color="blue" variant="light" radius="xl" size="md">
+            <IconPlus size={18} />
+          </ThemeIcon>
+          <Text fw={600} fz="xl">
+            Tambah Aplikasi
+          </Text>
+        </Group>
+      }
     >
       <Box component="form" onSubmit={handleSubmit} p="sm">
         <Stack>
@@ -86,17 +103,20 @@ export default function AppModal({ opened, onClose, onSuccess }) {
             onChange={(e) => setApp({ ...app, address: e.target.value })}
             required
           />
-          <Select
-            label="Status"
-            placeholder="Pilih status"
-            value={app.status}
-            onChange={(val) => setApp({ ...app, status: val })}
-            data={["Aktif", "Tidak Aktif"]}
-            required
+          <Switch
+            label={`${app.status === "Aktif" ? "Aktif" : "Tidak Aktif"}`}
+            checked={app.status === "Aktif"}
+            onChange={(event) =>
+              setApp({
+                ...app,
+                status: event.currentTarget.checked ? "Aktif" : "Tidak Aktif",
+              })
+            }
+            mt="xs"
           />
         </Stack>
 
-        <Group mt="lg" position="right">
+        <Group mt="md" position="right">
           <Button variant="default" onClick={onClose}>
             Batal
           </Button>

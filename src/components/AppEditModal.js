@@ -7,19 +7,21 @@ import {
   Group,
   Box,
   Loader,
-  Title,
-  Select,
+  Switch,
   Modal,
+  ThemeIcon,
+  Text,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { getAplikasiById, updateAplikasi } from "@/api/aplikasi";
+import { IconPencil } from "@tabler/icons-react";
 
 export default function AppEditModal({ id, opened, onClose, onSuccess }) {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     nama: "",
     alamat: "",
-    status: "1",
+    status: "",
   });
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function AppEditModal({ id, opened, onClose, onSuccess }) {
         const newData = {
           nama: data.nama || "",
           alamat: data.alamat || "",
-          status: data.status || "1",
+          status: data.status || "",
         };
 
         // Cek apakah data berubah sebelum set
@@ -68,7 +70,7 @@ export default function AppEditModal({ id, opened, onClose, onSuccess }) {
         color: "green",
       });
       onSuccess?.(); // panggil fungsi refresh
-      onClose();     // tutup modal
+      onClose(); // tutup modal
     } catch (err) {
       showNotification({
         title: "Gagal",
@@ -79,11 +81,32 @@ export default function AppEditModal({ id, opened, onClose, onSuccess }) {
   };
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Edit Aplikasi" centered>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      centered
+      overlayProps={{ blur: 2 }}
+      styles={{
+        header: {
+          marginTop: "-20px", // hilangkan jarak bawah header
+          marginBottom: "5px", // tambahkan jarak bawah header
+        },
+      }}
+      title={
+        <Group spacing="xs" align="center">
+          <ThemeIcon color="blue" variant="light" radius="xl" size="md">
+            <IconPencil size={18} />
+          </ThemeIcon>
+          <Text fw={600} fz="xl">
+            Edit Aplikasi
+          </Text>
+        </Group>
+      }
+    >
       {loading ? (
         <Loader mt="md" />
       ) : (
-        <Box component="form" onSubmit={handleSubmit}>
+        <Box component="form" onSubmit={handleSubmit} p="sm">
           <TextInput
             label="Nama"
             value={formData.nama}
@@ -98,22 +121,37 @@ export default function AppEditModal({ id, opened, onClose, onSuccess }) {
             required
             mt="md"
           />
-          <Select
-            label="Status"
-            data={[
-              { value: "1", label: "Aktif" },
-              { value: "0", label: "Tidak Aktif" },
-            ]}
-            value={formData.status}
-            onChange={(value) => handleChange("status", value)}
-            required
-            mt="md"
-          />
-          <Group mt="xl" position="apart">
-            <Button variant="default" onClick={onClose}>
+          <Group spacing="sm" mt="md">
+            <Switch
+              checked={formData.status === "1"}
+              onChange={(e) =>
+                handleChange("status", e.currentTarget.checked ? "1" : "0")
+              }
+              size="md"
+            />
+            <Text>{formData.status === "1" ? "Aktif" : "Tidak Aktif"}</Text>
+          </Group>
+          <Group mt="md" position="right">
+            <Button
+              variant="outline"
+              color="gray"
+              radius="md"
+              onClick={onClose}
+            >
               Batal
             </Button>
-            <Button type="submit">Simpan</Button>
+            <Button
+              type="submit"
+              radius="md"
+              styles={{
+                root: {
+                  backgroundColor: "#1C2D5A",
+                  "&:hover": { backgroundColor: "#162447" },
+                },
+              }}
+            >
+              Simpan
+            </Button>
           </Group>
         </Box>
       )}

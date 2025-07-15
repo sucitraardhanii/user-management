@@ -6,23 +6,16 @@ import {
   Button,
   Flex,
   Text,
-  TagsInput, Box
+  TagsInput,
+  Group,
+  ThemeIcon,
 } from "@mantine/core";
-import { IconCheck,IconX,
-} from "@tabler/icons-react";
+import { IconCheck, IconX, IconTrash } from "@tabler/icons-react";
 import GenericTable from "@/components/GenericTable";
-import {
-  fetchAplikasi,
-  deleteAplikasi,
-  encryptId,
-} from "@/api/aplikasi";
+import { fetchAplikasi, deleteAplikasi, encryptId } from "@/api/aplikasi";
 import StatusBadge from "@/components/StatusAkunBadge";
-import {
-  showNotification,
-  updateNotification,
-} from "@mantine/notifications";
+import { showNotification, updateNotification } from "@mantine/notifications";
 import CreateButton from "@/components/CreateButton";
-import Breadcrumb from "@/components/BreadCrumb";
 import { modals } from "@mantine/modals";
 import ButtonAction from "@/components/ButtonAction";
 import PageBreadCrumb from "@/components/PageBreadCrumb";
@@ -35,7 +28,7 @@ export default function AppPage() {
   if (!isSuperAdmin()) {
     return <ForbiddenPage />;
   }
-  
+
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTags, setSearchTags] = useState([]);
@@ -44,44 +37,67 @@ export default function AppPage() {
   const [data, setData] = useState([]);
 
   const getAplikasi = async () => {
-        try {
-          setLoading(true); // opsional, bisa dipindah
-          const data = await fetchAplikasi(); // ambil dari API
-          setApps(data); // update state
-        } catch (err) {
-          console.error("Gagal fetch aplikasi:", err);
-        } finally {
-          setLoading(false);
-        }
-      };
+    try {
+      setLoading(true); // opsional, bisa dipindah
+      const data = await fetchAplikasi(); // ambil dari API
+      setApps(data); // update state
+    } catch (err) {
+      console.error("Gagal fetch aplikasi:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    getAplikasi()
+    getAplikasi();
   }, []);
 
   const filteredData = useMemo(() => {
-  if (searchTags.length === 0) return apps;
-  return apps.filter((item) =>
-    searchTags.every((tag) =>
-      (item.name?.toLowerCase().includes(tag.toLowerCase()))
-    )
-  );
-}, [apps, searchTags]);
+    if (searchTags.length === 0) return apps;
+    return apps.filter((item) =>
+      searchTags.every((tag) =>
+        item.name?.toLowerCase().includes(tag.toLowerCase())
+      )
+    );
+  }, [apps, searchTags]);
 
   const handleDelete = (id, name) => {
     modals.openConfirmModal({
-      title: "Konfirmasi Hapus",
+      title: (
+        <Group spacing="xs">
+          <ThemeIcon color="red" variant="light" radius="xl" size="lg">
+            <IconTrash size={18} />
+          </ThemeIcon>
+          <Text fw={600} fz="lg">
+            Konfirmasi Hapus
+          </Text>
+        </Group>
+      ),
       centered: true,
       size: "sm",
-      overlayProps: { blur: 2, opacity: 0.1 },
+      overlayProps: { blur: 2 },
       children: (
-        <Text size="sm">
-          Yakin ingin menghapus <b>{name}</b>?
+        <Text size="sm" color="dimmed">
+          Apakah Anda yakin ingin menghapus aplikasi{" "}
+          <Text component="span" fw={600} color="red">
+            {name}
+          </Text>
+          ?
         </Text>
       ),
-      labels: { confirm: "Hapus", cancel: "Batal" },
-      confirmProps: { color: "red" },
+      labels: {
+        confirm: "Hapus",
+        cancel: "Batal",
+      },
+      confirmProps: {
+        color: "red",
+        variant: "filled",
+      },
+      cancelProps: {
+        variant: "default",
+      },
       onConfirm: async () => {
+        // Notifikasi loading saat proses hapus
         showNotification({
           id: "delete-aplikasi",
           title: "Menghapus...",
@@ -92,7 +108,7 @@ export default function AppPage() {
         });
 
         try {
-          await deleteAplikasi(id);
+          await deleteAplikasi(id); // ganti sesuai fungsi hapus kamu
 
           updateNotification({
             id: "delete-aplikasi",
@@ -103,6 +119,7 @@ export default function AppPage() {
             autoClose: 3000,
           });
 
+          // Update tampilan tabel
           setApps((prev) => prev.filter((app) => app.id !== id));
         } catch (err) {
           updateNotification({
@@ -132,10 +149,11 @@ export default function AppPage() {
       },
       { accessorKey: "name", header: "Nama" },
       { accessorKey: "address", header: "Alamat" },
-      { accessorKey: "idaplikasi", header: "ID Aplikasi", size:100 },
+      { accessorKey: "idaplikasi", header: "ID Aplikasi", size: 100 },
       {
         accessorKey: "encryptedId",
-        header: "Encrypted ID", size: 125,
+        header: "Encrypted ID",
+        size: 125,
         Cell: ({ row }) => {
           const [loading, setLoading] = useState(false);
 
@@ -162,7 +180,12 @@ export default function AppPage() {
           };
 
           return (
-            <Button size="xs" color="#2E4070" loading={loading} onClick={handleEncrypt}>
+            <Button
+              size="xs"
+              color="#2E4070"
+              loading={loading}
+              onClick={handleEncrypt}
+            >
               Encrypt
             </Button>
           );
@@ -199,9 +222,15 @@ export default function AppPage() {
       {/* Title dan tombol dalam 1 baris */}
       <Flex justify="space-between" align="center" mb="md">
         <Title order={2}>Daftar Aplikasi</Title>
-        <CreateButton entity="aplikasi" useModal onClick={() => setOpened(true)} />
+        <CreateButton
+          entity="aplikasi"
+          useModal
+          onClick={() => setOpened(true)}
+        />
       </Flex>
-      <TagsInput label="Filter berdasarkan Aplikasi" placeholder="Ketik dan tekan Enter"
+      <TagsInput
+        label="Filter berdasarkan Aplikasi"
+        placeholder="Ketik dan tekan Enter"
         value={searchTags}
         onChange={setSearchTags}
         clearable
@@ -221,9 +250,12 @@ export default function AppPage() {
 
       <AppEditModal
         id={editId}
-        opened={!!editId}
+        opened={Boolean(editId)}
         onClose={() => setEditId(null)}
-        onSuccess={getAplikasi}
+        onSuccess={() => {
+          getAplikasi();
+          setEditId(null); // tutup modal setelah sukses
+        }}
       />
     </>
   );
