@@ -50,7 +50,6 @@ export const deleteAplikasi = async (idaplikasi) => {
   return res.json();
 };
 
-
 // Tambah aplikasi
 export const createAplikasi = async (data) => {
   const token = getToken();
@@ -78,7 +77,9 @@ export const getAplikasiById = async (id) => {
 
   if (!res.ok) {
     const errorText = await res.text();
-    throw new Error(`Gagal mengambil data aplikasi: ${res.status} - ${errorText}`);
+    throw new Error(
+      `Gagal mengambil data aplikasi: ${res.status} - ${errorText}`
+    );
   }
 
   const json = await res.json();
@@ -91,11 +92,7 @@ export const updateAplikasi = async ({ idaplikasi, nama, alamat, status }) => {
 
   const res = await fetch(`${BASE_URL}/updateaplikasi`, {
     method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       idaplikasi, // string atau number, sesuai backend
       nama,
@@ -115,7 +112,7 @@ export const updateAplikasi = async ({ idaplikasi, nama, alamat, status }) => {
 export async function encryptId(id) {
   const res = await fetch(`${BASE_URL}/encId`, {
     method: "POST",
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       data: String(id),
       key: ENCRYPT_KEY,

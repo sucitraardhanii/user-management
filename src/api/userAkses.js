@@ -184,13 +184,20 @@ export async function fetchHakAkses(encryptedId) {
 // == CREATE USER AKSES FUNCTION ==
 export async function createUserAkses(payload) {
   const token = getToken();
+
   const res = await fetch(`${BASE_URL}/userAkses`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
-  const result = await res.json();
+  let result;
+  try {
+    result = await res.json();
+  } catch (e) {
+    console.error("❌ Gagal parsing JSON:", e);
+    throw new Error("Respons bukan JSON");
+  }
 
   if (!res.ok) {
     const error = new Error(result.message || "Gagal");

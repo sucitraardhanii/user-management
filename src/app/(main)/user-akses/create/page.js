@@ -1,160 +1,112 @@
-"use client";
+'use client';
 
 import {
   Card,
   Text,
-  Autocomplete,
+  TextInput,
+  Button,
   Select,
   Switch,
   Title,
   Group,
   Loader,
-  Button,
-} from "@mantine/core";
-import { useState, useEffect } from "react";
-import { useDebouncedValue } from "@mantine/hooks";
-import { useForm } from "@mantine/form";
-import { IconUserPlus } from "@tabler/icons-react";
-import { fetchAllUserNippos } from "@/api/userAkses";
-import {
-  fetchAplikasi,
-  encryptId,
-  fetchHakAkses,
-  createUserAkses,
-} from "@/api/userAkses";
-import { showNotification } from "@mantine/notifications";
+} from '@mantine/core';
+import { useState, useEffect } from 'react';
+import { useForm } from '@mantine/form';
+import { IconUserPlus } from '@tabler/icons-react';
+import { searchUserByNippos } from '@/api/userAkses';
+import { fetchAplikasi, encryptId, fetchHakAkses,createUserAkses } from "@/api/regisUserExtern";
+import { showNotification } from '@mantine/notifications';
 import { useRouter } from "next/navigation";
 
 export default function AddUserAksesForm() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [loadingUser, setLoadingUser] = useState(false);
-  const [loadingHakAkses, setLoadingHakAkses] = useState(false);
-
-  const [userOptions, setUserOptions] = useState([]);
-  const [allUserCache, setAllUserCache] = useState([]);
-  const [userInput, setUserInput] = useState("");
-  const [debounced] = useDebouncedValue(userInput, 300);
-
   const [aplikasiOptions, setAplikasiOptions] = useState([]);
   const [hakAksesOptions, setHakAksesOptions] = useState([]);
-  const route = useRouter();
-
+  const [loadingHakAkses, setLoadingHakAkses] = useState(false);
+  const [userOptions, setUserOptions] = useState([]);
+ 
   const form = useForm({
     initialValues: {
-      nippos: "",
-      idaplikasi: "",
-      idhakakses: "",
+      nippos: '',
+      idaplikasi:'',
+      idhakakses: '',
       statusUserAkses: true,
     },
     validate: {
-      nippos: (value) => (value ? null : "NIPPOS tidak boleh kosong"),
-      idhakakses: (value) => (value ? null : "Pilih hak akses"),
+      nippos: (value) => (value ? null : 'NIPPOS tidak boleh kosong'),
+      idhakakses: (value) => (value ? null : 'Pilih hak akses'),
     },
   });
 
-  const uniqueByValue = (arr) => {
-    const seen = new Set();
-    return arr.filter((item) => {
-      if (seen.has(item.value)) return false;
-      seen.add(item.value);
-      return true;
-    });
+    useEffect(() => {
+       const fetchInitialData = async () => {
+         try {
+           const [aplikasi] = await Promise.all([
+             fetchAplikasi(),
+           ]);
+           setAplikasiOptions(aplikasi);
+         } catch (err) {
+           console.error("Gagal ambil data aplikasi:", err);
+         } finally {
+           setLoading(false);
+         }
+       };
+   
+       fetchInitialData();
+     }, []);
+
+     useEffect(() => {
+      const selected = form.values.idaplikasi;
+      if (!selected) return;
+
+  const fetchHakAksesFromApi = async () => {
+    setLoadingHakAkses(true);
+    try {
+      const encrypted = await encryptId(selected);
+      const data = await fetchHakAkses(encrypted);
+      setHakAksesOptions(data);
+    } catch (err) {
+      console.error("Gagal ambil hak akses:", err);
+      setHakAksesOptions([]);
+    } finally {
+      setLoadingHakAkses(false);
+    }
   };
 
-  // Ambil data awal
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        setLoadingUser(true);
-        const [apps, users] = await Promise.all([
-          fetchAplikasi(),
-          fetchAllUserNippos(),
-        ]);
-        setAplikasiOptions(apps);
-        setAllUserCache(users);
-      } catch (err) {
-        console.error("Gagal fetch awal:", err);
-      } finally {
-        setLoading(false);
-        setLoadingUser(false);
-      }
-    };
-    fetchInitialData();
-  }, []);
-
-  // Filter lokal dari cache
-  useEffect(() => {
-    if (!debounced) {
-      setUserOptions([]);
-      return;
-    }
-
-    const filtered = allUserCache.filter((item) =>
-      item.label.toLowerCase().includes(debounced.toLowerCase())
-    );
-
-    setUserOptions(filtered.slice(0, 20));
-  }, [debounced, allUserCache]);
-
-  // Ambil hak akses saat aplikasi dipilih
-  useEffect(() => {
-    const selected = form.values.idaplikasi;
-    if (!selected) return;
-
-    const fetchHakAksesFromApi = async () => {
-      setLoadingHakAkses(true);
-      try {
-        const encrypted = await encryptId(selected);
-        const data = await fetchHakAkses(encrypted);
-        setHakAksesOptions(data);
-      } catch (err) {
-        console.error("Gagal fetch hak akses:", err);
-        setHakAksesOptions([]);
-      } finally {
-        setLoadingHakAkses(false);
-      }
-    };
-
-    fetchHakAksesFromApi();
-  }, [form.values.idaplikasi]);
+  fetchHakAksesFromApi();
+}, [form.values.idaplikasi]);
+     
+  const handleUserSearch = async (query) => {
+    if (query.length < 3) return;
+    const results = await searchUserByNippos(query);
+    setUserOptions(results.map((user) => ({
+      value: user.nippos,
+      label: `${user.nippos} - ${user.nama}`,
+    })));
+  };
 
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const encryptedId = await encryptId(values.idaplikasi);
-
       await createUserAkses({
-        nippos: values.nippos,
-        idHakAkses: parseInt(values.idhakakses),
+        ...values,
         statusUserAkses: values.statusUserAkses ? 1 : 0,
       });
 
       showNotification({
-        title: "Akses Berhasil Ditambahkan",
-        message: (
-          <>
-            <div>
-              <strong>📩Email:</strong> {values.nippos}
-            </div>
-            <div>
-              <strong>🔐Encrypted ID:</strong> {encryptedId}
-            </div>
-          </>
-        ),
-        color: "green",
-        autoClose: 3000,
+        title: 'Berhasil',
+        message: 'Akses berhasil ditambahkan!',
+        color: 'green',
       });
 
       form.reset();
-      setUserInput("");
-      route.push("/user-akses");
     } catch (err) {
-      const errorMessage =
-        err?.response?.data?.message || err.message || "Terjadi kesalahan.";
       showNotification({
-        title: "Gagal",
-        message: errorMessage,
-        color: "red",
+        title: 'Gagal',
+        message: err.message || 'Terjadi kesalahan.',
+        color: 'red',
       });
     } finally {
       setLoading(false);
@@ -163,82 +115,79 @@ export default function AddUserAksesForm() {
 
   return (
     <Card shadow="md" p="lg" radius="md" withBorder>
-      <Title order={4} mb="md">
-        Tambah Akses User
-      </Title>
+      <Title order={4} mb="md">Tambah Akses User</Title>
       <form onSubmit={form.onSubmit(handleSubmit)}>
-        <Autocomplete
+        <TextInput
           label="Cari NIPPOS / Email"
-          placeholder="Ketik nippos, email, atau nama"
-          data={userOptions.map((opt) => opt.label)}
-          value={userInput}
-          onChange={(val) => {
-            setUserInput(val);
-            const selected = userOptions.find((opt) => opt.label === val);
-            form.setFieldValue("nippos", selected?.value || "");
+          placeholder="contoh: vega@email.com"
+          onChange={(e) => {
+            form.setFieldValue('nippos', e.currentTarget.value);
+            handleUserSearch(e.currentTarget.value);
           }}
-          rightSection={loadingUser ? <Loader size="xs" /> : null}
-          clearable
-          disabled={loading}
+          value={form.values.nippos}
+          data={userOptions}
           required
         />
 
         <Select
-          label="Pilih Aplikasi"
-          data={aplikasiOptions}
-          placeholder="Pilih aplikasi"
-          searchable
-          clearable
-          required
-          disabled={loading}
-          value={form.values.idaplikasi}
-          onChange={(val) => {
-            form.setFieldValue("idaplikasi", val);
-            form.setFieldValue("idhakakses", "");
-            setHakAksesOptions([]);
-          }}
-          rightSection={loading ? <Loader size="xs" /> : null}
-        />
+              label="Pilih Aplikasi"
+              data={aplikasiOptions}
+              placeholder="Pilih aplikasi"
+              searchable
+              clearable
+              required
+              disabled={loading}
+              value={form.values.idaplikasi}
+              onChange={(val) => {
+                form.setFieldValue("idaplikasi", val);  // set aplikasi
+                form.setFieldValue("idhakakses", "");   // reset hak akses
+                setHakAksesOptions([]);                 // kosongkan list hak akses
+              }}
+              onClear={() => {
+              form.setFieldValue("idaplikasi", "");
+              form.setFieldValue("idhakakses", "");
+              setHakAksesOptions([]);
+            }}
+              rightSection={loading ? <Loader size="xs" /> : null}
+            />
 
-        <Select
-          label="Pilih Hak Akses"
-          data={hakAksesOptions}
-          value={form.values.idhakakses}
-          onChange={(val) => form.setFieldValue("idhakakses", val)}
-          placeholder={loadingHakAkses ? "Memuat data..." : "Pilih hak akses"}
-          searchable
-          clearable
-          required
-          disabled={loading || !form.values.idaplikasi || loadingHakAkses}
-          rightSection={loadingHakAkses ? <Loader size="xs" /> : null}
-        />
+            <Select
+              label="Pilih Hak Akses"
+              data={hakAksesOptions}
+              value={form.values.idhakakses}
+              onChange={(val) => form.setFieldValue('idhakakses', val)}
+              placeholder={loadingHakAkses ? "Memuat data..." : "Pilih hak akses"}
+              searchable
+              clearable
+              required
+              disabled={loading || !form.values.idaplikasi || loadingHakAkses}
+              rightSection={loadingHakAkses ? <Loader size="xs" /> : null}
+            />
 
-        {hakAksesOptions.length === 0 &&
-          !loadingHakAkses &&
-          form.values.idaplikasi && (
-            <Text size="xs" color="orange" mt="xs">
-              ⚠️ Tidak ada hak akses yang tersedia untuk aplikasi ini.
-            </Text>
-          )}
+            {hakAksesOptions.length === 0 && !loadingHakAkses && form.values.idaplikasi && (
+              <Text size="xs" color="orange" mt="xs">
+                ⚠️ Tidak ada hak akses yang tersedia untuk aplikasi ini.
+              </Text>
+            )}
 
         <Switch
           label="Status Aktif"
           mt="md"
           checked={form.values.statusUserAkses}
           onChange={(event) =>
-            form.setFieldValue("statusUserAkses", event.currentTarget.checked)
+            form.setFieldValue('statusUserAkses', event.currentTarget.checked)
           }
         />
 
         <Group mt="xl">
           <Button
-            type="submit"
-            leftSection={<IconUserPlus />}
-            loading={loading}
-            disabled={!form.values.nippos || !form.values.idhakakses}
-          >
-            Tambah Akses
-          </Button>
+              type="submit"
+              leftSection={<IconUserPlus />}
+              loading={loading}
+              disabled={hakAksesOptions.length === 0 || !form.values.idhakakses}
+            >
+              Tambah Akses
+            </Button>
         </Group>
       </form>
     </Card>

@@ -15,14 +15,13 @@ import {
 import { showNotification, updateNotification } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { modals } from "@mantine/modals";
-
 import GenericTable from "@/components/GenericTable";
 import StatusBadge from "@/components/StatusBadge";
 import NullBadge from "@/components/NullBadge";
-import Breadcrumb from "@/components/BreadCrumb";
 import CreateButton from "@/components/CreateButton";
 import ButtonAction from "@/components/ButtonAction";
 import UserAksesEditModal from "@/components/UserAksesEditModal";
+import UserAksesModal from "@/components/UserAksesModal";
 
 import {
   fetchUserAkses,
@@ -39,8 +38,9 @@ export default function UserAksesPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [aplikasiOptions, setAplikasiOptions] = useState([]);
-  const [modalOpened, setModalOpened] = useState(false);
+  const [modalOpened, setModalOpened] = useState(false); //untuk edit modal
   const [selectedRow, setSelectedRow] = useState(null);
+  const [createOpened, setCreateOpened] = useState(false); // untuk create modal
 
   const handleFetch = async () => {
     setLoading(true);
@@ -202,10 +202,14 @@ export default function UserAksesPage() {
 
   return (
     <>
-    <PageBreadCrumb/>
+      <PageBreadCrumb />
       <Flex justify="space-between" align="center" mb="md" mt="md">
         <Title order={2}>User Akses</Title>
-        <CreateButton entity="user-akses" />
+        <CreateButton
+          entity="user-akses"
+          useModal
+          onClick={() => setCreateOpened(true)}
+        />
       </Flex>
 
       <Stack>
@@ -230,13 +234,24 @@ export default function UserAksesPage() {
               rightSection={loading ? <Loader size="xs" /> : null}
               style={{ flex: 1 }}
             />
-            <Button color="#2E4070" onClick={handleFetch} mt={20} style={{ height: "40px" }}>
+            <Button
+              color="#2E4070"
+              onClick={handleFetch}
+              mt={20}
+              style={{ height: "40px" }}
+            >
               Tampilkan Data
             </Button>
           </Flex>
         </Paper>
         <GenericTable data={data} columns={columns} loading={loading} />
       </Stack>
+
+      <UserAksesModal
+        opened={createOpened}
+        onClose={() => setCreateOpened(false)}
+        onSuccess={handleFetch}
+      />
 
       <UserAksesEditModal
         opened={modalOpened}

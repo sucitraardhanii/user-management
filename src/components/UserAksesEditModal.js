@@ -1,8 +1,9 @@
-import { Modal, TextInput, Switch, Button, Group } from "@mantine/core";
+import { Modal, Text, ThemeIcon, Switch, Button, Group } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
 import { Autocomplete } from "@mantine/core";
 import { searchUserNippos, fetchAllUserNippos } from "@/api/userAkses";
+import { IconPencil } from "@tabler/icons-react";
 // Mantine komponen Modal, TextInput, Switch, Button, Group untuk membuat modal edit user akses.
 // useForm untuk mengelola form state dan validasi.
 // useEffect untuk memperbarui nilai form ketika editData berubah.
@@ -54,9 +55,24 @@ export default function UserAksesEditModal({
     <Modal
       opened={opened}
       onClose={onClose}
-      title="Edit User Akses"
       centered
-      size="md"
+      overlayProps={{ blur: 2 }}
+      styles={{
+        header: {
+          marginTop: "-10px", // hilangkan jarak bawah header
+          marginBottom: "5px", // tambahkan jarak bawah header
+        },
+      }}
+      title={
+        <Group spacing="xs" align="center">
+          <ThemeIcon color="blue" variant="light" radius="xl" size="md">
+            <IconPencil size={18} />
+          </ThemeIcon>
+          <Text fw={600} fz="xl">
+            Edit User Akses
+          </Text>
+        </Group>
+      }
     >
       <form onSubmit={form.onSubmit(onSubmit)}>
         <Autocomplete
@@ -69,23 +85,32 @@ export default function UserAksesEditModal({
             handleSearch(value); // ini memicu fetch API
           }}
         />
-
         <Switch
-          mt="md"
-          label="Status Aktif"
+          label={form.values.statusUserAkses ? "Aktif" : "Tidak Aktif"}
           checked={form.values.statusUserAkses}
-          onChange={(e) =>
-            form.setFieldValue("statusUserAkses", e.currentTarget.checked)
+          onChange={(event) =>
+            form.setFieldValue("statusUserAkses", event.currentTarget.checked)
           }
+          mt="md"
         />
         {/* // Switch untuk mengubah status aktif user akses.
         // Mantine butuh checked (boolean) dan onChange untuk mengubah nilai statusUserAkses. */}
 
-        <Group mt="xl" position="right">
+        <Group mt="md" position="center">
           <Button variant="default" onClick={onClose}>
             Batal
           </Button>
-          <Button type="submit">Simpan</Button>
+          <Button
+            type="submit"
+            styles={{
+              root: {
+                backgroundColor: "#1C2D5A",
+                "&:hover": { backgroundColor: "#162447" },
+              },
+            }}
+          >
+            Simpan
+          </Button>
         </Group>
       </form>
     </Modal>
