@@ -70,7 +70,6 @@ export const createAplikasi = async (data) => {
 
 // Ambil aplikasi berdasarkan ID
 export const getAplikasiById = async (id) => {
-  const token = getToken();
   const res = await fetch(`${BASE_URL}/getaplikasi/${id}`, {
     headers: getAuthHeaders(),
   });
@@ -88,8 +87,6 @@ export const getAplikasiById = async (id) => {
 
 // Update aplikasi
 export const updateAplikasi = async ({ idaplikasi, nama, alamat, status }) => {
-  const token = getToken();
-
   const res = await fetch(`${BASE_URL}/updateaplikasi`, {
     method: "PUT",
     headers: getAuthHeaders(),
@@ -112,7 +109,7 @@ export const updateAplikasi = async ({ idaplikasi, nama, alamat, status }) => {
 export async function encryptId(id) {
   const res = await fetch(`${BASE_URL}/encId`, {
     method: "POST",
-    headers: getAuthHeaders(),
+   headers: getAuthHeaders(),
     body: JSON.stringify({
       data: String(id),
       key: ENCRYPT_KEY,
