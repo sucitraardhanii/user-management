@@ -26,6 +26,7 @@ import UserAksesEditModal from "@/components/UserAksesEditModal";
 
 import {
   fetchUserAkses,
+  fetchUserAksesByApp,
   fetchAplikasi,
   encryptId,
   deleteUserAkses,
@@ -42,26 +43,42 @@ export default function UserAksesPage() {
   const [modalOpened, setModalOpened] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
-  const handleFetch = async () => {
-    setLoading(true);
-    try {
-      let encryptedId = "";
-      if (idaplikasi) {
-        encryptedId = await encryptId(idaplikasi);
-      }
-
-      const result = await fetchUserAkses({
-        nippos: nippos,
-        idaplikasi: encryptedId || "",
-      });
-
-      setData(result);
-    } catch (err) {
-      console.error("Gagal fetch:", err);
-    } finally {
-      setLoading(false);
+const handleFetch = async () => {
+  setLoading(true);
+  try {
+    let encryptedId = "";
+    if (idaplikasi) {
+      encryptedId = await encryptId(idaplikasi);
     }
-  };
+
+    let result;
+
+    if (encryptedId) {
+      // Jika ada aplikasi (dengan atau tanpa nippos)
+      result = await fetchUserAksesByApp({
+        nippos: nippos || "", // bisa isi atau kosong
+        idaplikasi: encryptedId,
+      });
+    } else {
+      // Jika tidak ada aplikasi
+      result = await fetchUserAkses({
+        nippos: nippos || "", // bisa isi atau kosong
+      });
+    }
+
+    setData(result);
+  } catch (err) {
+    console.error("Gagal fetch:", err);
+    showNotification({
+      title: "Gagal Fetch",
+      message: err.message || "Terjadi kesalahan saat mengambil data",
+      color: "red",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleDelete = (id, nippos) => {
     modals.openConfirmModal({

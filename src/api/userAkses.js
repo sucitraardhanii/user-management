@@ -17,36 +17,42 @@ function getAuthHeaders() {
   };
 }
 // header untuk semua fetch request, kecuali delete yang didefinisika ulang
-// setaip request akan mengirimkan token otentikasi dalam header Authorization
 
-// == USER AKSES API FUNCTIONS ==
-export async function fetchUserAkses({ nippos = "", idaplikasi = "" }) {
-  const token = getToken();
-  let endpoint = "/getUserAkses";
-  let body = { nippos };
-
-  if (nippos || idaplikasi) {
-    endpoint = "/getUserAksesByApp";
-    body = { nippos, idAplikasi: idaplikasi };
-  }
-
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
+// Ambil user akses hanya berdasarkan nippos (atau kosong)
+export async function fetchUserAkses({ nippos = "" }) {
+  const res = await fetch(`${BASE_URL}/getUserAkses`, {
     method: "POST",
     headers: getAuthHeaders(),
-    body: JSON.stringify(body),
+    body: JSON.stringify({ nippos }),
   });
 
   if (!res.ok) {
-    throw new Error("Gagal fetch user akses");
+    throw new Error("Gagal fetch user akses (by nippos)");
   }
 
   const json = await res.json();
-  return json.data; // ✅ Ambil hanya bagian array-nya
+  return json.data;
 }
-// Fungsi untuk mengambil data user akses berdasarkan nippos dan idaplikasi
-// Jika hanya nippos yang diberikan, akan mengambil semua user akses berdasarkan nippos.
-// Jika idaplikasi juga diberikan, akan mengambil user akses berdasarkan nippos dan idaplikasi.
-// mengembalikan hanya json.data yang berisi array user akses.
+
+// Ambil user akses berdasarkan aplikasi (dan optional nippos)
+export async function fetchUserAksesByApp({ nippos = "", idaplikasi }) {
+  const res = await fetch(`${BASE_URL}/getUserAksesByApp`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      nippos,
+      idAplikasi: idaplikasi,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Gagal fetch user akses/data tidak ditemukan");
+  }
+
+  const json = await res.json();
+  return json.data;
+}
+
 
 // == APLIKASI API FUNCTIONS ==
 export async function fetchAplikasi() {
